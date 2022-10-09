@@ -1,0 +1,72 @@
+<template>
+  <div v-if="user" class="d-flex align-center">
+    <v-app-bar-nav-icon small class="mr-1 rounded-lg" @click="appStore.toggleDrawer()" />
+    <v-menu v-model="menu" offset-y :close-on-content-click="false">
+      <template #activator="{ on, attrs }">
+        <v-btn text small class="text-none" v-bind="attrs" v-on="on">
+          <v-avatar size="24" color="secondary" class="mr-1" aria-hidden="true">
+            <v-img :src="user.avatar" :alt="$t('profile_picture_alt')" />
+          </v-avatar>
+          <span class="font-weight-bold text-body-2">{{user.nickname}}</span>
+        </v-btn>
+      </template>
+      <v-list dense class="list-content-mini">
+        <v-list-item dense @click="changeTheme">
+          <v-list-item-icon>
+            <v-icon small>
+              {{$vuetify.theme.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'}}
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{$t($vuetify.theme.dark ? 'dark' : 'light')}}
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-divider />
+        <v-list-item dense @click="logout">
+          <v-list-item-icon>
+            <v-icon small>
+              mdi-power
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{$t('logout')}}
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  </div>
+</template>
+
+<script lang="ts">
+import { Component, InjectReactive, Vue } from 'vue-property-decorator';
+import UserType from '@/types/user-type';
+import { getModule } from 'vuex-module-decorators';
+import AppStore from '@/store/modules/app-store';
+import { changeTheme } from '@/utils/utils';
+
+@Component
+export default class ProfileMenu extends Vue {
+  @InjectReactive('user')
+  private readonly user?: UserType | null;
+
+  appStore = getModule(AppStore, this.$store);
+
+  menu = false;
+
+  changeTheme(): void {
+    changeTheme(this.$vuetify);
+  }
+
+  logout(): void {
+    this.appStore.setAccessToken(null);
+    this.menu = false;
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+</style>

@@ -1,0 +1,100 @@
+html {
+  width: 400px;
+  height: 400px;
+}
+
+.theme--light ::-webkit-scrollbar {
+  width: 10px;
+}
+
+.theme--light ::-webkit-scrollbar-thumb {
+  background: #b0b0b0;
+  border-radius: 5px;
+}
+
+.theme--light ::-webkit-scrollbar-thumb:hover {
+  background: #909090;
+}
+
+.theme--dark ::-webkit-scrollbar {
+  width: 10px;
+}
+
+.theme--dark ::-webkit-scrollbar-thumb {
+  background: #3e3e3e;
+  border-radius: 5px;
+}
+
+.theme--dark ::-webkit-scrollbar-thumb:hover {
+  background: #5e5e5e;
+}
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.full-absolute {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.absolute-tl {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.absolute-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.fixed-tl {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.ellipse {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.one-line {
+  -webkit-line-clamp: 1 !important;
+}
+
+.fill-width {
+  width: 100%;
+}
+
+.flex-basis-auto {
+  flex-basis: auto;
+}
+
+
+.list-content-mini {
+  padding-top: 2px;
+  padding-bottom: 2px;
+
+  > .v-list-item {
+    min-height: unset;
+  }
+  .v-list-item__content {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+  .v-list-item__icon {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+  }
+}

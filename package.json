@@ -1,26 +1,37 @@
 {
   "name": "streaming-next",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "vue-cli-service build --mode development --watch",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "i18n:report": "vue-cli-service i18n:report --src \"./src/**/*.?(js|vue)\" --locales \"./src/locales/**/*.json\""
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "core-js": "^3.8.3",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "moment-duration-format": "^2.3.2",
     "register-service-worker": "^1.7.2",
     "vue": "^2.6.14",
     "vue-class-component": "^7.2.3",
+    "vue-cookies": "^1.8.1",
+    "vue-i18n": "^8.26.3",
     "vue-property-decorator": "^9.1.2",
-    "vuex": "^3.6.2"
+    "vuetify": "^2.6.0",
+    "vuex": "^3.6.2",
+    "vuex-module-decorators": "^2.0.0"
   },
   "devDependencies": {
+    "@types/firefox-webext-browser": "^67.0.2",
+    "@types/lodash": "^4.14.186",
+    "@types/moment-duration-format": "^2.2.3",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
-    "@vue/cli-plugin-pwa": "~5.0.0",
     "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/cli-plugin-vuex": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
@@ -30,7 +41,13 @@
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-vue": "^8.0.3",
     "eslint-plugin-vuejs-accessibility": "^1.1.0",
+    "sass": "^1.55.0",
+    "sass-loader": "^13.0.2",
     "typescript": "~4.5.5",
-    "vue-template-compiler": "^2.6.14"
+    "vue-cli-plugin-browser-extension": "npm:@rhilip/vue-cli-plugin-browser-extension@^0.26.0",
+    "vue-cli-plugin-i18n": "~2.3.1",
+    "vue-cli-plugin-vuetify": "~2.5.8",
+    "vue-template-compiler": "^2.6.14",
+    "vuetify-loader": "^1.7.0"
   }
 }
