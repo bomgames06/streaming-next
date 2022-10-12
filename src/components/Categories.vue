@@ -16,7 +16,7 @@
       </v-col>
     </v-row>
     <v-row v-else>
-      <v-col cols="12">
+      <v-col v-if="!itemExpandedSelect" cols="12">
         <v-card class="pa-1 d-flex" @click="category = null">
           <v-img
             :src="formatThumbnailCategory(category)"
@@ -39,7 +39,8 @@
           :items="streamersOrder"
           :item-expanded-select.sync="itemExpandedSelect"
           :dump-date="dumpDate"
-          category-mode
+          :expanded-mode.sync="expandedMode"
+          mode="CATEGORY_STREAM"
           @click="openTwitchLink"
         />
       </v-col>
@@ -53,7 +54,7 @@ import {
   InjectReactive,
   Watch,
   Vue,
-  Prop, PropSync,
+  PropSync,
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import AppStore from '@/store/modules/app-store';
@@ -64,6 +65,7 @@ import StreamersType from '@/types/streamers-type';
 import StreamersList from '@/components/StreamersList.vue';
 import { debounce, orderBy } from 'lodash';
 import LanguageIso6391Type from '@/types/language-iso639-1-type';
+import ModeType from '@/types/mode-type';
 
 @Component({
   components: { StreamersList },
@@ -94,6 +96,8 @@ export default class StreamsFollowing extends Vue {
   loadingCategories = false;
 
   loadingCategoryStreamers = false;
+
+  expandedMode: ModeType = 'NORMAL';
 
   loadTopCategoriesDebounce = debounce(this.loadTopCategories, 500);
 

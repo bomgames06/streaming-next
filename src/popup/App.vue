@@ -2,7 +2,9 @@
   <v-app>
     <settings-header @refresh="refreshList" />
     <v-main class="relative">
-      <div class="full-absolute overflow-y-auto overflow-x-hidden">
+      <div
+        class="full-absolute overflow-y-auto overflow-x-hidden"
+      >
         <auth v-if="!hasAuth" />
         <template v-else>
           <v-navigation-drawer
@@ -13,7 +15,7 @@
             hide-overlay
             mini-variant-width="36"
             class="drawer-content"
-            @input="appStore.setDrawer($event)"
+            @change="appStore.setDrawer($event)"
           >
             <v-list dense class="py-0 fill-height">
               <v-list-item-group
@@ -49,13 +51,26 @@
                     </v-icon>
                   </v-list-item-icon>
                 </v-list-item>
+                <v-list-item
+                  value="SEARCH"
+                  link
+                  :ripple="false"
+                  class="flex-grow-0 flex-basis-auto"
+                  :aria-label="$t('search')"
+                >
+                  <v-list-item-icon>
+                    <v-icon>
+                      mdi-magnify
+                    </v-icon>
+                  </v-list-item-icon>
+                </v-list-item>
                 <v-spacer />
                 <v-list-item
                   value="SETTINGS"
                   link
                   :ripple="false"
                   class="flex-grow-0 flex-basis-auto"
-                  :aria-label="$t('settings')"
+                  :aria-label="$tc('settings')"
                 >
                   <v-list-item-icon>
                     <v-icon>
@@ -77,6 +92,11 @@
             ref="categoriesRef"
             :category-id.sync="category"
           />
+          <search-user
+            v-if="screen === 'SEARCH'"
+            ref="searchUserRef"
+            @click-category="clickCategory"
+          />
         </template>
       </div>
     </v-main>
@@ -87,8 +107,8 @@
 import Auth from '@/components/Auth.vue';
 import {
   Component,
-  ProvideReactive, Ref,
-  Vue,
+  ProvideReactive,
+  Ref,
   Watch,
 } from 'vue-property-decorator';
 import SettingsHeader from '@/components/SettingsHeader.vue';
@@ -99,13 +119,14 @@ import TwitchApiService from '@/services/twitch-api/twitch-api-service';
 import StreamsFollowing from '@/components/StreamsFollowing.vue';
 import ScreenType from '@/types/screen-type';
 import Setttings from '@/components/Setttings.vue';
-import { processCookie } from '@/utils/utils';
-import FilterOrderType from '@/types/filter-order-type';
 import Categories from '@/components/Categories.vue';
-import CategoryType from '@/types/category-type';
+import SearchUser from '@/components/SearchUser.vue';
+import { mixins } from 'vue-class-component';
+import StartApp from '@/mixins/StartApp.vue';
 
 @Component({
   components: {
+    SearchUser,
     Categories,
     Setttings,
     StreamsFollowing,
@@ -113,7 +134,7 @@ import CategoryType from '@/types/category-type';
     Auth,
   },
 })
-export default class App extends Vue {
+export default class App extends mixins(StartApp) {
   @ProvideReactive('user')
   private user?: UserType | null = null;
 
@@ -129,16 +150,6 @@ export default class App extends Vue {
 
   @Ref('categoriesRef')
   categoriesRef?: Categories
-
-  created(): void {
-    const accessToken = Vue.$cookies.get('accessToken');
-    const filterOrderList = processCookie(Vue.$cookies.get('filterOrderList')) as FilterOrderType || 'NAME';
-    const filterOrderAsc = processCookie(Vue.$cookies.get('filterOrderAsc')) == null ? true : processCookie(Vue.$cookies.get('filterOrderAsc')) === 'true';
-
-    this.appStore.setAccessToken(accessToken && accessToken !== 'null' ? accessToken : null);
-    this.appStore.setFilterOrderListNative(filterOrderList);
-    this.appStore.setFilterOrderAscNative(filterOrderAsc);
-  }
 
   get hasAuth(): boolean {
     return this.appStore.hasAuth;
@@ -169,7 +180,7 @@ export default class App extends Vue {
 
   refreshList(): void {
     if (this.screen === 'LIST' && this.streamsFollowingRef) {
-      this.streamsFollowingRef.loadStreamers(true);
+      this.streamsFollowingRef.refresh();
     } else if (this.screen === 'CATEGORY' && this.categoriesRef) {
       this.categoriesRef.refresh();
     }

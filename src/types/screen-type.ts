@@ -1,3 +1,3 @@
-type ScreenType = 'LIST' | 'CATEGORY' | 'SETTINGS';
+type ScreenType = 'LIST' | 'CATEGORY' | 'SEARCH' | 'SETTINGS';
 
 export default ScreenType;

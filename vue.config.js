@@ -34,11 +34,16 @@ module.exports = defineConfig({
       },
     },
     i18n: {
-      locale: 'pt-BR',
+      locale: 'en',
       fallbackLocale: 'en',
       localeDir: 'locales',
       enableInSFC: false,
       enableBridge: false,
+    },
+  },
+  configureWebpack: {
+    experiments: {
+      topLevelAwait: true,
     },
   },
 });

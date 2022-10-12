@@ -1,7 +1,18 @@
+import TwitchApiService from '@/services/twitch-api/twitch-api-service';
+import StreamersType from '@/types/streamers-type';
+import { processStorage } from '@/utils/utils';
+import NotificationsType from '@/types/notifications-type';
+
+browser.alarms.create({ periodInMinutes: 0.5 });
+
 const clientId = process.env.VUE_APP_OAUTH2_TWITCH_CLIENTID;
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-let at;
+let accessToken: string | null;
+
+browser.storage.local.get('accessToken').then((value) => {
+  accessToken = value && value.accessToken;
+});
 
 function generateState(): string {
   let value = '';
@@ -23,10 +34,10 @@ async function authHandler(): Promise<string> {
   const urlObj = new URL(response.replace('#', '?'));
   if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect');
 
-  const accessToken = urlObj.searchParams.get('access_token');
+  accessToken = urlObj.searchParams.get('access_token');
   if (!accessToken) throw new Error('Token not found');
 
-  at = accessToken;
+  browser.storage.local.set({ accessToken }).then();
 
   return accessToken;
 }
@@ -47,3 +58,59 @@ browser.runtime.onMessage.addListener(async (message) => {
   }
   return true;
 });
+
+let loadingFollow = false;
+let first = true;
+let onlines: StreamersType[] = [];
+
+async function processNotifications(news: StreamersType[]) {
+  let notificate: StreamersType[] = [];
+  const notificationType: NotificationsType = await processStorage('notification');
+  if (notificationType === 'all') {
+    notificate = news.filter((value) => !onlines.some((online) => online.id === value.id));
+  }
+  if (notificationType === 'partial') {
+    const notificationIds = await processStorage('notificationIds') || [];
+    notificate = news.filter((value) => notificationIds.includes(value.id)
+      && !onlines.some((online) => online.id === value.id));
+  }
+  notificate.forEach((item) => {
+    browser.notifications.create({
+      type: 'basic',
+      iconUrl: browser.runtime.getURL('icons/128.png'),
+      title: item.nickname,
+      message: item.title || '',
+    })
+      .then();
+  });
+}
+
+async function countFollows() {
+  let count = 0;
+  try {
+    if (loadingFollow || !accessToken) return;
+    loadingFollow = true;
+    const user = await TwitchApiService.users.getSelfUser(accessToken);
+    const onlinesNews = await TwitchApiService.streamers.getStreamersOnlineFollowed(
+      user.id,
+      accessToken,
+    );
+    if (!first) {
+      await processNotifications(onlinesNews);
+    }
+
+    onlines = onlinesNews;
+    count = onlines.length;
+  } finally {
+    if (count > 0) {
+      browser.browserAction.setBadgeText({ text: count.toString() }).then();
+    } else {
+      browser.browserAction.setBadgeText({ text: '' }).then();
+    }
+    loadingFollow = false;
+    first = false;
+  }
+}
+
+browser.alarms.onAlarm.addListener(countFollows);
+setTimeout(countFollows, 1000);

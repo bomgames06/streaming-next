@@ -1,14 +1,13 @@
 import Vue from 'vue';
 import Vuetify from 'vuetify/lib/framework';
-import VueCookies from 'vue-cookies';
 import defaultTheme from '@/plugins/themes/default-theme';
+import { processStorage } from '@/utils/utils';
 
 Vue.use(Vuetify);
-Vue.use(VueCookies, { expires: '3650000D' });
 
 export default new Vuetify({
   theme: {
-    dark: Vue.$cookies.get('dark') === 'true' || Vue.$cookies.get('dark') === true,
+    dark: !!await processStorage('dark'),
     themes: defaultTheme,
     options: {
       customProperties: true,

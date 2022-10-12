@@ -90,7 +90,7 @@ export default class TwitchApiStreamersService extends AxiosTwitchApiService {
     return obj.data.map((value: any) => {
       const item: StreamersType = {
         online: true,
-        id: value.id,
+        id: value.user_id,
         login: value.user_login,
         nickname: value.user_name,
         gameId: value.game_id,

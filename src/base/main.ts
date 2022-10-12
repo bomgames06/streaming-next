@@ -3,7 +3,7 @@ import vuetify from '@/plugins/vuetify';
 import i18n from '@/i18n';
 import store from '@/store';
 import '../styles/app.scss';
-import 'moment-duration-format';
+import '@/moment/moment-init';
 
 export default function init(App: any): void {
   new Vue({

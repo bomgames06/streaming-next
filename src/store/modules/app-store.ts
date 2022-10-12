@@ -5,9 +5,11 @@ import {
   VuexModule,
 } from 'vuex-module-decorators';
 import AuthType from '@/types/auth-type';
-import Vue from 'vue';
 import FilterOrderType from '@/types/filter-order-type';
 import LanguageIso6391Type from '@/types/language-iso639-1-type';
+import ModeType from '@/types/mode-type';
+import FilterOrderVodType from '@/types/filter-order-vod-type';
+import NotificationsType from '@/types/notifications-type';
 
 @Module({ name: 'AppStore' })
 export default class AppStore extends VuexModule {
@@ -19,7 +21,11 @@ export default class AppStore extends VuexModule {
 
   _filterList = '';
 
+  _filterChannelList = '';
+
   _filterOrderList: FilterOrderType = 'NAME';
+
+  _filterOrderVodList: FilterOrderVodType = 'time';
 
   _filterCategoryList = '';
 
@@ -28,6 +34,14 @@ export default class AppStore extends VuexModule {
   _filterOrderAsc = true;
 
   _filterCategorySelected = false;
+
+  _mode: ModeType = 'NORMAL';
+
+  _notification: NotificationsType = 'none';
+
+  _notificationIds: string[] = [];
+
+  _showAlwaysOfflines = false;
 
   get isLoading(): boolean {
     return this._loading > 0;
@@ -49,8 +63,16 @@ export default class AppStore extends VuexModule {
     return this._filterList;
   }
 
+  get filterChannelList(): string {
+    return this._filterChannelList;
+  }
+
   get filterOrderList(): FilterOrderType {
     return this._filterOrderList;
+  }
+
+  get filterOrderVodList(): FilterOrderVodType {
+    return this._filterOrderVodList;
   }
 
   get filterCategoryList(): string {
@@ -67,6 +89,22 @@ export default class AppStore extends VuexModule {
 
   get filterCategorySelected(): boolean {
     return this._filterCategorySelected;
+  }
+
+  get mode(): ModeType {
+    return this._mode;
+  }
+
+  get notification(): NotificationsType {
+    return this._notification;
+  }
+
+  get notificationIds(): string[] {
+    return this._notificationIds;
+  }
+
+  get showAlwaysOfflines(): boolean {
+    return this._showAlwaysOfflines;
   }
 
   @Mutation
@@ -101,6 +139,11 @@ export default class AppStore extends VuexModule {
   }
 
   @Mutation
+  _setFilterChannelList(filterChannelList: string) {
+    this._filterChannelList = filterChannelList;
+  }
+
+  @Mutation
   _setFilterOrderList(filterOrderList: FilterOrderType) {
     if (this._filterOrderList === filterOrderList) {
       this._filterOrderAsc = !this._filterOrderAsc;
@@ -108,6 +151,11 @@ export default class AppStore extends VuexModule {
     }
     this._filterOrderList = filterOrderList;
     this._filterOrderAsc = true;
+  }
+
+  @Mutation
+  _setFilterOrderVodList(filterOrderVodList: FilterOrderVodType) {
+    this._filterOrderVodList = filterOrderVodList;
   }
 
   @Mutation
@@ -137,6 +185,40 @@ export default class AppStore extends VuexModule {
     this._filterCategorySelected = filterCategorySelected;
   }
 
+  @Mutation
+  _setMode(mode: ModeType) {
+    this._mode = mode;
+  }
+
+  @Mutation
+  _setNotification(notification: NotificationsType): void {
+    this._notification = notification;
+  }
+
+  @Mutation
+  _addNotification(notificationId: string): void {
+    this._notificationIds.push(notificationId);
+    this._notificationIds = [...this._notificationIds];
+  }
+
+  @Mutation
+  _delNotification(notificationId: string): void {
+    const index = this._notificationIds.indexOf(notificationId);
+    if (index < 0) return;
+    this._notificationIds.splice(index, 1);
+    this._notificationIds = [...this._notificationIds];
+  }
+
+  @Mutation
+  _setNotificationIds(notificationIds: string[]): void {
+    this._notificationIds = notificationIds;
+  }
+
+  @Mutation
+  _setShowAlwaysOfflines(showAlwaysOfflines: boolean): void {
+    this._showAlwaysOfflines = showAlwaysOfflines;
+  }
+
   @Action
   loading() {
     this.context.commit('_incrementLoading');
@@ -155,12 +237,13 @@ export default class AppStore extends VuexModule {
   @Action
   setDrawer(value: boolean) {
     this.context.commit('_setDrawer', value);
+    this.setMode('NORMAL');
   }
 
   @Action
   setAccessToken(accessToken: string | null) {
     this.context.commit('_setAccessToken', accessToken);
-    Vue.$cookies.set('accessToken', accessToken);
+    browser.storage.local.set({ accessToken }).then();
   }
 
   @Action
@@ -169,10 +252,22 @@ export default class AppStore extends VuexModule {
   }
 
   @Action
+  setFilterChannelList(filterChannelList: string) {
+    this.context.commit('_setFilterChannelList', filterChannelList);
+  }
+
+  @Action
   setFilterOrderList(filterOrderList: FilterOrderType) {
     this.context.commit('_setFilterOrderList', filterOrderList);
-    Vue.$cookies.set('filterOrderList', this.context.getters.filterOrderList);
-    Vue.$cookies.set('filterOrderAsc', this.context.getters.filterOrderAsc);
+    browser.storage.local.set({ filterOrderList: this.context.getters.filterOrderList }).then();
+    browser.storage.local.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
+  }
+
+  @Action
+  setFilterOrderVodList(filterOrderVodList: FilterOrderVodType) {
+    this.context.commit('_setFilterOrderVodList', filterOrderVodList);
+    browser.storage.local.set({ filterOrderVodList: this.context.getters.filterOrderVodList })
+      .then();
   }
 
   @Action
@@ -193,17 +288,53 @@ export default class AppStore extends VuexModule {
   @Action
   setFilterOrderListNative(filterOrderList: FilterOrderType) {
     this.context.commit('_setFilterOrderListNative', filterOrderList);
-    Vue.$cookies.set('filterOrderList', this.context.getters.filterOrderList);
+    browser.storage.local.set({ filterOrderList: this.context.getters.filterOrderList }).then();
   }
 
   @Action
   setFilterOrderAscNative(filterOrderAsc: boolean) {
     this.context.commit('_setFilterOrderAscNative', filterOrderAsc);
-    Vue.$cookies.set('filterOrderAsc', this.context.getters.filterOrderAsc);
+    browser.storage.local.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
   }
 
   @Action
   setFilterCategorySelected(filterCategorySelected: boolean) {
     this.context.commit('_setFilterCategorySelected', filterCategorySelected);
+  }
+
+  @Action
+  setMode(mode: ModeType) {
+    this.context.commit('_setMode', mode);
+  }
+
+  @Action
+  setNotification(notification: NotificationsType) {
+    this.context.commit('_setNotification', notification);
+    browser.storage.local.set({ notification: this.context.getters.notification }).then();
+  }
+
+  @Action
+  setShowAlwaysOfflines(showAlwaysOfflines: boolean) {
+    this.context.commit('_setShowAlwaysOfflines', showAlwaysOfflines);
+    browser.storage.local.set({ showAlwaysOfflines: this.context.getters.showAlwaysOfflines })
+      .then();
+  }
+
+  @Action
+  addNotification(notificationId: string) {
+    this.context.commit('_addNotification', notificationId);
+    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
+  }
+
+  @Action
+  delNotification(notificationId: string) {
+    this.context.commit('_delNotification', notificationId);
+    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
+  }
+
+  @Action
+  setNotificationIds(notificationIds: string[]) {
+    this.context.commit('_setNotificationIds', notificationIds || []);
+    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
   }
 }

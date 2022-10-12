@@ -3,9 +3,45 @@
     <profile-menu v-if="hasAuth" />
     <v-spacer />
     <div v-if="!hasAuth">
+      <v-menu offset-y bottom :close-on-content-click="false">
+        <template #activator="{ attrs, on }">
+          <v-btn
+            v-bind="attrs"
+            icon
+            small
+            class="ml-1 rounded-lg"
+            :aria-label="$t('language')"
+            v-on="on"
+          >
+            <v-icon>
+              mdi-google-translate
+            </v-icon>
+          </v-btn>
+        </template>
+        <v-list dense class="py-0 list-content-mini-language" max-height="96px">
+          <v-list-item-group
+            :value="$i18n.locale"
+            mandatory
+            class="list-content-mini-language"
+            @change="onChangeLanguage"
+          >
+            <v-list-item
+              v-for="language in languages"
+              :key="language.locale"
+              :value="language.locale"
+              dense
+            >
+              <v-list-item-title>
+                {{$t(language.i18nKey)}}
+              </v-list-item-title>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-menu>
       <v-btn
         icon
         small
+        class="ml-1 rounded-lg"
         :aria-label="$t($vuetify.theme.dark ? 'dark' : 'light')"
         @click="changeTheme"
       >
@@ -14,7 +50,82 @@
     </div>
     <template v-else>
       <div class="d-flex align-center">
-        <template v-if="screen === 'LIST'">
+        <template v-if="appStore.mode === 'VOD'">
+          <v-menu offset-y>
+            <template #activator="{ attrs, on }">
+              <v-btn
+                v-bind="attrs"
+                icon
+                small
+                class="ml-1 rounded-lg"
+                v-on="on"
+              >
+                <v-icon>mdi-sort</v-icon>
+              </v-btn>
+            </template>
+            <v-list dense class="py-0 list-content-mini">
+              <v-list-item
+                dense
+                link
+                :ripple="false"
+                :class="getFilterVodClass('time')"
+                @click="appStore.setFilterOrderVodList('time')"
+              >
+                <v-list-item-icon
+                  class="mx-0 list-item-icon-content fill-width align-self-center relative"
+                >
+                  <v-icon large>
+                    mdi-calendar
+                  </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+              <v-list-item
+                dense
+                link
+                :ripple="false"
+                :class="getFilterVodClass('trending')"
+                @click="appStore.setFilterOrderVodList('trending')"
+              >
+                <v-list-item-icon
+                  class="mx-0 list-item-icon-content fill-width align-self-center relative"
+                >
+                  <v-icon large>
+                    mdi-star
+                  </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+              <v-list-item
+                dense
+                link
+                :ripple="false"
+                :class="getFilterVodClass('views')"
+                @click="appStore.setFilterOrderVodList('views')"
+              >
+                <v-list-item-icon
+                  class="mx-0 list-item-icon-content fill-width align-self-center relative"
+                >
+                  <v-icon large>
+                    mdi-account-eye
+                  </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </template>
+        <template v-else-if="screen === 'SEARCH'">
+          <v-text-field
+            :label="$t('filter')"
+            :value="appStore.filterChannelList"
+            :error="!appStore.filterChannelList.trim()"
+            hide-details
+            outlined
+            solo
+            dense
+            class="filter text-caption mr-1"
+            @input="appStore.setFilterChannelList($event)"
+          />
+        </template>
+        <template v-else-if="screen === 'LIST'">
           <v-text-field
             :label="$t('filter')"
             :value="appStore.filterList"
@@ -125,7 +236,7 @@
             <v-icon>mdi-refresh</v-icon>
           </v-btn>
         </template>
-        <template v-if="screen === 'CATEGORY'">
+        <template v-else-if="screen === 'CATEGORY'">
           <v-select
             v-if="appStore.filterCategorySelected"
             :value="appStore.filterLanguageCategoryStreamList"
@@ -170,6 +281,9 @@ import FilterOrderType from '@/types/filter-order-type';
 import LanguageIso6391Type from '@/types/language-iso639-1-type';
 import languageIso6391Data from '@/data/language-iso639-1-data';
 import VueI18n from 'vue-i18n';
+import FilterOrderVodType from '@/types/filter-order-vod-type';
+import LanguageType from '@/types/language-type';
+import languagesData from '@/data/languages-data';
 
 @Component({
   components: { ProfileMenu },
@@ -181,6 +295,8 @@ export default class SettingsHeader extends Vue {
   appStore = getModule(AppStore, this.$store);
 
   languagesIso6391: LanguageIso6391Type[] = languageIso6391Data;
+
+  languages: LanguageType[] = languagesData;
 
   get hasAuth(): boolean {
     return this.appStore.hasAuth;
@@ -198,8 +314,22 @@ export default class SettingsHeader extends Vue {
     };
   }
 
+  getFilterVodClass(filter: FilterOrderVodType): any {
+    return {
+      'px-1': true,
+      'align-center': true,
+      'v-list-item--active': this.appStore.filterOrderVodList === filter,
+    };
+  }
+
   formatLanguageIso6391(item: LanguageIso6391Type): VueI18n.TranslateResult {
     return this.$t(item.i18nKey);
+  }
+
+  onChangeLanguage(language: string): void {
+    this.$i18n.locale = language;
+    browser.storage.local.set({ language }).then();
+    this.$moment.locale(language.toLowerCase());
   }
 }
 </script>

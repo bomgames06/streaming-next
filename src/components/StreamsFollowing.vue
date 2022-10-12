@@ -3,12 +3,15 @@
     <streamers-list
       :items="streamersOrder"
       :item-expanded-select.sync="itemExpandedSelect"
+      :expanded-mode.sync="expandedMode"
       :dump-date="dumpDate"
+      mode="STREAM"
       @click="openTwitchLink"
       @click-category="$emit('click-category', $event)"
     />
     <v-btn
-      v-if="!itemExpandedSelect && streamersOffline.length && isEnabledFilterOnline"
+      v-if="!itemExpandedSelect && streamersOffline.length && isEnabledFilterOnline
+      && !appStore.showAlwaysOfflines"
       block
       height="54"
       class="mt-2"
@@ -36,6 +39,7 @@ import UserType from '@/types/user-type';
 import TwitchApiService from '@/services/twitch-api/twitch-api-service';
 import { deburr, orderBy } from 'lodash';
 import StreamersList from '@/components/StreamersList.vue';
+import ModeType from '@/types/mode-type';
 
 @Component({
   components: { StreamersList },
@@ -60,6 +64,8 @@ export default class StreamsFollowing extends Vue {
 
   dumpDate?: Date = new Date();
 
+  expandedMode: ModeType = 'NORMAL';
+
   get hasUser(): boolean {
     return !!this.user;
   }
@@ -68,9 +74,11 @@ export default class StreamsFollowing extends Vue {
     return orderBy(
       [
         ...this.streamersOnline,
-        ...this.showOfflines || !this.isEnabledFilterOnline ? this.streamersOffline : [],
-      ].filter((value) => deburr(value.nickname || value.login).toLowerCase()
-        .includes(deburr(this.appStore.filterList.trim().toLowerCase()))),
+        ...(this.showOfflines || this.appStore.showAlwaysOfflines)
+        || !this.isEnabledFilterOnline ? this.streamersOffline : [],
+      ].filter((value) => this.itemExpandedSelect
+        || deburr(value.nickname || value.login).toLowerCase()
+          .includes(deburr(this.appStore.filterList.trim().toLowerCase()))),
       [
         (value) => this.isEnabledFilterOnline && !value.online,
         this.getTextFilterStreamers,
@@ -130,6 +138,12 @@ export default class StreamsFollowing extends Vue {
         this.user.id,
         this.appStore.auth?.accessToken,
       );
+      if (this.streamersOnline.length > 0) {
+        browser.browserAction.setBadgeText({ text: this.streamersOnline.length.toString() })
+          .then();
+      } else {
+        browser.browserAction.setBadgeText({ text: '' }).then();
+      }
       if (force) {
         this.dumpDate = new Date();
       }
@@ -155,30 +169,17 @@ export default class StreamsFollowing extends Vue {
   getContainerClass(): any {
     return {
       'align-start': true,
-      'fill-height': !!this.itemExpandedSelect,
+      'fill-height': !!this.itemExpandedSelect && this.expandedMode !== 'VOD',
     };
+  }
+
+  refresh(): void {
+    if (!this.itemExpandedSelect) {
+      this.loadStreamers(true);
+    }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.list-item {
-  min-height: unset !important;
-  height: 59px !important;
-}
-.list-item-img {
-  height: unset !important;
-  margin: 0 !important;
-  margin-right: 6px !important;
-}
-.list-item-action {
-  height: 100% !important;
-  margin: 0 !important;
-}
-.timer-content {
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  font-size: 10px;
-}
 </style>

@@ -1,26 +1,25 @@
 <template>
   <v-app>
-    <v-main class="relative">
-      <div class="full-absolute overflow-y-auto overflow-x-hidden">
-        <setttings />
-      </div>
+    <v-main>
+      <setttings v-if="appStore.auth" />
+      <erro-need-auth v-else />
     </v-main>
   </v-app>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import Setttings from '@/components/Setttings.vue';
+import ErroNeedAuth from '@/components/ErroNeedAuth.vue';
+import { mixins } from 'vue-class-component';
+import StartApp from '@/mixins/StartApp.vue';
 
 @Component({
-  components: { Setttings },
+  components: { ErroNeedAuth, Setttings },
 })
-export default class App extends Vue {
+export default class App extends mixins(StartApp) {
 }
 </script>
 
 <style>
-html {
-  overflow-y: auto;
-}
 </style>

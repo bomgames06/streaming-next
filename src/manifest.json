@@ -24,11 +24,12 @@
     }
   },
   "options_ui": {
-    "page": "options.html",
-    "browser_style": true
+    "page": "options.html"
   },
   "permissions": [
     "identity",
-    "cookies"
+    "storage",
+    "notifications",
+    "alarms"
   ]
 }

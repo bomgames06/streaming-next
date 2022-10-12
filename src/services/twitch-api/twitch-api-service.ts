@@ -3,6 +3,7 @@ import TwitchApiStreamersService
   from '@/services/twitch-api/endpoints/twitch-api-streamers-service';
 import TwitchApiSearchService from '@/services/twitch-api/endpoints/twitch-api-search-service';
 import TwitchApiGamesService from '@/services/twitch-api/endpoints/twitch-api-games-service';
+import TwitchApiVideosService from '@/services/twitch-api/endpoints/twitch-api-videos-service';
 
 export default class TwitchApiService {
   static users: TwitchApiUsersService = new TwitchApiUsersService(this);
@@ -12,4 +13,6 @@ export default class TwitchApiService {
   static search: TwitchApiSearchService = new TwitchApiSearchService(this);
 
   static games: TwitchApiGamesService = new TwitchApiGamesService(this);
+
+  static videos: TwitchApiVideosService = new TwitchApiVideosService(this);
 }

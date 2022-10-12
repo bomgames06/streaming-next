@@ -81,8 +81,7 @@ html {
   flex-basis: auto;
 }
 
-
-.list-content-mini {
+@mixin list-content-mini {
   padding-top: 2px;
   padding-bottom: 2px;
 
@@ -97,4 +96,25 @@ html {
     margin-top: 2px !important;
     margin-bottom: 2px !important;
   }
+}
+
+
+.list-content-mini {
+  @include list-content-mini;
+
+  > .v-list-item {
+    min-height: unset;
+  }
+}
+
+.list-content-mini-language {
+  @include list-content-mini;
+
+  > .v-list-item {
+    min-height: 28px !important;
+  }
+}
+
+.user-selection-none {
+  user-select: none;
 }
