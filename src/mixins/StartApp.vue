@@ -33,8 +33,7 @@ export default class StartApp extends Vue {
       this.appStore.setShowAlwaysOfflines(!!showAlwaysOfflines);
       this.appStore.setNotificationIds(notificationIds || []);
 
-      browser.storage.sync.set({ language: this.$i18n.locale })
-        .then();
+      browser.storage.sync.set({ language: this.$i18n.locale }).then();
     } finally {
       this.loaded = true;
     }

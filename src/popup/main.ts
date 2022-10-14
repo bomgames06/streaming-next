@@ -1,4 +1,4 @@
 import App from './App.vue';
-import init from '../base/main';
+import init from '../main';
 
 init(App);

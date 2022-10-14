@@ -7,9 +7,10 @@
         <v-btn
           x-small
           text
-          height="22"
+          height="-webkit-fill-available"
           :color="hover ? 'twitter' : ''"
           class="px-1 text-subtitle-2 text-none letter-spacing-normal"
+          @click="openTwitter('bomgames06')"
         >
           <v-icon small class="mr-1">
             mdi-twitter
@@ -28,5 +29,8 @@ import { Component, Vue } from 'vue-property-decorator';
 
 @Component
 export default class AboutMe extends Vue {
+  openTwitter(profile: string): void {
+    window.open(`https://twitter.com/${profile}`, '_blank');
+  }
 }
 </script>

@@ -1,7 +1,7 @@
 import StreamersType from '@/types/streamers-type';
 import { processStorage } from './utils/utils';
 
-browser.alarms.create({ periodInMinutes: 0.5 });
+browser.alarms.create({ periodInMinutes: 0.25 });
 
 const clientId = process.env.VUE_APP_OAUTH2_TWITCH_CLIENTID;
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -57,16 +57,27 @@ let loadingFollow = false;
 let first = true;
 let onlines: StreamersType[] = [];
 
+function getStreamersHasLogin(item: StreamersType[]): StreamersType[] {
+  return item.filter((value) => value.nickname);
+}
+
 async function processNotifications(news: StreamersType[]) {
-  let notificate: StreamersType[] = [];
   const notificationType = await processStorage('notification');
+  if (notificationType === 'none') return;
+
+  const newsLogin = getStreamersHasLogin(news);
+  const onlinesLogin = getStreamersHasLogin(onlines);
+
+  let notificate: StreamersType[] = [];
+
   if (notificationType === 'all') {
-    notificate = news.filter((value) => !onlines.some((online) => online.id === value.id));
+    notificate = newsLogin.filter((value) => !onlinesLogin
+      .some((online) => online.id === value.id));
   }
   if (notificationType === 'partial') {
     const notificationIds = await processStorage('notificationIds') || [];
-    notificate = news.filter((value) => notificationIds.includes(value.id)
-      && !onlines.some((online) => online.id === value.id));
+    notificate = newsLogin.filter((value) => notificationIds.includes(value.id)
+      && !onlinesLogin.some((online) => online.id === value.id));
   }
   notificate.forEach((item) => {
     browser.notifications.create({
@@ -74,8 +85,7 @@ async function processNotifications(news: StreamersType[]) {
       iconUrl: browser.runtime.getURL('icons/128.png'),
       title: item.nickname,
       message: item.title || '',
-    })
-      .then();
+    }).then();
   });
 }
 
