@@ -1,6 +1,8 @@
 {
-  "extName": {
-    "message": "streaming-next",
-    "description": ""
+  "AppName": {
+    "message": "Streaming Next"
+  },
+  "appDesc": {
+    "message": "Facilitate interaction with the Twitch platform. View, notify and open stream, video and clips page."
   }
 }

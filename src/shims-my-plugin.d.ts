@@ -5,10 +5,12 @@ declare module 'vue/types/vue' {
   // on the `VueConstructor` interface
   interface VueConstructor {
     $moment: moment;
+    $appVersion: string;
   }
 
   interface Vue {
     $moment: moment;
+    $appVersion: string;
   }
 }
 

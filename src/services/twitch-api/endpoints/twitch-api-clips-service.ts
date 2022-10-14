@@ -1,17 +1,16 @@
 import AxiosTwitchApiService from '@/services/twitch-api/base/axios-twitch-api-service';
-import VideosType from '@/types/videos-type';
 import PaginationType from '@/types/pagination-type';
-import FilterOrderVodType from '@/types/filter-order-vod-type';
+import ClipsType from '@/types/clips-type';
+import { Moment } from 'moment';
 
-export default class TwitchApiVideosService extends AxiosTwitchApiService {
-  async getVideos(userId: string, sort?: FilterOrderVodType, page?: string, accessToken?: string)
-    : Promise<PaginationType<VideosType>> {
-    const response = await this.axios.get('/videos', {
+export default class TwitchApiClipsService extends AxiosTwitchApiService {
+  async getClips(userId: string, startedAt?: Moment, page?: string, accessToken?: string)
+    : Promise<PaginationType<ClipsType>> {
+    const response = await this.axios.get('/clips', {
       params: {
-        user_id: userId,
+        broadcaster_id: userId,
         after: page || '',
-        type: 'archive',
-        sort: sort || '',
+        started_at: startedAt && startedAt.format(),
       },
       headers: {
         'Client-ID': process.env.VUE_APP_OAUTH2_TWITCH_CLIENTID,
@@ -22,11 +21,11 @@ export default class TwitchApiVideosService extends AxiosTwitchApiService {
 
     return {
       data: obj.data.map((item: any) => {
-        const value: VideosType = {
+        const value: ClipsType = {
           id: item.id,
           online: true,
-          login: item.user_login,
-          nickname: item.user_name,
+          login: item.broadcaster_id,
+          nickname: item.broadcaster_name,
           title: item.title,
           viewers: item.view_count,
           createdAt: item.created_at,
@@ -34,10 +33,6 @@ export default class TwitchApiVideosService extends AxiosTwitchApiService {
           url: item.url,
           thumbnailUrl: item.thumbnail_url,
           duration: item.duration,
-          mutedSegments: !item.muted_segments ? [] : item.muted_segments.map((itemMuted: any) => ({
-            duration: itemMuted.duration,
-            offset: itemMuted.offset,
-          })),
         };
         return value;
       }),

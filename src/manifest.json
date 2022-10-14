@@ -1,8 +1,7 @@
 {
-  "manifest_version": 2,
-  "name": "Streaming Next",
-  "homepage_url": "http://localhost:8080/",
-  "description": "Stream view on twitch",
+  "manifest_version": 3,
+  "name": "__MSG_appName__",
+  "description": "__MSG_appDesc__",
   "default_locale": "en",
   "icons": {
     "16": "icons/16.png",
@@ -10,18 +9,12 @@
     "128": "icons/128.png"
   },
   "background": {
-    "scripts": [
-      "js/background.js"
-    ],
-    "persistent": false
+    "service_worker": "js/background.js"
   },
-  "browser_action": {
+  "action": {
     "default_popup": "popup.html",
     "default_title": "Streaming Next",
-    "default_icon": {
-      "19": "icons/19.png",
-      "38": "icons/38.png"
-    }
+    "default_icon": "icons/38.png"
   },
   "options_ui": {
     "page": "options.html"
@@ -31,5 +24,8 @@
     "storage",
     "notifications",
     "alarms"
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; connect-src 'self' https://api.twitch.tv; img-src 'self' https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; frame-src 'self' https://player.twitch.tv"
+  }
 }

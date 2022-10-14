@@ -1,9 +1,10 @@
 import AxiosTwitchApiService from '@/services/twitch-api/base/axios-twitch-api-service';
 import CategoryType from '@/types/category-type';
+import PaginationType from '@/types/pagination-type';
 
 export default class TwitchApiGamesService extends AxiosTwitchApiService {
   async topGames(page?: string, first?: number, accessToken?: string)
-    : Promise<CategoryType[]> {
+    : Promise<PaginationType<CategoryType>> {
     const response = await this.axios.get('/games/top', {
       params: {
         after: page || '',
@@ -16,14 +17,17 @@ export default class TwitchApiGamesService extends AxiosTwitchApiService {
     });
     const obj = JSON.parse(response.data);
 
-    return obj.data.map((item: any) => {
-      const value: CategoryType = {
-        id: item.id,
-        name: item.name,
-        boxArtUrl: item.box_art_url,
-      };
-      return value;
-    });
+    return {
+      data: obj.data.map((item: any) => {
+        const value: CategoryType = {
+          id: item.id,
+          name: item.name,
+          boxArtUrl: item.box_art_url,
+        };
+        return value;
+      }),
+      pagination: obj.pagination,
+    };
   }
 
   async getGame(id: string, page?: string, first?: number, accessToken?: string)

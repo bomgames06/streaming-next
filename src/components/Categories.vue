@@ -1,20 +1,36 @@
 <template>
   <v-container>
-    <v-row v-if="!category" dense>
-      <v-col v-for="item in categories" :key="item.id" cols="4">
-        <v-card class="pa-1" width="100%" @click="selectCategory(item)">
-          <div>
-            <v-img
-              :src="formatThumbnailCategory(item)"
-              :alt="$t('category_thumbnail', { name: item.name })"
-            />
-          </div>
-          <div class="font-weight-bold ellipse">
-            <span :title="item.name">{{item.name}}</span>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+    <template v-if="!category">
+      <v-row dense>
+        <v-col v-for="item in categories" :key="item.id" cols="4">
+          <v-card class="pa-1" width="100%" @click="selectCategory(item)">
+            <div>
+              <v-img
+                :src="formatThumbnailCategory(item)"
+                :alt="$t('category_thumbnail', { name: item.name })"
+              />
+            </div>
+            <div class="font-weight-bold ellipse">
+              <span :title="item.name">{{item.name}}</span>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-btn
+        v-if="categoriesPage"
+        block
+        height="54"
+        :loading="loadingCategories"
+        :disabled="loadingCategories"
+        class="mt-2"
+        @click="loadTopCategories(true)"
+      >
+        <v-icon class="mr-2">
+          mdi-magnify
+        </v-icon>
+        <span>{{$t('fetch_more')}}</span>
+      </v-btn>
+    </template>
     <v-row v-else>
       <v-col v-if="!itemExpandedSelect" cols="12">
         <v-card class="pa-1 d-flex" @click="category = null">
@@ -99,6 +115,8 @@ export default class StreamsFollowing extends Vue {
 
   expandedMode: ModeType = 'NORMAL';
 
+  categoriesPage: string | null = null;
+
   loadTopCategoriesDebounce = debounce(this.loadTopCategories, 500);
 
   loadStreamersByCategoryDebounce = debounce(this.loadStreamersByCategory, 500);
@@ -142,7 +160,7 @@ export default class StreamsFollowing extends Vue {
     return orderBy(this.streamers, ['viewers'], ['desc']);
   }
 
-  async loadTopCategories(): Promise<void> {
+  async loadTopCategories(nextPage?: boolean): Promise<void> {
     if (!this.user) {
       this.categories = [];
       return;
@@ -151,11 +169,18 @@ export default class StreamsFollowing extends Vue {
     try {
       this.loadingCategories = true;
       this.appStore.loading();
-      this.categories = await TwitchApiService.games.topGames(
-        undefined,
+      const categoriesPagination = await TwitchApiService.games.topGames(
+        nextPage && this.categoriesPage ? this.categoriesPage : undefined,
         99,
         this.appStore.auth?.accessToken,
       );
+      if (nextPage) {
+        this.categories.push(...categoriesPagination.data);
+      } else {
+        this.categories = categoriesPagination.data;
+      }
+      this.categoriesPage = categoriesPagination.pagination
+        && categoriesPagination.pagination.cursor;
     } catch (e) {
       this.categories = [];
     } finally {

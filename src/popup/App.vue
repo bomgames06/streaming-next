@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app v-if="loaded">
     <settings-header @refresh="refreshList" />
     <v-main class="relative">
       <div
@@ -32,7 +32,7 @@
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('followed')"
                 >
-                  <v-list-item-icon>
+                  <v-list-item-icon class="mx-0">
                     <v-icon>
                       mdi-format-list-text
                     </v-icon>
@@ -45,7 +45,7 @@
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('categories')"
                 >
-                  <v-list-item-icon>
+                  <v-list-item-icon class="mx-0">
                     <v-icon>
                       mdi-controller
                     </v-icon>
@@ -58,7 +58,7 @@
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('search')"
                 >
-                  <v-list-item-icon>
+                  <v-list-item-icon class="mx-0">
                     <v-icon>
                       mdi-magnify
                     </v-icon>
@@ -72,7 +72,7 @@
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$tc('settings')"
                 >
-                  <v-list-item-icon>
+                  <v-list-item-icon class="mx-0">
                     <v-icon>
                       mdi-cog
                     </v-icon>
@@ -118,7 +118,7 @@ import UserType from '@/types/user-type';
 import TwitchApiService from '@/services/twitch-api/twitch-api-service';
 import StreamsFollowing from '@/components/StreamsFollowing.vue';
 import ScreenType from '@/types/screen-type';
-import Setttings from '@/components/Setttings.vue';
+import Settings from '@/components/Settings.vue';
 import Categories from '@/components/Categories.vue';
 import SearchUser from '@/components/SearchUser.vue';
 import { mixins } from 'vue-class-component';
@@ -128,7 +128,7 @@ import StartApp from '@/mixins/StartApp.vue';
   components: {
     SearchUser,
     Categories,
-    Setttings,
+    Setttings: Settings,
     StreamsFollowing,
     SettingsHeader,
     Auth,
@@ -188,7 +188,9 @@ export default class App extends mixins(StartApp) {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+@import "src/styles/app";
+
 .drawer-content {
   margin-top: 36px !important;
   height: calc(100% - 36px) !important;

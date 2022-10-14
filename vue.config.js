@@ -1,6 +1,6 @@
-const { defineConfig } = require('@vue/cli-service');
+process.env.VUE_APP_VERSION = require('./package.json').version;
 
-module.exports = defineConfig({
+module.exports = {
   transpileDependencies: [
     'vuetify',
   ],
@@ -27,7 +27,7 @@ module.exports = defineConfig({
         contentScripts: {
           entries: {
             'content-script': [
-              'src/content-scripts/content-script.ts',
+              'src/content-scripts/content-script.js',
             ],
           },
         },
@@ -42,8 +42,6 @@ module.exports = defineConfig({
     },
   },
   configureWebpack: {
-    experiments: {
-      topLevelAwait: true,
-    },
+    devtool: 'source-map',
   },
-});
+};

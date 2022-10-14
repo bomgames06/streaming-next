@@ -8,6 +8,7 @@
         >
           <v-card
             :color="enabledCard ? '' : 'transparent'"
+            flat
             width="100%"
           >
             <v-list-item
@@ -25,14 +26,14 @@
                   :alt="formatAltImg(item)"
                 >
                   <v-card
-                    v-if="(listItem.hover && item.online) || mode === 'VOD'"
+                    v-if="(listItem.hover && item.online) || isVodType"
                     width="min-content"
                     class="px-1 timer-content"
                   >
                     {{getStreamerDuration(item)}}
                   </v-card>
                   <v-card
-                    v-if="mode !== 'VOD' && appStore.notification === 'partial'
+                    v-if="!isVodType && appStore.notification === 'partial'
                     && appStore.notificationIds.includes(item.id)"
                     width="min-content"
                     class="notification-content"
@@ -57,7 +58,7 @@
                   </span>
                 </v-list-item-title>
                 <template v-if="item.online">
-                  <v-list-item-subtitle v-if="mode !== 'VOD'" class="one-line ma-0">
+                  <v-list-item-subtitle v-if="!isVodType" class="one-line ma-0">
                     <span :title="formatGameView(item)">
                       {{ formatGameView(item) }}
                     </span>
@@ -65,7 +66,7 @@
                   <v-list-item-subtitle class="one-line ma-0">
                     <span :title="item.title">{{item.title}}</span>
                   </v-list-item-subtitle>
-                  <v-list-item-subtitle v-if="mode === 'VOD'" class="one-line ma-0">
+                  <v-list-item-subtitle v-if="isVodType" class="one-line ma-0">
                     <span :title="formatCreatedAtVod(item)">
                       {{formatCreatedAtVod(item)}}
                     </span>
@@ -117,6 +118,29 @@
               <span>{{$t('fetch_more')}}</span>
             </v-btn>
           </template>
+          <template v-if="syncedExpandedMode === 'CLIP'">
+            <span class="text-h6 mt-2">{{$t('clips')}}</span>
+            <v-divider class="my-1" />
+            <streamers-list
+              :items="clips"
+              mode="CLIP"
+              :dump-date="dumpDateClip"
+              class="py-2"
+            />
+            <v-btn
+              v-if="clipsPage"
+              block
+              height="54"
+              :loading="loadingClip"
+              :disabled="loadingClip"
+              @click="loadClips(syncedItemExpandedSelect.id, true)"
+            >
+              <v-icon class="mr-2">
+                mdi-magnify
+              </v-icon>
+              <span>{{$t('fetch_more')}}</span>
+            </v-btn>
+          </template>
         </template>
       </div>
       <v-divider
@@ -134,7 +158,7 @@
     >
       <v-list dense class="list-content-mini">
         <v-list-item
-          v-if="menu.streamer"
+          v-if="menu.streamer && appStore.notification === 'partial'"
           dense
           class="user-selection-none"
           @click="notification"
@@ -163,7 +187,7 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>
-              {{$t('open_category')}}
+              {{$t('category')}}
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
@@ -176,6 +200,18 @@
           <v-list-item-content>
             <v-list-item-title>
               {{$t('videos')}}
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item dense class="user-selection-none" @click="clickShowClip">
+          <v-list-item-icon class="mr-2">
+            <v-icon small>
+              mdi-movie-open-star
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{$t('clips')}}
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
@@ -197,10 +233,12 @@ import VideosType from '@/types/videos-type';
 import TwitchApiService from '@/services/twitch-api/twitch-api-service';
 import { getModule } from 'vuex-module-decorators';
 import AppStore from '@/store/modules/app-store';
-import { getDurationVod } from '@/utils/utils';
+import { getDurationVod, getTimeByTimeClipsType } from '@/utils/utils';
 import ModeType from '@/types/mode-type';
 import FilterOrderVodType from '@/types/filter-order-vod-type';
 import ChannelType from '@/types/channel-type';
+import ClipsType from '@/types/clips-type';
+import TimeClipsType from '@/types/time-clips-type';
 
 type MenuStreamer = {
   streamer: StreamersType | null,
@@ -209,17 +247,16 @@ type MenuStreamer = {
   y: number,
 }
 
-// eslint-disable-next-line no-use-before-define
-@Component({ components: { StreamersList } })
+@Component({ name: 'StreamersList' })
 export default class StreamersList extends Vue {
   @Prop({ required: true })
-  readonly items?: StreamersType[] | VideosType[] | ChannelType[];
+  readonly items?: StreamersType[] | VideosType[] | ChannelType[] | ClipsType[];
 
   @Prop({ required: true })
   dumpDate?: Date;
 
   @Prop({ required: true })
-  mode?: 'STREAM' | 'CATEGORY_STREAM' | 'VOD' | 'CHANNEL';
+  mode?: 'STREAM' | 'CATEGORY_STREAM' | 'VOD' | 'CHANNEL' | 'CLIP';
 
   @PropSync('itemExpandedSelect')
   syncedItemExpandedSelect?: StreamersType | null;
@@ -237,11 +274,19 @@ export default class StreamersList extends Vue {
 
   videos: VideosType[] = [];
 
+  clips: ClipsType[] = [];
+
   videosPage: string | null = null;
+
+  clipsPage: string | null = null;
 
   loadingVideo = false;
 
+  loadingClip = false;
+
   dumpDateVideo = new Date();
+
+  dumpDateClip = new Date();
 
   menu: MenuStreamer = {
     streamer: null,
@@ -254,6 +299,16 @@ export default class StreamersList extends Vue {
     return !!this.syncedItemExpandedSelect;
   }
 
+  get isVodType(): boolean {
+    if (!this.mode) return false;
+    return ['VOD', 'CLIP'].includes(this.mode);
+  }
+
+  get isItemVodType(): boolean {
+    if (!this.syncedExpandedMode) return false;
+    return ['VOD', 'CLIP'].includes(this.syncedExpandedMode);
+  }
+
   @Watch('syncedExpandedMode')
   onChangeSyncedExpandedMode(): void {
     if (!this.syncedExpandedMode) return;
@@ -264,10 +319,20 @@ export default class StreamersList extends Vue {
     return this.appStore.filterOrderVodList;
   }
 
+  get filterTimeClipList(): TimeClipsType {
+    return this.appStore.filterTimeClipList;
+  }
+
   @Watch('filterOrderVodList')
   onChangeFilterOrderVodList(): void {
     if (!this.syncedItemExpandedSelect) return;
     this.loadVideos(this.syncedItemExpandedSelect.id);
+  }
+
+  @Watch('filterTimeClipList')
+  onChangeFilterTimeClipList(): void {
+    if (!this.syncedItemExpandedSelect) return;
+    this.loadClips(this.syncedItemExpandedSelect.id);
   }
 
   created(): void {
@@ -286,7 +351,7 @@ export default class StreamersList extends Vue {
   }
 
   formatThumbnailStreamer(item: StreamersType | VideosType | ChannelType): string {
-    if (this.mode === 'CHANNEL') {
+    if (this.mode === 'CHANNEL' || this.mode === 'CLIP') {
       return (item as ChannelType).thumbnailUrl;
     }
     if (item.online || this.mode === 'VOD') {
@@ -303,7 +368,7 @@ export default class StreamersList extends Vue {
   }
 
   formatAltImg(streamer: StreamersType): VueI18n.TranslateResult {
-    if (this.mode === 'VOD') {
+    if (this.isVodType) {
       return this.$t('streamer_video_thumbnail', { name: streamer.nickname });
     }
     if (streamer.online) {
@@ -321,10 +386,13 @@ export default class StreamersList extends Vue {
     return `${viewers.toLocaleString(this.$i18n.locale)} ${(this.$t('viewers') as string).toLowerCase()}`;
   }
 
-  getStreamerDuration(item: StreamersType | VideosType): string {
-    if (this.mode === 'VOD') {
-      return getDurationVod((item as VideosType).duration)
-        .format('hh:mm:ss', { trim: false });
+  getStreamerDuration(item: StreamersType | VideosType | ClipsType): string {
+    if (this.isVodType) {
+      if (this.mode === 'VOD') {
+        return getDurationVod((item as VideosType).duration)
+          .format('hh:mm:ss', { trim: false });
+      }
+      return `${(item as ClipsType).duration.toFixed()}s`;
     }
     return this.$moment.duration(this.currentTime.diff((item as StreamersType).startedAt))
       .format('hh:mm:ss', { trim: false });
@@ -342,14 +410,14 @@ export default class StreamersList extends Vue {
     return {
       transparent: true,
       'pa-0': true,
-      'fill-height': !!this.syncedItemExpandedSelect && this.syncedExpandedMode !== 'VOD',
-      'd-flex': !!this.syncedItemExpandedSelect && this.syncedExpandedMode !== 'VOD',
-      'flex-column': !!this.syncedItemExpandedSelect && this.syncedExpandedMode !== 'VOD',
+      'fill-height': !!this.syncedItemExpandedSelect && !this.isItemVodType,
+      'd-flex': !!this.syncedItemExpandedSelect && !this.isItemVodType,
+      'flex-column': !!this.syncedItemExpandedSelect && !this.isItemVodType,
     };
   }
 
   showMenu(e: MouseEvent, streamer: StreamersType): void {
-    if (this.mode === 'VOD') return;
+    if (this.isVodType) return;
     this.menu.show = false;
     this.menu.streamer = streamer;
     this.menu.x = e.clientX;
@@ -359,9 +427,9 @@ export default class StreamersList extends Vue {
     });
   }
 
-  clickItem(item: StreamersType | VideosType): void {
-    if (this.mode === 'VOD') {
-      window.open((item as VideosType).url, '_blank');
+  clickItem(item: StreamersType | VideosType | ClipsType): void {
+    if (this.isVodType) {
+      window.open((item as VideosType | ClipsType).url, '_blank');
       return;
     }
     if (!this.syncedItemExpandedSelect) {
@@ -378,6 +446,14 @@ export default class StreamersList extends Vue {
     this.syncedExpandedMode = 'VOD';
     this.syncedItemExpandedSelect = this.menu.streamer;
     this.loadVideos(this.menu.streamer.id);
+  }
+
+  clickShowClip(): void {
+    if (!this.menu.show || !this.menu.streamer) return;
+    this.clips = [];
+    this.syncedExpandedMode = 'CLIP';
+    this.syncedItemExpandedSelect = this.menu.streamer;
+    this.loadClips(this.menu.streamer.id);
   }
 
   notification(): void {
@@ -413,6 +489,31 @@ export default class StreamersList extends Vue {
       this.appStore.loaded();
     }
   }
+
+  async loadClips(id: string, nextPage?: boolean): Promise<void> {
+    if (this.loadingClip) return;
+    try {
+      this.loadingClip = true;
+      this.appStore.loading();
+      const clipsPagination = await TwitchApiService.clips.getClips(
+        id,
+        getTimeByTimeClipsType(this.filterTimeClipList),
+        nextPage && this.clipsPage ? this.clipsPage : undefined,
+        this.appStore.auth?.accessToken,
+      );
+      if (nextPage) {
+        this.clips.push(...clipsPagination.data);
+      } else {
+        this.clips = clipsPagination.data;
+      }
+      this.clipsPage = clipsPagination.pagination && clipsPagination.pagination.cursor;
+    } catch (e) {
+      this.clips = [];
+    } finally {
+      this.loadingClip = false;
+      this.appStore.loaded();
+    }
+  }
 }
 </script>
 
@@ -442,8 +543,5 @@ export default class StreamersList extends Vue {
   right: 1px;
   font-size: 10px;
   padding: 2px;
-}
-.game-button {
-  letter-spacing: normal !important;
 }
 </style>

@@ -32,6 +32,7 @@
   "search": "Search",
   "filter_to_search": "Filter to search",
   "open_category": "Open category",
+  "category": "Category",
   "necessary_authentication_message": "It is necessary to authenticate",
   "languages": "Languages",
   "notifications": "Notifications",
@@ -42,5 +43,12 @@
   "show_transmission_preview": "Show transmission preview",
   "show_offlines_always": "Always show offlines",
   "enable_notification": "Enable notification",
-  "disable_notification": "Disable notification"
+  "disable_notification": "Disable notification",
+  "clips": "Clips",
+  "24h":  "24H",
+  "7d": "7 Days",
+  "30d":  "30 Days",
+  "clean_notifications": "Clean notifications",
+  "version": "Version",
+  "creator": "Creator"
 }

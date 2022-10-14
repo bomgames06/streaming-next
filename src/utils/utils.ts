@@ -1,10 +1,11 @@
 import { Framework } from 'vuetify';
 import Vue from 'vue';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
+import TimeClipsType from '@/types/time-clips-type';
 
 export function changeTheme(vuetify: Framework): void {
   vuetify.theme.dark = !vuetify.theme.dark;
-  browser.storage.local.set({ dark: vuetify.theme.dark }).then();
+  browser.storage.sync.set({ dark: vuetify.theme.dark }).then();
 }
 
 export function partition<T>(collection: T[], amount: number): T[][] {
@@ -19,7 +20,7 @@ export function partition<T>(collection: T[], amount: number): T[][] {
 }
 
 export async function processStorage(key: string): Promise<any> {
-  const storage = await browser.storage.local.get(key);
+  const storage = await browser.storage.sync.get(key);
   if (storage) return storage[key];
   return null;
 }
@@ -40,4 +41,18 @@ export function getDurationVod(durationStr: string): moment.Duration {
   });
 
   return duration;
+}
+
+export function getTimeByTimeClipsType(item: TimeClipsType): Moment | undefined {
+  switch (item.value) {
+    case '24h':
+      return Vue.$moment().subtract('1', 'days');
+    case '7d':
+      return Vue.$moment().subtract('7', 'days');
+    case '30d':
+      return Vue.$moment().subtract('30', 'days');
+    case 'all':
+    default:
+      return undefined;
+  }
 }

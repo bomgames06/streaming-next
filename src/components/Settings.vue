@@ -34,6 +34,17 @@
           <v-radio :label="$t('none')" value="none" />
         </v-radio-group>
       </v-col>
+      <v-col
+        v-if="appStore.notification === 'partial'"
+        cols="12"
+      >
+        <v-btn small @click="appStore.setNotificationIds([])">
+          <v-icon class="mr-1">
+            mdi-broom
+          </v-icon>
+          <span>{{$t('clean_notifications')}}</span>
+        </v-btn>
+      </v-col>
       <v-col cols="12">
         <v-switch
           :input-value="$vuetify.theme.dark"
@@ -57,7 +68,7 @@
         />
       </v-col>
     </v-row>
-    <v-row dense justify="center">
+    <v-row dense justify="center" class="mt-4">
       <v-col cols="auto">
         <about-me />
       </v-col>
@@ -78,7 +89,7 @@ import { changeTheme } from '@/utils/utils';
 @Component({
   components: { AboutMe },
 })
-export default class Setttings extends Vue {
+export default class Settings extends Vue {
   appStore = getModule(AppStore, this.$store);
 
   languages: LanguageType[] = languagesData;
@@ -93,7 +104,7 @@ export default class Setttings extends Vue {
 
   onChangeLanguage(language: string): void {
     this.$i18n.locale = language;
-    browser.storage.local.set({ language }).then();
+    browser.storage.sync.set({ language }).then();
     this.$moment.locale(language.toLowerCase());
   }
 }

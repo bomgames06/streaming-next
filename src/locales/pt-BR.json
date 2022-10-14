@@ -32,6 +32,7 @@
   "search": "Procurar",
   "filter_to_search": "Filtrar para procurar",
   "open_category": "Abrir categoria",
+  "category": "Categoria",
   "necessary_authentication_message": "É necessário autenticar",
   "languages": "Linguagens",
   "notifications": "Notificações",
@@ -42,5 +43,12 @@
   "show_transmission_preview": "Mostrar preview da transmissão",
   "show_offlines_always": "Mostrar offlines sempre",
   "enable_notification": "Ativar notificação",
-  "disable_notification": "Desativar notificação"
+  "disable_notification": "Desativar notificação",
+  "clips": "Clipes",
+  "24h":  "24H",
+  "7d": "7 Dias",
+  "30d":  "30 Dias",
+  "clean_notifications": "Limpar notificações",
+  "version": "Versão",
+  "creator": "Criador"
 }

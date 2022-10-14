@@ -99,7 +99,7 @@ export default class SearchUser extends Vue {
   getContainerClass(): any {
     return {
       'align-start': true,
-      'fill-height': !!this.itemExpandedSelect && this.expandedMode !== 'VOD',
+      'fill-height': !!this.itemExpandedSelect && this.expandedMode !== 'VOD' && this.expandedMode !== 'CLIP',
     };
   }
 

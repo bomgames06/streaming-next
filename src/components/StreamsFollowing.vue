@@ -120,6 +120,15 @@ export default class StreamsFollowing extends Vue {
     }
   }
 
+  getBrowserAction(): any {
+    if (browser.browserAction) {
+      return browser.browserAction;
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return browser.action;
+  }
+
   async loadStreamers(force?: boolean): Promise<void> {
     if (!this.user) {
       this.streamersOnline = [];
@@ -138,11 +147,13 @@ export default class StreamsFollowing extends Vue {
         this.user.id,
         this.appStore.auth?.accessToken,
       );
-      if (this.streamersOnline.length > 0) {
-        browser.browserAction.setBadgeText({ text: this.streamersOnline.length.toString() })
+      if (this.streamersOnline.length > 99) {
+        this.getBrowserAction().setBadgeText({ text: '99+' }).then();
+      } else if (this.streamersOnline.length > 0) {
+        this.getBrowserAction().setBadgeText({ text: this.streamersOnline.length.toString() })
           .then();
       } else {
-        browser.browserAction.setBadgeText({ text: '' }).then();
+        this.getBrowserAction().setBadgeText({ text: '' }).then();
       }
       if (force) {
         this.dumpDate = new Date();
@@ -169,7 +180,7 @@ export default class StreamsFollowing extends Vue {
   getContainerClass(): any {
     return {
       'align-start': true,
-      'fill-height': !!this.itemExpandedSelect && this.expandedMode !== 'VOD',
+      'fill-height': !!this.itemExpandedSelect && this.expandedMode !== 'VOD' && this.expandedMode !== 'CLIP',
     };
   }
 

@@ -101,7 +101,7 @@ export default class ProfileMenu extends Vue {
 
   onChangeLanguage(language: string): void {
     this.$i18n.locale = language;
-    browser.storage.local.set({ language }).then();
+    browser.storage.sync.set({ language }).then();
     this.$moment.locale(language.toLowerCase());
   }
 }

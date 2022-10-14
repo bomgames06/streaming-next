@@ -10,6 +10,7 @@ import LanguageIso6391Type from '@/types/language-iso639-1-type';
 import ModeType from '@/types/mode-type';
 import FilterOrderVodType from '@/types/filter-order-vod-type';
 import NotificationsType from '@/types/notifications-type';
+import TimeClipsType from '@/types/time-clips-type';
 
 @Module({ name: 'AppStore' })
 export default class AppStore extends VuexModule {
@@ -30,6 +31,8 @@ export default class AppStore extends VuexModule {
   _filterCategoryList = '';
 
   _filterLanguageCategoryStreamList: LanguageIso6391Type | null = null;
+
+  _filterTimeClipList: TimeClipsType = { value: '24h', i18nKey: '24h' };
 
   _filterOrderAsc = true;
 
@@ -81,6 +84,10 @@ export default class AppStore extends VuexModule {
 
   get filterLanguageCategoryStreamList(): LanguageIso6391Type | null {
     return this._filterLanguageCategoryStreamList;
+  }
+
+  get filterTimeClipList(): TimeClipsType {
+    return this._filterTimeClipList;
   }
 
   get filterOrderAsc(): boolean {
@@ -171,6 +178,11 @@ export default class AppStore extends VuexModule {
   }
 
   @Mutation
+  _setFilterTimeClipList(filterTimeClipList: TimeClipsType) {
+    this._filterTimeClipList = filterTimeClipList;
+  }
+
+  @Mutation
   _setFilterOrderListNative(filterOrderList: FilterOrderType) {
     this._filterOrderList = filterOrderList;
   }
@@ -243,30 +255,30 @@ export default class AppStore extends VuexModule {
   @Action
   setAccessToken(accessToken: string | null) {
     this.context.commit('_setAccessToken', accessToken);
-    browser.storage.local.set({ accessToken }).then();
+    browser.storage.sync.set({ accessToken }).then();
   }
 
   @Action
   setFilterList(filterList: string) {
-    this.context.commit('_setFilterList', filterList);
+    this.context.commit('_setFilterList', filterList || '');
   }
 
   @Action
   setFilterChannelList(filterChannelList: string) {
-    this.context.commit('_setFilterChannelList', filterChannelList);
+    this.context.commit('_setFilterChannelList', filterChannelList || '');
   }
 
   @Action
   setFilterOrderList(filterOrderList: FilterOrderType) {
     this.context.commit('_setFilterOrderList', filterOrderList);
-    browser.storage.local.set({ filterOrderList: this.context.getters.filterOrderList }).then();
-    browser.storage.local.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
+    browser.storage.sync.set({ filterOrderList: this.context.getters.filterOrderList }).then();
+    browser.storage.sync.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
   }
 
   @Action
   setFilterOrderVodList(filterOrderVodList: FilterOrderVodType) {
     this.context.commit('_setFilterOrderVodList', filterOrderVodList);
-    browser.storage.local.set({ filterOrderVodList: this.context.getters.filterOrderVodList })
+    browser.storage.sync.set({ filterOrderVodList: this.context.getters.filterOrderVodList })
       .then();
   }
 
@@ -286,15 +298,20 @@ export default class AppStore extends VuexModule {
   }
 
   @Action
+  setFilterTimeClipList(filterTimeClipList: TimeClipsType) {
+    this.context.commit('_setFilterTimeClipList', filterTimeClipList);
+  }
+
+  @Action
   setFilterOrderListNative(filterOrderList: FilterOrderType) {
     this.context.commit('_setFilterOrderListNative', filterOrderList);
-    browser.storage.local.set({ filterOrderList: this.context.getters.filterOrderList }).then();
+    browser.storage.sync.set({ filterOrderList: this.context.getters.filterOrderList }).then();
   }
 
   @Action
   setFilterOrderAscNative(filterOrderAsc: boolean) {
     this.context.commit('_setFilterOrderAscNative', filterOrderAsc);
-    browser.storage.local.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
+    browser.storage.sync.set({ filterOrderAsc: this.context.getters.filterOrderAsc }).then();
   }
 
   @Action
@@ -310,31 +327,31 @@ export default class AppStore extends VuexModule {
   @Action
   setNotification(notification: NotificationsType) {
     this.context.commit('_setNotification', notification);
-    browser.storage.local.set({ notification: this.context.getters.notification }).then();
+    browser.storage.sync.set({ notification: this.context.getters.notification }).then();
   }
 
   @Action
   setShowAlwaysOfflines(showAlwaysOfflines: boolean) {
     this.context.commit('_setShowAlwaysOfflines', showAlwaysOfflines);
-    browser.storage.local.set({ showAlwaysOfflines: this.context.getters.showAlwaysOfflines })
+    browser.storage.sync.set({ showAlwaysOfflines: this.context.getters.showAlwaysOfflines })
       .then();
   }
 
   @Action
   addNotification(notificationId: string) {
     this.context.commit('_addNotification', notificationId);
-    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
+    browser.storage.sync.set({ notificationIds: this.context.getters.notificationIds }).then();
   }
 
   @Action
   delNotification(notificationId: string) {
     this.context.commit('_delNotification', notificationId);
-    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
+    browser.storage.sync.set({ notificationIds: this.context.getters.notificationIds }).then();
   }
 
   @Action
   setNotificationIds(notificationIds: string[]) {
     this.context.commit('_setNotificationIds', notificationIds || []);
-    browser.storage.local.set({ notificationIds: this.context.getters.notificationIds }).then();
+    browser.storage.sync.set({ notificationIds: this.context.getters.notificationIds }).then();
   }
 }

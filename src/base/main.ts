@@ -2,8 +2,12 @@ import Vue from 'vue';
 import vuetify from '@/plugins/vuetify';
 import i18n from '@/i18n';
 import store from '@/store';
-import '../styles/app.scss';
 import '@/moment/moment-init';
+
+Vue.use((VueObj) => {
+  VueObj.prototype.$appVersion = process.env.VUE_APP_VERSION;
+  VueObj.$appVersion = process.env.VUE_APP_VERSION;
+});
 
 export default function init(App: any): void {
   new Vue({

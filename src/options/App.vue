@@ -1,7 +1,7 @@
 <template>
-  <v-app>
+  <v-app v-if="loaded">
     <v-main>
-      <setttings v-if="appStore.auth" />
+      <settings v-if="appStore.auth" />
       <erro-need-auth v-else />
     </v-main>
   </v-app>
@@ -9,17 +9,18 @@
 
 <script lang="ts">
 import { Component } from 'vue-property-decorator';
-import Setttings from '@/components/Setttings.vue';
+import Settings from '@/components/Settings.vue';
 import ErroNeedAuth from '@/components/ErroNeedAuth.vue';
 import { mixins } from 'vue-class-component';
 import StartApp from '@/mixins/StartApp.vue';
 
 @Component({
-  components: { ErroNeedAuth, Setttings },
+  components: { ErroNeedAuth, Settings },
 })
 export default class App extends mixins(StartApp) {
 }
 </script>
 
-<style>
+<style lang="scss">
+@import "src/styles/app";
 </style>

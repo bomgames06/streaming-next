@@ -112,6 +112,23 @@
             </v-list>
           </v-menu>
         </template>
+        <template v-else-if="appStore.mode === 'CLIP'">
+          <v-select
+            :value="appStore.filterTimeClipList"
+            :items="timeClips"
+            item-value="value"
+            :item-text="formatTimeClip"
+            hide-details
+            outlined
+            solo
+            dense
+            return-object
+            :menu-props="{ dense: true }"
+            class="filter text-caption mr-1"
+            :label="$t('filter')"
+            @input="appStore.setFilterTimeClipList($event)"
+          />
+        </template>
         <template v-else-if="screen === 'SEARCH'">
           <v-text-field
             :label="$t('filter')"
@@ -121,6 +138,7 @@
             outlined
             solo
             dense
+            clearable
             class="filter text-caption mr-1"
             @input="appStore.setFilterChannelList($event)"
           />
@@ -133,6 +151,7 @@
             outlined
             solo
             dense
+            clearable
             class="filter text-caption"
             @input="appStore.setFilterList($event)"
           />
@@ -284,6 +303,8 @@ import VueI18n from 'vue-i18n';
 import FilterOrderVodType from '@/types/filter-order-vod-type';
 import LanguageType from '@/types/language-type';
 import languagesData from '@/data/languages-data';
+import TimeClipsType from '@/types/time-clips-type';
+import timeClipsData from '@/data/time-clips-data';
 
 @Component({
   components: { ProfileMenu },
@@ -295,6 +316,8 @@ export default class SettingsHeader extends Vue {
   appStore = getModule(AppStore, this.$store);
 
   languagesIso6391: LanguageIso6391Type[] = languageIso6391Data;
+
+  timeClips: TimeClipsType[] = timeClipsData;
 
   languages: LanguageType[] = languagesData;
 
@@ -326,9 +349,13 @@ export default class SettingsHeader extends Vue {
     return this.$t(item.i18nKey);
   }
 
+  formatTimeClip(item: TimeClipsType): VueI18n.TranslateResult {
+    return this.$t(item.i18nKey);
+  }
+
   onChangeLanguage(language: string): void {
     this.$i18n.locale = language;
-    browser.storage.local.set({ language }).then();
+    browser.storage.sync.set({ language }).then();
     this.$moment.locale(language.toLowerCase());
   }
 }
