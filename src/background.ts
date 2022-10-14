@@ -1,5 +1,6 @@
 import StreamersType from '@/types/streamers-type';
-import { processStorage } from './utils/utils';
+import UserType from '@/types/user-type';
+import { partition, processStorage } from './utils/utils';
 
 browser.alarms.create({ periodInMinutes: 0.25 });
 
@@ -57,37 +58,79 @@ let loadingFollow = false;
 let first = true;
 let onlines: StreamersType[] = [];
 
-function getStreamersHasLogin(item: StreamersType[]): StreamersType[] {
-  return item.filter((value) => value.nickname);
+async function getUsers(userIds: string[], accessToken?: string): Promise<UserType[]> {
+  const paritionValues = partition(userIds, 100);
+  const values: UserType[] = [];
+
+  const promises: any[] = [];
+  paritionValues.forEach((ids) => {
+    promises.push((async (): Promise<UserType[]> => {
+      const url = new URL('https://api.twitch.tv/helix/users');
+      ids.forEach((value) => url.searchParams.append('id', value));
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          'Client-ID': process.env.VUE_APP_OAUTH2_TWITCH_CLIENTID,
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const obj = await response.json();
+
+      return obj.data.map((value: any): UserType => ({
+        id: value.id,
+        login: value.login,
+        nickname: value.display_name,
+        avatar: value.profile_image_url,
+      }));
+    })());
+  });
+
+  const responses = await Promise.all(promises);
+  responses.forEach((value) => values.push(...value));
+
+  return values;
 }
 
-async function processNotifications(news: StreamersType[]) {
+async function processNotifications(news: StreamersType[], accessToken: string) {
   const notificationType = await processStorage('notification');
   if (notificationType === 'none') return;
-
-  const newsLogin = getStreamersHasLogin(news);
-  const onlinesLogin = getStreamersHasLogin(onlines);
 
   let notificate: StreamersType[] = [];
 
   if (notificationType === 'all') {
-    notificate = newsLogin.filter((value) => !onlinesLogin
+    notificate = news.filter((value) => !onlines
       .some((online) => online.id === value.id));
   }
   if (notificationType === 'partial') {
     const notificationIds = await processStorage('notificationIds') || [];
-    notificate = newsLogin.filter((value) => notificationIds.includes(value.id)
-      && !onlinesLogin.some((online) => online.id === value.id));
+    notificate = news.filter((value) => notificationIds.includes(value.id)
+      && !onlines.some((online) => online.id === value.id));
   }
+  if (!notificate.length) return;
+
+  const ids = notificate.map((value) => value.id);
+  const users = await getUsers(ids, accessToken);
+
   notificate.forEach((item) => {
-    browser.notifications.create({
+    const user = users.find((value) => value.id === item.id);
+    if (!user) return;
+    browser.notifications.create(`${generateState()}-N-${user.login}`, {
       type: 'basic',
-      iconUrl: browser.runtime.getURL('icons/128.png'),
-      title: item.nickname,
+      iconUrl: user.avatar,
+      title: user.nickname,
       message: item.title || '',
     }).then();
   });
 }
+
+const regexNotification = /^([a-zA-Z0-9]{50})-N-(.+)$/;
+browser.notifications.onClicked.addListener((notificationId) => {
+  if (regexNotification.test(notificationId)) {
+    const match = notificationId.match(regexNotification);
+    if (!match || !match[2]) return;
+    browser.tabs.create({ url: `https://www.twitch.tv/${match[2]}` }).then();
+  }
+});
 
 async function fetchAll<T>(handler: (page: string) => Promise<{ page: string, items: T[] }>)
   : Promise<T[]> {
@@ -172,7 +215,7 @@ async function countFollows() {
       accessToken,
     );
     if (!first) {
-      await processNotifications(onlinesNews);
+      await processNotifications(onlinesNews, accessToken);
     }
 
     onlines = onlinesNews;
