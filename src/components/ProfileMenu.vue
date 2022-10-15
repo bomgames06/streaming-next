@@ -94,7 +94,8 @@ export default class ProfileMenu extends Vue {
     changeTheme(this.$vuetify);
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    await browser.runtime.sendMessage({ type: 'REVOKE' });
     this.appStore.setAccessToken(null);
     this.menu = false;
   }

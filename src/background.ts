@@ -1,11 +1,19 @@
-import StreamersType from '@/types/streamers-type';
 import UserType from '@/types/user-type';
 import { partition, processStorage } from './utils/utils';
 
-browser.alarms.create({ periodInMinutes: 0.25 });
+browser.alarms.create({ periodInMinutes: 1 });
 
 const clientId = process.env.VUE_APP_OAUTH2_TWITCH_CLIENTID;
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+function generateState() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let value = '';
+  for (let i = 0; i < 50; i += 1) {
+    value += chars.charAt(Math.floor(Math.random()
+      * chars.length));
+  }
+  return value;
+}
 
 function getBrowserAction(): any {
   if (browser.browserAction) {
@@ -16,47 +24,17 @@ function getBrowserAction(): any {
   return browser.action;
 }
 
-function generateState() {
-  let value = '';
-  for (let i = 0; i < 50; i += 1) {
-    value += chars.charAt(Math.floor(Math.random()
-      * chars.length));
-  }
-  return value;
+function getSessionStorage(): any {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return browser.storage.session;
 }
 
-async function authHandler() {
-  const state = generateState();
-  const request = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=true&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`;
-  const response = await browser.identity.launchWebAuthFlow({
-    url: request,
-    interactive: true,
-  });
-
-  const urlObj = new URL(response.replace('#', '?'));
-  if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect');
-
-  const accessToken = urlObj.searchParams.get('access_token');
-  if (!accessToken) throw new Error('Token not found');
-
-  browser.storage.sync.set({ accessToken }).then();
-
-  return accessToken;
+async function processStorageSession(key: string): Promise<any> {
+  const storage = await getSessionStorage().get(key);
+  if (storage) return storage[key];
+  return null;
 }
-
-browser.runtime.onMessage.addListener(async (message) => {
-  switch (message.type) {
-    case 'AUTH':
-      return authHandler();
-    default:
-      break;
-  }
-  return true;
-});
-
-let loadingFollow = false;
-let first = true;
-let onlines: StreamersType[] = [];
 
 async function getUsers(userIds: string[], accessToken?: string): Promise<UserType[]> {
   const paritionValues = partition(userIds, 100);
@@ -91,11 +69,11 @@ async function getUsers(userIds: string[], accessToken?: string): Promise<UserTy
   return values;
 }
 
-async function processNotifications(news: StreamersType[], accessToken: string) {
+async function processNotifications(onlines: any[], news: any[], accessToken: string) {
   const notificationType = await processStorage('notification');
   if (notificationType === 'none') return;
 
-  let notificate: StreamersType[] = [];
+  let notificate: any[] = [];
 
   if (notificationType === 'all') {
     notificate = news.filter((value) => !onlines
@@ -123,8 +101,8 @@ async function processNotifications(news: StreamersType[], accessToken: string) 
   });
 }
 
-const regexNotification = /^([a-zA-Z0-9]{50})-N-(.+)$/;
 browser.notifications.onClicked.addListener((notificationId) => {
+  const regexNotification = /^([a-zA-Z0-9]{50})-N-(.+)$/;
   if (regexNotification.test(notificationId)) {
     const match = notificationId.match(regexNotification);
     if (!match || !match[2]) return;
@@ -161,7 +139,7 @@ async function getSelfUserId(accessToken: string): Promise<string> {
 }
 
 async function getStreamersOnlineFollowed(userId: string, accessToken: string)
-  : Promise<StreamersType[]> {
+  : Promise<any[]> {
   return fetchAll(async (page) => {
     const url = new URL('https://api.twitch.tv/helix/streams/followed');
     url.searchParams.append('user_id', userId);
@@ -179,25 +157,10 @@ async function getStreamersOnlineFollowed(userId: string, accessToken: string)
 
     return {
       page: obj.pagination && obj.pagination.cursor,
-      items: obj.data.map((value: any) => {
-        const item: StreamersType = {
-          id: value.user_id,
-          online: true,
-          login: value.user_login,
-          nickname: value.user_name,
-          startedAt: value.started_at,
-          language: value.language,
-          gameId: value.game_id,
-          gameName: value.game_name,
-          type: value.type,
-          title: value.title,
-          viewers: value.viewer_count,
-          thumbnailUrl: value.thumbnail_url,
-          tagIds: value.tag_ids,
-          isMature: value.is_mature,
-        };
-        return item;
-      }),
+      items: obj.data.map((value: any) => ({
+        id: value.user_id,
+        title: value.title,
+      })),
     };
   });
 }
@@ -205,22 +168,29 @@ async function getStreamersOnlineFollowed(userId: string, accessToken: string)
 async function countFollows() {
   let count = 0;
   try {
-    const value = await browser.storage.sync.get('accessToken');
-    const accessToken = value && value.accessToken;
-    if (loadingFollow || !accessToken) return;
-    loadingFollow = true;
+    const accessToken = await processStorage('accessToken');
+    if (!accessToken) {
+      getBrowserAction().setBadgeText({ text: '' }).then();
+      return;
+    }
+
+    const loadingFollow = await processStorageSession('loadingFollow');
+    if (loadingFollow) return;
+    await getSessionStorage().set({ loadingFollow: true });
+
     const userId = await getSelfUserId(accessToken);
     const onlinesNews = await getStreamersOnlineFollowed(
       userId,
       accessToken,
     );
-    if (!first) {
-      await processNotifications(onlinesNews, accessToken);
+    const started = await processStorageSession('started');
+    if (started) {
+      const onlines = await processStorageSession('onlines') || [];
+      await processNotifications(onlines, onlinesNews, accessToken);
     }
 
-    onlines = onlinesNews;
-    count = onlines.length;
-  } finally {
+    await getSessionStorage().set({ onlines: onlinesNews });
+    count = onlinesNews.length;
     if (count > 99) {
       getBrowserAction().setBadgeText({ text: '99+' }).then();
     } else if (count > 0) {
@@ -228,10 +198,62 @@ async function countFollows() {
     } else {
       getBrowserAction().setBadgeText({ text: '' }).then();
     }
-    loadingFollow = false;
-    first = false;
+  } finally {
+    await getSessionStorage().set({ loadingFollow: false });
+    await getSessionStorage().set({ started: true });
   }
 }
 
+async function authHandler() {
+  const state = generateState();
+  const request = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=true&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`;
+  const response = await browser.identity.launchWebAuthFlow({
+    url: request,
+    interactive: true,
+  });
+
+  const urlObj = new URL(response.replace('#', '?'));
+  if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect');
+
+  const accessToken = urlObj.searchParams.get('access_token');
+  if (!accessToken) throw new Error('Token not found');
+
+  browser.storage.sync.set({ accessToken }).then();
+  await getSessionStorage().set({ started: false });
+  countFollows().then();
+
+  return accessToken;
+}
+
+async function revokeHandler() {
+  const accessToken = await processStorage('accessToken');
+  if (!accessToken) return true;
+  const request = `https://id.twitch.tv/oauth2/revoke?client_id=${clientId}&token=${accessToken}`;
+  await fetch(request, {
+    method: 'POST',
+  });
+
+  browser.storage.sync.set({ accessToken: null }).then();
+  await getSessionStorage().set({ started: false });
+  countFollows().then();
+
+  return true;
+}
+
+browser.runtime.onMessage.addListener(async (message) => {
+  switch (message.type) {
+    case 'AUTH':
+      return authHandler();
+    case 'REVOKE':
+      return revokeHandler();
+    default:
+      break;
+  }
+  return true;
+});
+
 browser.alarms.onAlarm.addListener(countFollows);
-setTimeout(countFollows, 1000);
+
+processStorageSession('started').then((value: any) => {
+  if (!value) countFollows().then();
+});
