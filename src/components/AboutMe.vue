@@ -27,6 +27,7 @@
           height="-webkit-fill-available"
           :color="hover ? 'red' : ''"
           class="mx-1 px-1 text-subtitle-2 text-none letter-spacing-normal"
+          @click="openDonation()"
         >
           <v-icon small class="mr-1">
             mdi-heart
@@ -47,6 +48,10 @@ import { Component, Vue } from 'vue-property-decorator';
 export default class AboutMe extends Vue {
   openTwitter(profile: string): void {
     window.open(`https://twitter.com/${profile}`, '_blank');
+  }
+
+  openDonation(): void {
+    window.open('https://www.buymeacoffee.com/bomgames06', '_blank');
   }
 }
 </script>
