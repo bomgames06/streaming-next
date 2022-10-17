@@ -16,7 +16,7 @@
             mdi-twitter
           </v-icon>
           <span>
-            bomgames06
+            Bomgames06
           </span>
         </v-btn>
       </v-hover><v-divider vertical />
