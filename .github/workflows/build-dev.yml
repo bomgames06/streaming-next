@@ -1,0 +1,54 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build Dev
+
+on:
+  push:
+    branches: [ "dev" ]
+    
+env:
+  GITHUB_ACTION_BOT_NAME: Github Action(bot)
+  GITHUB_ACTION_BOT_EMAIL: github.action.bot@users.noreply.github.com
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    if: github.event.commits[0].author.name === $GITHUB_ACTION_BOT_NAME
+    steps:
+      - uses: vuetifyjs/close-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v2
+      with:
+        path: |
+          node_modules
+          **/node_modules
+        key: ${{ runner.os }}-${{ hashFiles('./yarn.lock') }}
+    - run: yarn install --frozen-lockfile
+    - run: yarn build --if-present
+    - uses: vemel/nextversion@0.1.1
+      with:
+        path: package.json
+        type: semver
+        release: alpha
+        result: patch
+        encoding: utf-8
+    - name: Commit new Version
+      run: |
+        echo $GITHUB_ACTION_BOT_NAME
+        echo $GITHUB_ACTION_BOT_EMAIL
+        git log
+        VERSION=${{ toJSON(steps.version.outputs.result) }}
+        BRANCH="dev"
+        git config --local user.email "$GITHUB_ACTION_BOT_EMAIL"
+        git config --local user.name "$GITHUB_ACTION_BOT_NAME"
+        git commit -am "Bump version to $VERSION"
+        git push --set-upstream origin $BRANCH
