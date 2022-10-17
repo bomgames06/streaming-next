@@ -32,3 +32,6 @@ jobs:
         release: alpha
         result: patch
         encoding: utf-8
+    - uses: mathieudutour/github-tag-action@v6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
