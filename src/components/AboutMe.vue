@@ -33,7 +33,7 @@
             mdi-heart
           </v-icon>
           <span>
-            {{$t('donation')}}
+            {{$t('sponsor')}}
           </span>
         </v-btn>
       </v-hover>

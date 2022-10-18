@@ -1,6 +1,7 @@
 <template>
   <v-container :class="getContainerClass()">
     <streamers-list
+      v-if="filter"
       :items="channels"
       :item-expanded-select.sync="itemExpandedSelect"
       :expanded-mode.sync="expandedMode"
@@ -9,6 +10,19 @@
       @click="openTwitchLink"
       @click-category="$emit('click-category', $event)"
     />
+    <v-row
+      v-else
+      no-gutters
+      class="fill-height fill-width absolute-tl"
+      align="center"
+      justify="center"
+    >
+      <v-col cols="auto" class="pa-5 text-center">
+        <span class="text-h6">
+          {{$t('fill_filter_to_search_channels')}}
+        </span>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 

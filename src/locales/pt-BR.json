@@ -51,5 +51,6 @@
   "clean_notifications": "Limpar notificações",
   "version": "Versão",
   "creator": "Criador",
-  "donation": "Doação"
+  "sponsor": "Apoiar",
+  "fill_filter_to_search_channels": "Preencha o campo \"Filtro\" para pesquisar os canais"
 }

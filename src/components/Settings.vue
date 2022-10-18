@@ -3,9 +3,9 @@
     <span class="text-h6 mt-2">
       {{$t('settings')}}
     </span>
-    <v-divider class="my-1" />
+    <v-divider class="mb-1" />
     <v-row dense>
-      <v-col cols="12">
+      <v-col cols="auto">
         <v-select
           :value="$i18n.locale"
           :label="$t('languages')"
@@ -18,7 +18,9 @@
         >
         </v-select>
       </v-col>
-      <v-col cols="12">
+    </v-row>
+    <v-row dense>
+      <v-col cols="auto">
         <v-radio-group
           :value="appStore.notification"
           mandatory
@@ -34,9 +36,11 @@
           <v-radio :label="$t('none')" value="none" />
         </v-radio-group>
       </v-col>
+    </v-row>
+    <v-row dense>
       <v-col
         v-if="appStore.notification === 'partial'"
-        cols="12"
+        cols="auto"
       >
         <v-btn small @click="appStore.setNotificationIds([])">
           <v-icon class="mr-1">
@@ -45,7 +49,9 @@
           <span>{{$t('clean_notifications')}}</span>
         </v-btn>
       </v-col>
-      <v-col cols="12">
+    </v-row>
+    <v-row dense>
+      <v-col cols="auto">
         <v-switch
           :input-value="$vuetify.theme.dark"
           :label="$t('dark_mode')"
@@ -56,7 +62,9 @@
           @change="changeTheme"
         />
       </v-col>
-      <v-col cols="12">
+    </v-row>
+    <v-row dense>
+      <v-col cols="auto">
         <v-switch
           :input-value="appStore.showAlwaysOfflines"
           :label="$t('show_offlines_always')"
