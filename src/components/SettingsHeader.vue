@@ -439,5 +439,7 @@ export default class SettingsHeader extends Vue {
   max-width: 50%;
   flex-grow: 1;
   flex-shrink: 0;
+  display: flex;
+  justify-content: end;
 }
 </style>

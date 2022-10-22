@@ -3,6 +3,7 @@ import { processStorage } from '@/utils/utils';
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import AppStore from '@/store/modules/app-store';
+import { take } from 'lodash';
 
 @Component
 export default class StartApp extends Vue {
@@ -23,7 +24,7 @@ export default class StartApp extends Vue {
       const notificationIds = await processStorage('notificationIds');
 
       this.$vuetify.theme.dark = !!dark;
-      this.$i18n.locale = language || navigator.language || process.env.VUE_APP_I18N_LOCALE || 'en';
+      this.$i18n.locale = language || this.processNavigatorLanguage() || process.env.VUE_APP_I18N_LOCALE || 'en';
       this.$moment.locale(this.$i18n.locale.toLowerCase());
       document.documentElement.setAttribute('lang', this.$i18n.locale);
       this.appStore.setAccessToken(accessToken);
@@ -38,6 +39,15 @@ export default class StartApp extends Vue {
     } finally {
       this.loaded = true;
     }
+  }
+
+  processNavigatorLanguage(): string | null {
+    const languagesSplit = navigator.language.split('-');
+    for (let i = languagesSplit.length; i > 0; i -= 1) {
+      const language = take(languagesSplit, i).join('-');
+      if (this.$i18n.availableLocales.includes(language)) return language;
+    }
+    return null;
   }
 }
 </script>
