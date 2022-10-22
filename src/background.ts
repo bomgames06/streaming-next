@@ -225,8 +225,7 @@ async function authHandler() {
   return accessToken;
 }
 
-async function revokeHandler() {
-  const accessToken = await processStorage('accessToken');
+async function revokeHandler(accessToken?: string) {
   if (!accessToken) return true;
   const request = `https://id.twitch.tv/oauth2/revoke?client_id=${clientId}&token=${accessToken}`;
   await fetch(request, {
@@ -245,7 +244,7 @@ browser.runtime.onMessage.addListener(async (message) => {
     case 'AUTH':
       return authHandler();
     case 'REVOKE':
-      return revokeHandler();
+      return revokeHandler(message.accessToken);
     default:
       break;
   }
@@ -253,6 +252,15 @@ browser.runtime.onMessage.addListener(async (message) => {
 });
 
 browser.alarms.onAlarm.addListener(countFollows);
+
+getBrowserAction().setBadgeBackgroundColor({
+  color: '#660099',
+});
+if (getBrowserAction().setBadgeTextColor) {
+  getBrowserAction().setBadgeTextColor({
+    color: '#FFFFFF',
+  });
+}
 
 processStorageSession('started').then((value: any) => {
   if (!value) countFollows().then();

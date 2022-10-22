@@ -1,6 +1,7 @@
 import AxiosTwitchApiService from '@/services/twitch-api/base/axios-twitch-api-service';
 import StreamersType from '@/types/streamers-type';
 import UserType from '@/types/user-type';
+import PaginationType from '@/types/pagination-type';
 
 export default class TwitchApiStreamersService extends AxiosTwitchApiService {
   async getStreamersOfflineFollowed(userId: string, excludeIds?: string[], accessToken?: string)
@@ -67,7 +68,7 @@ export default class TwitchApiStreamersService extends AxiosTwitchApiService {
     nick?: string,
     page?: string,
     accessToken?: string,
-  ): Promise<StreamersType[]> {
+  ): Promise<PaginationType<StreamersType>> {
     const params = new URLSearchParams();
     gameIds.forEach((value) => params.append('game_id', value));
     params.set('after', page || '');
@@ -77,7 +78,6 @@ export default class TwitchApiStreamersService extends AxiosTwitchApiService {
     if (nick) {
       params.set('user_login', nick);
     }
-    params.set('first', '100');
     const response = await this.axios.get('/streams', {
       params,
       headers: {
@@ -87,23 +87,26 @@ export default class TwitchApiStreamersService extends AxiosTwitchApiService {
     });
     const obj = JSON.parse(response.data);
 
-    return obj.data.map((value: any) => {
-      const item: StreamersType = {
-        online: true,
-        id: value.user_id,
-        login: value.user_login,
-        nickname: value.user_name,
-        gameId: value.game_id,
-        gameName: value.game_name,
-        type: value.live,
-        title: value.title,
-        viewers: value.viewer_count,
-        startedAt: value.started_at,
-        language: value.language,
-        thumbnailUrl: value.thumbnail_url,
-        isMature: value.is_mature,
-      };
-      return item;
-    });
+    return {
+      data: obj.data.map((value: any) => {
+        const item: StreamersType = {
+          online: true,
+          id: value.user_id,
+          login: value.user_login,
+          nickname: value.user_name,
+          gameId: value.game_id,
+          gameName: value.game_name,
+          type: value.live,
+          title: value.title,
+          viewers: value.viewer_count,
+          startedAt: value.started_at,
+          language: value.language,
+          thumbnailUrl: value.thumbnail_url,
+          isMature: value.is_mature,
+        };
+        return item;
+      }),
+      pagination: obj.pagination,
+    };
   }
 }

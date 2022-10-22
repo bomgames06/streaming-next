@@ -13,6 +13,8 @@
     <v-row
       v-else
       no-gutters
+      role="alert"
+      aria-live="polite"
       class="fill-height fill-width absolute-tl"
       align="center"
       justify="center"

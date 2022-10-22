@@ -2,59 +2,60 @@
   <v-app-bar height="36" app class="header-settings">
     <profile-menu v-if="hasAuth" />
     <v-spacer />
-    <div v-if="!hasAuth">
-      <v-menu offset-y bottom :close-on-content-click="false">
-        <template #activator="{ attrs, on }">
-          <v-btn
-            v-bind="attrs"
-            icon
-            small
-            class="ml-1 rounded-lg"
-            :aria-label="$t('language')"
-            v-on="on"
-          >
-            <v-icon>
-              mdi-google-translate
-            </v-icon>
-          </v-btn>
-        </template>
-        <v-list dense class="py-0 list-content-mini-language" max-height="96px">
-          <v-list-item-group
-            :value="$i18n.locale"
-            mandatory
-            class="list-content-mini-language"
-            @change="onChangeLanguage"
-          >
-            <v-list-item
-              v-for="language in languages"
-              :key="language.locale"
-              :value="language.locale"
-              dense
+    <div class="content-filter">
+      <div v-if="!hasAuth">
+        <v-menu offset-y bottom :close-on-content-click="false">
+          <template #activator="{ attrs, on }">
+            <v-btn
+              v-bind="attrs"
+              icon
+              small
+              class="ml-1 rounded-lg"
+              :aria-label="$t('language')"
+              v-on="on"
             >
-              <v-list-item-title>
-                {{$t(language.i18nKey)}}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
-      </v-menu>
-      <v-btn
-        icon
-        small
-        class="ml-1 rounded-lg"
-        :aria-label="$t($vuetify.theme.dark ? 'dark' : 'light')"
-        @click="changeTheme"
-      >
-        <v-icon>{{$vuetify.theme.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'}}</v-icon>
-      </v-btn>
-    </div>
-    <template v-else>
-      <div class="d-flex align-center">
+              <v-icon>
+                mdi-google-translate
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-list dense class="py-0 list-content-mini-language" max-height="96px">
+            <v-list-item-group
+              :value="$i18n.locale"
+              mandatory
+              class="list-content-mini-language"
+              @change="onChangeLanguage"
+            >
+              <v-list-item
+                v-for="language in languages"
+                :key="language.locale"
+                :value="language.locale"
+                dense
+              >
+                <v-list-item-title>
+                  {{$t(language.i18nKey)}}
+                </v-list-item-title>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-menu>
+        <v-btn
+          icon
+          small
+          class="ml-1 rounded-lg"
+          :aria-label="$t($vuetify.theme.dark ? 'dark' : 'light')"
+          @click="changeTheme"
+        >
+          <v-icon>{{$vuetify.theme.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'}}</v-icon>
+        </v-btn>
+      </div>
+      <div v-else class="d-flex align-center justify-end">
         <template v-if="appStore.mode === 'VOD'">
           <v-menu offset-y>
             <template #activator="{ attrs, on }">
               <v-btn
                 v-bind="attrs"
+                :aria-label="$t('order')"
                 icon
                 small
                 class="ml-1 rounded-lg"
@@ -68,6 +69,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="$t('time')"
                 :class="getFilterVodClass('time')"
                 @click="appStore.setFilterOrderVodList('time')"
               >
@@ -83,6 +85,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="$t('trending')"
                 :class="getFilterVodClass('trending')"
                 @click="appStore.setFilterOrderVodList('trending')"
               >
@@ -98,6 +101,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="$t('views')"
                 :class="getFilterVodClass('views')"
                 @click="appStore.setFilterOrderVodList('views')"
               >
@@ -126,14 +130,17 @@
             :menu-props="{ dense: true }"
             class="filter text-caption mr-1"
             :label="$t('filter')"
+            :aria-label="$t('filter')"
             @input="appStore.setFilterTimeClipList($event)"
           />
         </template>
         <template v-else-if="screen === 'SEARCH'">
           <v-text-field
             :label="$t('filter')"
+            :aria-label="$t('filter')"
             :value="appStore.filterChannelList"
             :error="!appStore.filterChannelList.trim()"
+            :aria-invalid="!appStore.filterChannelList.trim()"
             hide-details
             outlined
             solo
@@ -146,6 +153,7 @@
         <template v-else-if="screen === 'LIST'">
           <v-text-field
             :label="$t('filter')"
+            :aria-label="$t('filter')"
             :value="appStore.filterList"
             hide-details
             outlined
@@ -159,6 +167,7 @@
             <template #activator="{ attrs, on }">
               <v-btn
                 v-bind="attrs"
+                :aria-label="$t('order')"
                 icon
                 small
                 class="ml-1 rounded-lg"
@@ -172,6 +181,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="getFilterAriaLabel('NAME')"
                 :class="getFilterClass('NAME')"
                 @click="appStore.setFilterOrderList('NAME')"
               >
@@ -197,6 +207,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="getFilterAriaLabel('VIEW')"
                 :class="getFilterClass('VIEW')"
                 @click="appStore.setFilterOrderList('VIEW')"
               >
@@ -222,6 +233,7 @@
                 dense
                 link
                 :ripple="false"
+                :aria-label="getFilterAriaLabel('GAME')"
                 :class="getFilterClass('GAME')"
                 @click="appStore.setFilterOrderList('GAME')"
               >
@@ -271,6 +283,7 @@
             :menu-props="{ dense: true }"
             class="filter text-caption"
             :label="$t('language')"
+            :aria-label="$t('language')"
             @input="appStore.setFilterLanguageCategoryStreamList($event)"
           />
           <v-btn
@@ -284,7 +297,7 @@
           </v-btn>
         </template>
       </div>
-    </template>
+    </div>
     <v-progress-linear v-show="appStore.isLoading" indeterminate class="absolute-bl" />
   </v-app-bar>
 </template>
@@ -337,6 +350,27 @@ export default class SettingsHeader extends Vue {
     };
   }
 
+  getFilterAriaLabel(filter: string): string {
+    const textList = [];
+
+    if (filter === 'NAME') {
+      textList.push(this.$t('name'));
+    } else if (filter === 'VIEW') {
+      textList.push(this.$t('views'));
+    } else if (filter === 'GAME') {
+      textList.push(this.$t('game'));
+    }
+    if (this.appStore.filterOrderList === filter) {
+      if (this.appStore.filterOrderAsc) {
+        textList.push(this.$t('asc'));
+      } else {
+        textList.push(this.$t('desc'));
+      }
+    }
+
+    return textList.join(' - ');
+  }
+
   getFilterVodClass(filter: FilterOrderVodType): any {
     return {
       'px-1': true,
@@ -357,6 +391,7 @@ export default class SettingsHeader extends Vue {
     this.$i18n.locale = language;
     browser.storage.sync.set({ language }).then();
     this.$moment.locale(language.toLowerCase());
+    document.documentElement.setAttribute('lang', language);
   }
 }
 </script>
@@ -398,5 +433,11 @@ export default class SettingsHeader extends Vue {
   position: absolute;
   top: -5px;
   right: -2px;
+}
+
+.content-filter {
+  max-width: 50%;
+  flex-grow: 1;
+  flex-shrink: 0;
 }
 </style>

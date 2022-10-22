@@ -25,6 +25,7 @@ export default class StartApp extends Vue {
       this.$vuetify.theme.dark = !!dark;
       this.$i18n.locale = language || navigator.language || process.env.VUE_APP_I18N_LOCALE || 'en';
       this.$moment.locale(this.$i18n.locale.toLowerCase());
+      document.documentElement.setAttribute('lang', this.$i18n.locale);
       this.appStore.setAccessToken(accessToken);
       this.appStore.setFilterOrderListNative(filterOrderList || 'NAME');
       this.appStore.setFilterOrderAscNative(filterOrderAsc != null ? !!filterOrderAsc : true);

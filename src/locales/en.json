@@ -53,5 +53,17 @@
   "creator": "Creator",
   "donation": "Donation",
   "sponsor": "Sponsor",
-  "fill_filter_to_search_channels": "Fill in the \"Filter\" field to search the channels"
+  "fill_filter_to_search_channels": "Fill in the \"Filter\" field to search the channels",
+  "navbar": "Navigation bar",
+  "order": "Order",
+  "time": "Time",
+  "trending": "Trending",
+  "views": "Views",
+  "asc": "Ascending",
+  "desc": "Descending",
+  "name": "Name",
+  "game": "Game",
+  "fill_to_search": "Fill to search",
+  "profile": "Profile",
+  "press_go_back": "Press to go back"
 }

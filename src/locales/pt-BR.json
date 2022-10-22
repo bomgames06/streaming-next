@@ -52,5 +52,17 @@
   "version": "Versão",
   "creator": "Criador",
   "sponsor": "Apoiar",
-  "fill_filter_to_search_channels": "Preencha o campo \"Filtro\" para pesquisar os canais"
+  "fill_filter_to_search_channels": "Preencha o campo \"Filtro\" para pesquisar os canais",
+  "navbar": "Barra de navegação",
+  "order": "Ordenar",
+  "time": "Tempo",
+  "trending": "Popularidade",
+  "views": "Visualizações",
+  "asc": "Crescente",
+  "desc": "Decrescente",
+  "name": "Nome",
+  "game": "Jogo",
+  "fill_to_search": "Preencher para pesquisar",
+  "profile": "Perfil",
+  "press_go_back": "Pressione para voltar"
 }

@@ -114,6 +114,7 @@ export default class Settings extends Vue {
     this.$i18n.locale = language;
     browser.storage.sync.set({ language }).then();
     this.$moment.locale(language.toLowerCase());
+    document.documentElement.setAttribute('lang', language);
   }
 }
 </script>

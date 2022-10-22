@@ -87,6 +87,20 @@ html {
   flex-basis: auto;
 }
 
+.v-list {
+  > .v-list-item {
+    min-height: unset;
+  }
+  .v-list-item__content {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .v-list-item__icon {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+}
+
 @mixin list-content-mini {
   padding-top: 2px;
   padding-bottom: 2px;

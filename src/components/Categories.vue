@@ -60,6 +60,22 @@
           @click="openTwitchLink"
         />
       </v-col>
+      <v-col cols="12">
+        <v-btn
+          v-if="streamersCategoryPage"
+          block
+          height="54"
+          :loading="loadingCategoryStreamers"
+          :disabled="loadingCategoryStreamers"
+          class="mt-2"
+          @click="loadStreamersByCategory(true)"
+        >
+          <v-icon class="mr-2">
+            mdi-magnify
+          </v-icon>
+          <span>{{$t('fetch_more')}}</span>
+        </v-btn>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -116,6 +132,8 @@ export default class StreamsFollowing extends Vue {
   expandedMode: ModeType = 'NORMAL';
 
   categoriesPage: string | null = null;
+
+  streamersCategoryPage: string | null = null;
 
   loadTopCategoriesDebounce = debounce(this.loadTopCategories, 500);
 
@@ -226,7 +244,7 @@ export default class StreamsFollowing extends Vue {
     this.loadStreamersByCategoryDebounce();
   }
 
-  async loadStreamersByCategory(): Promise<void> {
+  async loadStreamersByCategory(nextPage?: boolean): Promise<void> {
     if (!this.category) {
       this.streamers = [];
       return;
@@ -235,14 +253,22 @@ export default class StreamsFollowing extends Vue {
     try {
       this.loadingCategoryStreamers = true;
       this.appStore.loading();
-      this.streamers = await TwitchApiService.streamers.getStreams(
+      const pagination = await TwitchApiService.streamers.getStreams(
         [this.category.id],
         this.filterLanguage ? this.filterLanguage.language : undefined,
         undefined,
-        undefined,
+        nextPage && this.streamersCategoryPage ? this.streamersCategoryPage : undefined,
         this.appStore.auth?.accessToken,
       );
-      this.dumpDate = new Date();
+      if (nextPage) {
+        this.streamers.push(...pagination.data);
+      } else {
+        this.streamers = pagination.data;
+      }
+      this.streamersCategoryPage = pagination.pagination && pagination.pagination.cursor;
+      if (!nextPage) {
+        this.dumpDate = new Date();
+      }
     } catch (e) {
       this.streamers = [];
     } finally {
