@@ -26,5 +26,6 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     'no-await-in-loop': 'off',
     'no-param-reassign': 'off',
+    'vuejs-accessibility/no-autofocus': 'off',
   },
 };

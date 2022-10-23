@@ -136,6 +136,7 @@
         </template>
         <template v-else-if="screen === 'SEARCH'">
           <v-text-field
+            ref="textFieldFilterSearchRef"
             :label="$t('filter')"
             :aria-label="$t('filter')"
             :value="appStore.filterChannelList"
@@ -152,6 +153,7 @@
         </template>
         <template v-else-if="screen === 'LIST'">
           <v-text-field
+            ref="textFieldFilterListRef"
             :label="$t('filter')"
             :aria-label="$t('filter')"
             :value="appStore.filterList"
@@ -303,7 +305,9 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Vue } from 'vue-property-decorator';
+import {
+  Component, InjectReactive, Ref, Vue, Watch,
+} from 'vue-property-decorator';
 import { changeTheme } from '@/utils/utils';
 import { getModule } from 'vuex-module-decorators';
 import AppStore from '@/store/modules/app-store';
@@ -334,8 +338,27 @@ export default class SettingsHeader extends Vue {
 
   languages: LanguageType[] = languagesData;
 
+  @Ref('textFieldFilterSearchRef')
+  textFieldFilterSearchRef?: any;
+
+  @Ref('textFieldFilterListRef')
+  textFieldFilterListRef?: any;
+
   get hasAuth(): boolean {
     return this.appStore.hasAuth;
+  }
+
+  @Watch('screen', { immediate: true })
+  onChangeScreen() {
+    if (this.screen === 'LIST') {
+      this.$nextTick(() => {
+        if (this.textFieldFilterListRef) this.textFieldFilterListRef.focus();
+      });
+    } else if (this.screen === 'SEARCH') {
+      this.$nextTick(() => {
+        if (this.textFieldFilterSearchRef) this.textFieldFilterSearchRef.focus();
+      });
+    }
   }
 
   changeTheme(): void {

@@ -218,8 +218,10 @@ async function authHandler() {
   const accessToken = urlObj.searchParams.get('access_token');
   if (!accessToken) throw new Error('Token not found');
 
-  browser.storage.sync.set({ accessToken }).then();
+  browser.storage.sync.set({ notificationIds: [] }).then();
+  await getSessionStorage().set({ onlines: [] });
   await getSessionStorage().set({ started: false });
+  browser.storage.sync.set({ accessToken }).then();
   countFollows().then();
 
   return accessToken;
@@ -233,7 +235,9 @@ async function revokeHandler(accessToken?: string) {
   });
 
   browser.storage.sync.set({ accessToken: null }).then();
+  browser.storage.sync.set({ notificationIds: [] }).then();
   await getSessionStorage().set({ started: false });
+  await getSessionStorage().set({ onlines: [] });
   countFollows().then();
 
   return true;
@@ -261,6 +265,9 @@ if (getBrowserAction().setBadgeTextColor) {
     color: '#FFFFFF',
   });
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+browser.runtime.onStartup.addListener(() => {});
 
 processStorageSession('started').then((value: any) => {
   if (!value) countFollows().then();

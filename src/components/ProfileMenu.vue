@@ -123,6 +123,7 @@ export default class ProfileMenu extends Vue {
       type: 'REVOKE',
       accessToken: this.appStore.auth?.accessToken,
     }).then();
+    this.appStore.setNotificationIds([]);
     this.appStore.setAccessToken(null);
     this.menu = false;
   }
