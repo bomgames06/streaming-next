@@ -24,13 +24,6 @@ module.exports = {
         background: {
           entry: 'src/background.ts',
         },
-        contentScripts: {
-          entries: {
-            'content-script': [
-              'src/content-scripts/content-script.js',
-            ],
-          },
-        },
       },
     },
     i18n: {
@@ -44,4 +37,5 @@ module.exports = {
   configureWebpack: {
     devtool: 'source-map',
   },
+  productionSourceMap: false,
 };

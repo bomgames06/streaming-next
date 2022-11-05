@@ -21,7 +21,7 @@
     >
       <v-col cols="auto" class="pa-5 text-center">
         <span class="text-h6">
-          {{$t('fill_filter_to_search_channels')}}
+          {{$t('fill_field_to_search_channels', { name: $t('search') })}}
         </span>
       </v-col>
     </v-row>
@@ -119,8 +119,8 @@ export default class SearchUser extends Vue {
     };
   }
 
-  openTwitchLink(streamer: StreamersType): void {
-    window.open(`https://www.twitch.tv/${streamer.login}`, '_blank');
+  openTwitchLink(streamer: any): void {
+    browser.tabs.create({ url: `https://www.twitch.tv/${streamer.value.login}`, active: !streamer.middle });
   }
 }
 </script>

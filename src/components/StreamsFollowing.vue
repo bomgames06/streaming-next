@@ -173,8 +173,8 @@ export default class StreamsFollowing extends Vue {
     }
   }
 
-  openTwitchLink(streamer: StreamersType): void {
-    window.open(`https://www.twitch.tv/${streamer.login}`, '_blank');
+  openTwitchLink(streamer: any): void {
+    browser.tabs.create({ url: `https://www.twitch.tv/${streamer.value.login}`, active: !streamer.middle });
   }
 
   getContainerClass(): any {

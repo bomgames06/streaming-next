@@ -6,7 +6,7 @@
       class="mr-1 rounded-lg"
       @click="appStore.toggleDrawer()"
     />
-    <v-menu v-model="menu" offset-y :close-on-content-click="false">
+    <v-menu v-model="menu" offset-y :close-on-content-click="false" @input="languageGroup = false">
       <template #activator="{ on, attrs }">
         <v-btn
           text
@@ -23,7 +23,11 @@
         </v-btn>
       </template>
       <v-list dense class="list-content-mini">
-        <v-list-item dense @click="openProfile()">
+        <v-list-item
+          dense
+          @click="openProfile(false)"
+          @mousedown.middle.native.prevent="openProfile(true)"
+        >
           <v-list-item-icon class="mr-2">
             <v-icon small>
               mdi-account
@@ -35,7 +39,7 @@
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-group dense class="py-0 list-content-mini">
+        <v-list-group v-model="languageGroup" dense class="py-0 list-content-mini">
           <template #activator>
             <v-list-item-icon class="mr-2">
               <v-icon small>mdi-google-translate</v-icon>
@@ -112,6 +116,8 @@ export default class ProfileMenu extends Vue {
 
   menu = false;
 
+  languageGroup = false;
+
   languages: LanguageType[] = languagesData;
 
   changeTheme(): void {
@@ -128,9 +134,9 @@ export default class ProfileMenu extends Vue {
     this.menu = false;
   }
 
-  openProfile(): void {
+  openProfile(middle: boolean): void {
     if (!this.user) return;
-    window.open(`https://www.twitch.tv/${this.user.login}`, '_blank');
+    browser.tabs.create({ url: `https://www.twitch.tv/${this.user.login}`, active: !middle });
   }
 
   onChangeLanguage(language: string): void {

@@ -135,10 +135,11 @@
           />
         </template>
         <template v-else-if="screen === 'SEARCH'">
+          <div v-shortkey="['alt', 's']" @shortkey="textFieldFilterSearchRef.focus()" />
           <v-text-field
             ref="textFieldFilterSearchRef"
-            :label="$t('filter')"
-            :aria-label="$t('filter')"
+            :label="$t('search')"
+            :aria-label="$t('search')"
             :value="appStore.filterChannelList"
             :error="!appStore.filterChannelList.trim()"
             :aria-invalid="!appStore.filterChannelList.trim()"
@@ -152,6 +153,7 @@
           />
         </template>
         <template v-else-if="screen === 'LIST'">
+          <div v-shortkey="['alt', 's']" @shortkey="textFieldFilterListRef.focus()" />
           <v-text-field
             ref="textFieldFilterListRef"
             :label="$t('filter')"
@@ -416,6 +418,10 @@ export default class SettingsHeader extends Vue {
     this.$moment.locale(language.toLowerCase());
     document.documentElement.setAttribute('lang', language);
   }
+
+  teste(event: any): void {
+    console.log(event);
+  }
 }
 </script>
 
@@ -463,6 +469,6 @@ export default class SettingsHeader extends Vue {
   flex-grow: 1;
   flex-shrink: 0;
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
 }
 </style>

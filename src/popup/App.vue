@@ -31,6 +31,8 @@
                   :ripple="false"
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('followed')"
+                  v-shortkey="['alt', '1']"
+                  @shortkey="screen = 'LIST'"
                 >
                   <v-list-item-icon class="mx-0">
                     <v-icon>
@@ -44,6 +46,8 @@
                   :ripple="false"
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('categories')"
+                  v-shortkey="['alt', '2']"
+                  @shortkey="screen = 'CATEGORY'"
                 >
                   <v-list-item-icon class="mx-0">
                     <v-icon>
@@ -57,6 +61,8 @@
                   :ripple="false"
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$t('search')"
+                  v-shortkey="['alt', '3']"
+                  @shortkey="screen = 'SEARCH'"
                 >
                   <v-list-item-icon class="mx-0">
                     <v-icon>
@@ -71,6 +77,8 @@
                   :ripple="false"
                   class="flex-grow-0 flex-basis-auto"
                   :aria-label="$tc('settings')"
+                  v-shortkey="['alt', 'a']"
+                  @shortkey="screen = 'SETTINGS'"
                 >
                   <v-list-item-icon class="mx-0">
                     <v-icon>

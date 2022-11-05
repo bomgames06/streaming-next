@@ -14,7 +14,8 @@
             <v-list-item
               dense
               class="flex-nowrap pa-1 list-item flex-grow-1"
-              @click="clickItem(item)"
+              @click="clickItem(item, false)"
+              @mousedown.middle.native.prevent="clickItem(item, true)"
               @contextmenu.prevent="showMenu($event, item)"
             >
               <v-list-item-icon class="list-item-img">
@@ -427,13 +428,13 @@ export default class StreamersList extends Vue {
     });
   }
 
-  clickItem(item: StreamersType | VideosType | ClipsType): void {
+  clickItem(item: StreamersType | VideosType | ClipsType, middle: boolean): void {
     if (this.isVodType) {
-      window.open((item as VideosType | ClipsType).url, '_blank');
+      browser.tabs.create({ url: (item as VideosType | ClipsType).url, active: !middle });
       return;
     }
     if (!this.syncedItemExpandedSelect) {
-      this.$emit('click', item);
+      this.$emit('click', { value: item, middle });
       return;
     }
     this.syncedItemExpandedSelect = null;
