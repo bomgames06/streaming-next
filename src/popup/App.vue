@@ -136,7 +136,7 @@ import StartApp from '@/mixins/StartApp.vue';
   components: {
     SearchUser,
     Categories,
-    Setttings: Settings,
+    Settings,
     StreamsFollowing,
     SettingsHeader,
     Auth,
