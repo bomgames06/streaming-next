@@ -20,6 +20,8 @@ export default class AppStore extends VuexModule {
 
   _auth: AuthType | null = null;
 
+  _expiredToken = false;
+
   _filterList = '';
 
   _filterChannelList = '';
@@ -60,6 +62,10 @@ export default class AppStore extends VuexModule {
 
   get auth(): AuthType | null {
     return this._auth;
+  }
+
+  get expiredToken(): boolean {
+    return this._expiredToken;
   }
 
   get filterList(): string {
@@ -138,6 +144,11 @@ export default class AppStore extends VuexModule {
   @Mutation
   _setAccessToken(accessToken: string | null) {
     this._auth = accessToken ? { accessToken } : null;
+  }
+
+  @Mutation
+  _setExpiredToken(expiredToken: boolean) {
+    this._expiredToken = expiredToken;
   }
 
   @Mutation
@@ -256,6 +267,12 @@ export default class AppStore extends VuexModule {
   setAccessToken(accessToken: string | null) {
     this.context.commit('_setAccessToken', accessToken);
     browser.storage.sync.set({ accessToken }).then();
+  }
+
+  @Action
+  setExpiredToken(expiredToken: boolean) {
+    this.context.commit('_setExpiredToken', expiredToken);
+    browser.storage.sync.set({ expiredToken }).then();
   }
 
   @Action

@@ -80,7 +80,7 @@ export default class StreamsFollowing extends Vue {
         || deburr(value.nickname || value.login).toLowerCase()
           .includes(deburr(this.appStore.filterList.trim().toLowerCase()))),
       [
-        (value) => this.isEnabledFilterOnline && !value.online,
+        (value) => !value.online,
         this.getTextFilterStreamers,
       ],
       ['asc', this.appStore.filterOrderAsc ? 'asc' : 'desc'],
@@ -147,14 +147,10 @@ export default class StreamsFollowing extends Vue {
         this.user.id,
         this.appStore.auth?.accessToken,
       );
-      if (this.streamersOnline.length > 99) {
-        this.getBrowserAction().setBadgeText({ text: '99+' }).then();
-      } else if (this.streamersOnline.length > 0) {
-        this.getBrowserAction().setBadgeText({ text: this.streamersOnline.length.toString() })
-          .then();
-      } else {
-        this.getBrowserAction().setBadgeText({ text: '' }).then();
-      }
+      this.getBrowserAction().setBadgeBackgroundColor({
+        color: '#660099',
+      }).then();
+      await browser.runtime.sendMessage({ type: 'BADGE_COUNT', value: this.streamersOnline.length });
       if (force) {
         this.dumpDate = new Date();
       }

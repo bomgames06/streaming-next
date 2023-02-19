@@ -16,6 +16,7 @@ export default class StartApp extends Vue {
       const dark = await processStorage('dark');
       const language = await processStorage('language');
       const accessToken = await processStorage('accessToken');
+      const expiredToken = await processStorage('expiredToken');
       const filterOrderList = await processStorage('filterOrderList');
       const filterOrderAsc = await processStorage('filterOrderAsc');
       const filterOrderVodList = await processStorage('filterOrderVodList');
@@ -28,12 +29,15 @@ export default class StartApp extends Vue {
       this.$moment.locale(this.$i18n.locale.toLowerCase());
       document.documentElement.setAttribute('lang', this.$i18n.locale);
       this.appStore.setAccessToken(accessToken);
+      this.appStore.setExpiredToken(expiredToken);
       this.appStore.setFilterOrderListNative(filterOrderList || 'NAME');
       this.appStore.setFilterOrderAscNative(filterOrderAsc != null ? !!filterOrderAsc : true);
       this.appStore.setFilterOrderVodList(filterOrderVodList || 'time');
       this.appStore.setNotification(notification || 'none');
       this.appStore.setShowAlwaysOfflines(!!showAlwaysOfflines);
       this.appStore.setNotificationIds(notificationIds || []);
+
+      await browser.runtime.sendMessage({ type: 'START' });
 
       browser.storage.sync.set({ language: this.$i18n.locale }).then();
     } finally {

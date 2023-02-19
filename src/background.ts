@@ -36,6 +36,23 @@ async function processStorageSession(key: string): Promise<any> {
   return null;
 }
 
+async function expiredTokenHandler() {
+  getBrowserAction().setBadgeBackgroundColor({
+    color: 'red',
+  }).then();
+  getBrowserAction().setBadgeText({ text: '!' }).then();
+}
+
+async function badgeCountHandler(value: number) {
+  if (value > 99) {
+    getBrowserAction().setBadgeText({ text: '99+' }).then();
+  } else if (value > 0) {
+    getBrowserAction().setBadgeText({ text: value.toString() }).then();
+  } else {
+    getBrowserAction().setBadgeText({ text: '' }).then();
+  }
+}
+
 async function getUsers(userIds: string[], accessToken?: string): Promise<UserType[]> {
   const paritionValues = partition(userIds, 100);
   const values: UserType[] = [];
@@ -52,6 +69,7 @@ async function getUsers(userIds: string[], accessToken?: string): Promise<UserTy
           Authorization: `Bearer ${accessToken}`,
         },
       });
+      if (response.status === 401) throw Error('HTTP_401');
       const obj = await response.json();
 
       return obj.data.map((value: any): UserType => ({
@@ -133,6 +151,7 @@ async function getSelfUserId(accessToken: string): Promise<string> {
     },
     method: 'GET',
   });
+  if (response.status === 401) throw Error('HTTP_401');
   const obj = await response.json();
 
   return obj.data[0].id;
@@ -153,6 +172,7 @@ async function getStreamersOnlineFollowed(userId: string, accessToken: string)
       },
       method: 'GET',
     });
+    if (response.status === 401) throw Error('HTTP_401');
     const obj = await response.json();
 
     return {
@@ -170,7 +190,12 @@ async function countFollows() {
   try {
     const accessToken = await processStorage('accessToken');
     if (!accessToken) {
-      getBrowserAction().setBadgeText({ text: '' }).then();
+      const expiredToken = await processStorage('expiredToken');
+      if (expiredToken) {
+        expiredTokenHandler().then();
+      } else {
+        getBrowserAction().setBadgeText({ text: '' }).then();
+      }
       return;
     }
 
@@ -191,12 +216,15 @@ async function countFollows() {
 
     await getSessionStorage().set({ onlines: onlinesNews });
     count = onlinesNews.length;
-    if (count > 99) {
-      getBrowserAction().setBadgeText({ text: '99+' }).then();
-    } else if (count > 0) {
-      getBrowserAction().setBadgeText({ text: count.toString() }).then();
-    } else {
-      getBrowserAction().setBadgeText({ text: '' }).then();
+    getBrowserAction().setBadgeBackgroundColor({
+      color: '#660099',
+    }).then();
+    badgeCountHandler(count).then();
+  } catch (error: any) {
+    if (error.message === 'HTTP_401') {
+      browser.storage.sync.set({ accessToken: '' }).then();
+      browser.storage.sync.set({ expiredToken: true }).then();
+      expiredTokenHandler().then();
     }
   } finally {
     await getSessionStorage().set({ loadingFollow: false });
@@ -204,9 +232,16 @@ async function countFollows() {
   }
 }
 
+async function startHandler() {
+  const expiredToken = await processStorage('expiredToken');
+  if (expiredToken) {
+    expiredTokenHandler().then();
+  }
+}
+
 async function authHandler() {
   const state = generateState();
-  const request = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=true&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`;
+  const request = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=false&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`;
   const response = await browser.identity.launchWebAuthFlow({
     url: request,
     interactive: true,
@@ -222,6 +257,7 @@ async function authHandler() {
   await getSessionStorage().set({ onlines: [] });
   await getSessionStorage().set({ started: false });
   browser.storage.sync.set({ accessToken }).then();
+  browser.storage.sync.set({ expiredToken: false }).then();
   countFollows().then();
 
   return accessToken;
@@ -247,6 +283,12 @@ browser.runtime.onMessage.addListener(async (message) => {
   switch (message.type) {
     case 'AUTH':
       return authHandler();
+    case 'START':
+      return startHandler();
+    case 'EXPIRED_TOKEN':
+      return expiredTokenHandler();
+    case 'BADGE_COUNT':
+      return badgeCountHandler(message.value);
     case 'REVOKE':
       return revokeHandler(message.accessToken);
     default:

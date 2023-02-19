@@ -64,5 +64,7 @@
   "game": "Jogo",
   "fill_to_search": "Preencher para pesquisar",
   "profile": "Perfil",
-  "press_go_back": "Pressione para voltar"
+  "press_go_back": "Pressione para voltar",
+  "token_expired_message": "Token está expirado",
+  "auth_twitch_expire_message": "Autenticação da Twitch por padrão dura 60 dias"
 }

@@ -1,6 +1,9 @@
 <template>
   <v-container class="fill-height">
     <v-row class="flex-column fill-height" dense align="center" justify="center">
+      <v-col v-if="appStore.expiredToken" cols="auto">
+        <h2 class="text-body-1 error--text">{{$t('token_expired_message')}}</h2>
+      </v-col>
       <v-col cols="auto">
         <h2 class="text-body-1">{{$t('auth_mandatory_message')}}</h2>
       </v-col>
@@ -17,6 +20,9 @@
           </v-icon>
           <span class="white--text">{{$t('auth_twitch')}}</span>
         </v-btn>
+      </v-col>
+      <v-col cols="auto">
+        <h2 class="text-caption">* {{$t('auth_twitch_expire_message')}}</h2>
       </v-col>
     </v-row>
   </v-container>
@@ -38,6 +44,7 @@ export default class Auth extends Vue {
     try {
       const accessToken = await browser.runtime.sendMessage({ type: 'AUTH' });
       this.appStore.setAccessToken(accessToken);
+      this.appStore.setExpiredToken(false);
     } finally {
       this.loading = false;
     }
