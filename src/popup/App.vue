@@ -94,7 +94,7 @@
             ref="streamsFollowingRef"
             @click-category="clickCategory"
           />
-          <setttings v-if="screen === 'SETTINGS'" />
+          <settings v-if="screen === 'SETTINGS'" />
           <categories
             v-if="screen === 'CATEGORY'"
             ref="categoriesRef"
