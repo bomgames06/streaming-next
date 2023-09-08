@@ -23,9 +23,9 @@ export default class TwitchApiUsersService extends AxiosTwitchApiService {
   async getFollowFromUser(userId: string, accessToken?: string): Promise<UserType[]> {
     return AxiosTwitchApiService.fetchAll(async (page) => {
       // TODO: hotfix, change to other endpoint class
-      const response = await this.axios.get('/channels/followers', {
+      const response = await this.axios.get('/channels/followed', {
         params: {
-          broadcaster_id: userId,
+          user_id: userId,
           after: page || '',
           first: 100,
         },
@@ -40,9 +40,9 @@ export default class TwitchApiUsersService extends AxiosTwitchApiService {
         page: obj.pagination && obj.pagination.cursor,
         items: obj.data.map((value: any) => {
           const item: UserType = {
-            id: value.user_id,
-            login: value.user_login,
-            nickname: value.user_name,
+            id: value.broadcaster_id,
+            login: value.broadcaster_login,
+            nickname: value.broadcaster_name,
           };
           return item;
         }),
