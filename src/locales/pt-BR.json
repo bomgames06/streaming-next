@@ -1,70 +1,113 @@
 {
-  "auth_mandatory_message": "Precisamos autenticar para prosseguir",
-  "dark": "Escuro",
-  "light": "Claro",
-  "auth_twitch": "Autenticar na Twitch",
-  "profile_picture_alt": "Foto de perfil da twitch",
-  "streamer_thumbnail": "Imagem da transmissão de {name}",
-  "streamer_profile_thumbnail": "Imagem do perfil de {name}",
-  "viewers": "Espectadores",
-  "logout": "Sair",
-  "refresh": "Atualizar",
-  "filter": "Filtro",
-  "offline": "Offline",
-  "under_construction": "Ainda está sendo construído, cuidado para não pisar no cimento",
-  "settings": "Configurações",
-  "followed": "Seguindo",
-  "show_offlines": "Mostrar offlines",
-  "hide_offlines": "Esconder offlines",
-  "categories": "Categorias",
-  "category_thumbnail": "Imagem da categoria {name}",
-  "language": "Idioma",
-  "portuguese": "Português",
-  "portuguese_brazil": "Português - Brasil",
-  "english": "Inglês",
-  "korean": "Coreano",
-  "japanese": "Japonês",
-  "russian": "Russo",
-  "chinese": "Chinês",
-  "streamer_video_thumbnail": "Imagem do vídeo de {name}",
-  "videos": "Vídeos",
-  "fetch_more": "Buscar mais",
-  "search": "Pesquisar",
-  "filter_to_search": "Filtrar para procurar",
-  "open_category": "Abrir categoria",
-  "category": "Categoria",
-  "necessary_authentication_message": "É necessário autenticar",
-  "languages": "Idiomas",
-  "notifications": "Notificações",
-  "all": "Todos",
-  "partial": "Parcial",
-  "none": "Nenhum",
-  "dark_mode": "Modo dark",
-  "show_transmission_preview": "Mostrar preview da transmissão",
-  "show_offlines_always": "Mostrar offlines sempre",
-  "enable_notification": "Ativar notificação",
-  "disable_notification": "Desativar notificação",
-  "clips": "Clipes",
-  "24h": "24H",
-  "7d": "7 Dias",
-  "30d": "30 Dias",
-  "clean_notifications": "Limpar notificações",
-  "version": "Versão",
-  "creator": "Criador",
-  "sponsor": "Apoiar",
-  "fill_field_to_search_channels": "Preencha o campo \"{name}\" para buscar os canais",
-  "navbar": "Barra de navegação",
-  "order": "Ordenar",
-  "time": "Tempo",
-  "trending": "Popularidade",
-  "views": "Visualizações",
-  "asc": "Crescente",
-  "desc": "Decrescente",
-  "name": "Nome",
-  "game": "Jogo",
-  "fill_to_search": "Preencher para pesquisar",
-  "profile": "Perfil",
-  "press_go_back": "Pressione para voltar",
-  "token_expired_message": "Token está expirado",
-  "auth_twitch_expire_message": "Autenticação da Twitch por padrão dura 60 dias"
+  "appLayout": {
+    "accounts": "Contas",
+    "addAccount": "Adicionar",
+    "addAccountDialogTitle": "Adicionar conta",
+    "dark": "Escuro",
+    "language": "Idioma",
+    "light": "Claro",
+    "logout": "Sair"
+  },
+  "auth": {
+    "accountAlreadyAddedError": "Conta já foi cadastrada antes",
+    "authenticate": "Autenticar",
+    "differentAccountError": "Conta diferente",
+    "favorite": "Favorito",
+    "invalidAccounts": "Contas inválidas",
+    "logout": "Sair",
+    "mandatoryMessage": "Precisamos autenticar para prosseguir",
+    "notFavorite": "Não favorito",
+    "remove": "Remover",
+    "twitchAuth": "Autenticar na Twitch",
+    "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias"
+  },
+  "categoriesList": {
+    "appBarView": {
+      "language": "Idioma",
+      "languages": {
+        "chinese": "Chinês",
+        "english": "Inglês",
+        "japanese": "Japonês",
+        "korean": "Coreano",
+        "portuguese": "Português",
+        "russian": "Russo"
+      }
+    },
+    "searchMore": "Buscar mais"
+  },
+  "categoriesView": {
+    "searchMore": "Buscar mais"
+  },
+  "common": {
+    "close": "Fechar",
+    "loaded": "Carregado",
+    "loading": "Carregando",
+    "loadingError": "Erro para carregar aplicação",
+    "mandatoryField": "Campo obrigatório",
+    "projectName": "Streaming Next",
+    "systemError": "Erro no sistema",
+    "unauthorizedAccount": "Conta não está mais autorizada"
+  },
+  "languages": {
+    "en": "Inglês",
+    "pt-BR": "Português - Brasil"
+  },
+  "searchView": {
+    "fillFieldToSearchChannels": "Preencha o campo \"Pesquisar\" para buscar os canais",
+    "search": "Pesquisar",
+    "searchMore": "Buscar mais"
+  },
+  "settings": {
+    "cleanNotifications": "Limpar notificações",
+    "darkMode": "Modo dark",
+    "languages": "Idiomas",
+    "notificationType": {
+      "all": "Todos",
+      "none": "Nenhum",
+      "partial": "Parcial"
+    },
+    "showAlwaysOfflines": "Mostrar offlines sempre",
+    "sponsor": "Apoiar",
+    "title": "Configurações",
+    "version": "Versão: {version}"
+  },
+  "simpleLayout": {
+    "languageAriaLabelButton": "Idiomas",
+    "themeAriaLabelButton": {
+      "dark": "Tema escuro",
+      "light": "Tema claro"
+    }
+  },
+  "streamList": {
+    "appBarView": {
+      "clipPeriod": {
+        "24h": "24 horas",
+        "30d": "30 dias",
+        "7d": "7 dias",
+        "all": "Todos"
+      },
+      "filter": "Filtro"
+    },
+    "clips": "Clipes",
+    "menu": {
+      "category": "Categoria",
+      "clips": "Clipes",
+      "disableNotification": "Desabilitar notificação",
+      "enableNotification": "Ativar notificação",
+      "videos": "Vídeos"
+    },
+    "offline": "Offline",
+    "searchMore": "Buscar mais",
+    "spectators": "Espectador | Espectadores",
+    "streamerPreview": "Amostra da live de {name}",
+    "streamerProfile": "Imagem de perfil de {name}",
+    "videos": "Vídeos"
+  },
+  "streamView": {
+    "filter": "Filtro"
+  },
+  "streamsView": {
+    "hideOfflines": "Esconder offlines",
+    "showOfflines": "Mostrar offlines"
+  }
 }
