@@ -40,7 +40,7 @@ const previewImage = computed(() => {
     item.value.previewImage
   )
     return typeof item.value.previewImage === 'function'
-      ? item.value.previewImage(previewWidth, previewWidth * (1 / aspectRatio), props.dump)
+      ? item.value.previewImage(290, 290 * (1 / aspectRatio), props.dump)
       : item.value.previewImage
   if (item.value.type === 'twitch' && item.value.status === 'clip' && item.value.previewImage)
     return item.value.previewImage
