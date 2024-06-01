@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import type { AccountStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import StreamList from '@/components/listStream/StreamList.vue'
 import type {
   StreamItemLiveOfflineType,
@@ -11,7 +11,7 @@ import type {
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
 import AppBusiness from '@/services/business/appBusiness'
-import { deburr, orderBy, uniqBy } from 'lodash'
+import { debounce, deburr, orderBy, uniqBy } from 'lodash'
 import emitter from '@/events'
 import { includeUtil } from '@/utils/util'
 
@@ -25,6 +25,16 @@ const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
+const filter = ref<string>(system.streamFilter)
+
+const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
+watch(
+  () => system.streamFilter,
+  () => {
+    filterDebounce()
+  }
+)
+
 const itemsFiltered = computed(() =>
   orderBy(
     uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem),
@@ -32,12 +42,12 @@ const itemsFiltered = computed(() =>
     sorts.value
   )
 )
-const showOfflinesComp = computed(() => !!system.streamFilter || system.showAlwaysOfflines || showOfflines.value)
-const renderOfflinesComp = computed(() => !system.streamFilter && offlines.value.length && !system.showAlwaysOfflines)
+const showOfflinesComp = computed(() => !!filter.value || system.showAlwaysOfflines || showOfflines.value)
+const renderOfflinesComp = computed(() => !filter.value && offlines.value.length && !system.showAlwaysOfflines)
 const orders = computed(() => {
   const items: ((item: StreamItemLiveType) => string | number)[] = []
 
-  if (!system.streamFilter) items.push(orderStatus)
+  if (!filter.value) items.push(orderStatus)
   if (system.streamOrder === 'name') items.push(orderName)
   if (system.streamOrder === 'view') items.push(orderView)
   if (system.streamOrder === 'game') items.push(orderGame)
@@ -47,7 +57,7 @@ const orders = computed(() => {
 const sorts = computed(() => {
   const items: ('asc' | 'desc')[] = []
 
-  if (!system.streamFilter) items.push('desc')
+  if (!filter.value) items.push('desc')
   items.push(system.streamOrderSort ? 'asc' : 'desc')
 
   return items
@@ -79,11 +89,11 @@ function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
   if (!showOfflinesComp.value && value.status === 'offline') show = false
-  else if (system.streamFilter) {
-    if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, system.streamFilter)) show = false
+  else if (filter.value) {
+    if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
       ['game'].includes(system.streamOrder) &&
-      (value.status === 'offline' || !value.game || !includeUtil(value.game, system.streamFilter))
+      (value.status === 'offline' || !value.game || !includeUtil(value.game, filter.value))
     )
       show = false
   }

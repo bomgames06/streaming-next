@@ -2,30 +2,46 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
+import { onMounted, onUnmounted, ref } from 'vue'
+import Mousetrap from 'mousetrap'
 
 const system = useSystemStore()
 const { t } = useI18n()
+
+const filterTextFieldRef = ref<HTMLInputElement | null>(null)
+
+onMounted(() => {
+  Mousetrap.bind('alt+s', () => {
+    if (filterTextFieldRef.value) filterTextFieldRef.value.focus()
+  })
+})
+onUnmounted(() => {
+  Mousetrap.unbind('alt+s')
+})
 </script>
 
 <template>
   <v-text-field
-    :model-value="system.streamFilter"
+    ref="filterTextFieldRef"
+    v-model.trim="system.streamFilterComp"
     variant="outlined"
     :label="t('streamView.filter')"
     color="primary"
     autofocus
     single-line
-    @update:model-value="system.setStreamFilter(($event || '').trim())"
   />
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">
-      <v-btn v-bind="props" :icon="true" :size="system.appBarHeight" class="rounded-lg">
+      <v-btn v-bind="props" :icon="true" :size="system.appBarHeight" :aria-label="t('common.sort')" class="rounded-lg">
         <v-icon>mdi-sort</v-icon>
       </v-btn>
     </template>
     <v-list class="pa-0">
       <v-list-item
         :active="system.streamOrder === 'name'"
+        :aria-selected="system.streamOrder === 'name'"
+        :aria-sort="system.streamOrder === 'name' ? (system.streamOrderSort ? 'ascending' : 'descending') : ''"
+        :aria-label="t('streamView.appBarView.sort.name')"
         role="option"
         height="42"
         width="42"
@@ -41,6 +57,9 @@ const { t } = useI18n()
       </v-list-item>
       <v-list-item
         :active="system.streamOrder === 'view'"
+        :aria-selected="system.streamOrder === 'view'"
+        :aria-sort="system.streamOrder === 'view' ? (system.streamOrderSort ? 'ascending' : 'descending') : ''"
+        :aria-label="t('streamView.appBarView.sort.view')"
         height="42"
         width="42"
         class="pa-0 stream-order-item rounded-0"
@@ -55,6 +74,9 @@ const { t } = useI18n()
       </v-list-item>
       <v-list-item
         :active="system.streamOrder === 'game'"
+        :aria-selected="system.streamOrder === 'game'"
+        :aria-sort="system.streamOrder === 'game' ? (system.streamOrderSort ? 'ascending' : 'descending') : ''"
+        :aria-label="t('streamView.appBarView.sort.game')"
         height="42"
         width="42"
         class="pa-0 stream-order-item rounded-0"
@@ -69,7 +91,13 @@ const { t } = useI18n()
       </v-list-item>
     </v-list>
   </v-menu>
-  <v-btn :icon="true" :size="system.appBarHeight" class="rounded-lg" @click="emitter.emit('refresh')">
+  <v-btn
+    :icon="true"
+    :size="system.appBarHeight"
+    :aria-label="t('common.refresh')"
+    class="rounded-lg"
+    @click="emitter.emit('refresh')"
+  >
     <v-icon>mdi-refresh</v-icon>
   </v-btn>
 </template>

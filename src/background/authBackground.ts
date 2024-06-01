@@ -6,7 +6,7 @@ import type {
 } from '@/background/types/backgroundMessageType'
 import { generateState, twitchOAuthRevoke, twitchOAuthWebAuth } from '@/utils/util'
 
-browser.runtime.onMessage.addListener(async (message: BackgroundMessageType) => {
+browser.runtime.onMessage.addListener((message: BackgroundMessageType) => {
   switch (message.type) {
     case 'auth':
       return auth(message)
@@ -15,7 +15,6 @@ browser.runtime.onMessage.addListener(async (message: BackgroundMessageType) => 
     default:
       break
   }
-  return true
 })
 
 async function auth(message: AuthBackgroundMessageType) {

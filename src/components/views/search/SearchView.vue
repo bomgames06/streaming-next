@@ -5,11 +5,12 @@ import StreamList from '@/components/listStream/StreamList.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import AppBusiness from '@/services/business/appBusiness'
+import { debounce } from 'lodash'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
-system.setStreamNameFilterWithoutDebounce('')
+system.streamNameFilterComp = ''
 
 watch(
   () => system.accounts.twitch,
@@ -31,6 +32,7 @@ async function fetchChannels() {
   if (!system.streamNameFilter) {
     channels.items = []
     channels.cursor = undefined
+    return
   }
   system.loading()
   fetching.value = true
@@ -48,12 +50,13 @@ async function fetchChannels() {
     fetching.value = false
   }
 }
+const fetchChannelsDebounce = debounce(fetchChannels, 500)
 
 watch(
   () => system.streamNameFilter,
   () => {
     channels.cursor = undefined
-    fetchChannels()
+    fetchChannelsDebounce()
   }
 )
 </script>

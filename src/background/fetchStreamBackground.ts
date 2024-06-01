@@ -46,12 +46,11 @@ void fetchStreams()
 
 browser.alarms.onAlarm.addListener(fetchStreams)
 
-browser.runtime.onMessage.addListener(async (message: BackgroundMessageType) => {
+browser.runtime.onMessage.addListener((message: BackgroundMessageType) => {
   switch (message.type) {
     case 'fetchStream':
       return fetchStreams()
     default:
       break
   }
-  return true
 })

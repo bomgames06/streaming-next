@@ -10,14 +10,15 @@
   },
   "auth": {
     "accountAlreadyAddedError": "Conta já foi cadastrada antes",
+    "authAccount": "Autenticar {name}",
     "authenticate": "Autenticar",
     "differentAccountError": "Conta diferente",
     "favorite": "Favorito",
     "invalidAccounts": "Contas inválidas",
-    "logout": "Sair",
     "mandatoryMessage": "Precisamos autenticar para prosseguir",
     "notFavorite": "Não favorito",
     "remove": "Remover",
+    "removeAccount": "Remover {name}",
     "twitchAuth": "Autenticar na Twitch",
     "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias"
   },
@@ -45,6 +46,8 @@
     "loadingError": "Erro para carregar aplicação",
     "mandatoryField": "Campo obrigatório",
     "projectName": "Streaming Next",
+    "refresh": "Atualizar",
+    "sort": "Ordenar",
     "systemError": "Erro no sistema",
     "unauthorizedAccount": "Conta não está mais autorizada"
   },
@@ -68,7 +71,9 @@
     },
     "showAlwaysOfflines": "Mostrar offlines sempre",
     "sponsor": "Apoiar",
+    "sponsorProfile": "Apoiar {name}",
     "title": "Configurações",
+    "twitterProfile": "Twitter {name}",
     "version": "Versão: {version}"
   },
   "simpleLayout": {
@@ -86,7 +91,12 @@
         "7d": "7 dias",
         "all": "Todos"
       },
-      "filter": "Filtro"
+      "filter": "Filtro",
+      "sort": {
+        "time": "Tempo",
+        "trending": "Popularidade",
+        "views": "Visualização"
+      }
     },
     "clips": "Clipes",
     "menu": {
@@ -104,6 +114,13 @@
     "videos": "Vídeos"
   },
   "streamView": {
+    "appBarView": {
+      "sort": {
+        "game": "Jogo",
+        "name": "Nome",
+        "view": "Visualização"
+      }
+    },
     "filter": "Filtro"
   },
   "streamsView": {

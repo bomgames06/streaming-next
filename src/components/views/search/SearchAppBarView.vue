@@ -10,7 +10,7 @@ const mandatoryRule = (value: string) => !!value || t('common.mandatoryField')
 
 <template>
   <v-text-field
-    :model-value="system.streamNameFilter"
+    v-model.trim="system.streamNameFilter"
     variant="outlined"
     :label="t('searchView.search')"
     color="primary"
@@ -19,7 +19,6 @@ const mandatoryRule = (value: string) => !!value || t('common.mandatoryField')
     :rules="[mandatoryRule]"
     hide-details
     class="mr-2"
-    @update:model-value="system.setStreamNameFilter(($event || '').trim())"
   />
 </template>
 

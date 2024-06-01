@@ -51,7 +51,13 @@ const items: {
     persistent-clear
     @update:model-value="system.setLanguageCategoryStream"
   />
-  <v-btn :icon="true" :size="system.appBarHeight" class="rounded-lg" @click="emitter.emit('refresh')">
+  <v-btn
+    :icon="true"
+    :size="system.appBarHeight"
+    :aria-label="t('common.refresh')"
+    class="rounded-lg"
+    @click="emitter.emit('refresh')"
+  >
     <v-icon>mdi-refresh</v-icon>
   </v-btn>
 </template>

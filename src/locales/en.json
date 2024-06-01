@@ -10,14 +10,15 @@
   },
   "auth": {
     "accountAlreadyAddedError": "AccountStore already added",
+    "authAccount": "Authenticate {name}",
     "authenticate": "Authenticate",
     "differentAccountError": "Different account",
     "favorite": "Favorite",
     "invalidAccounts": "Invalid accounts",
-    "logout": "Logout",
     "mandatoryMessage": "We need to authenticate to proceed",
     "notFavorite": "Not favorite",
     "remove": "Remove",
+    "removeAccount": "Remove {name}",
     "twitchAuth": "Authenticate on Twitch",
     "twitchExpireMessage": "* Twitch authentication by default lasts 60 days"
   },
@@ -45,6 +46,8 @@
     "loadingError": "Error loading application",
     "mandatoryField": "Mandatory field",
     "projectName": "Streaming Next",
+    "refresh": "Refresh",
+    "sort": "Sort",
     "systemError": "System error",
     "unauthorizedAccount": "AccountStore is no longer authorized"
   },
@@ -68,7 +71,9 @@
     },
     "showAlwaysOfflines": "Always show offlines",
     "sponsor": "Sponsor",
+    "sponsorProfile": "Sponsor {name}",
     "title": "Settings",
+    "twitterProfile": "Twitter {name}",
     "version": "Version: {version}"
   },
   "simpleLayout": {
@@ -86,7 +91,12 @@
         "7d": "7 days",
         "all": "All"
       },
-      "filter": "Filter"
+      "filter": "Filter",
+      "sort": {
+        "time": "Time",
+        "trending": "Trending",
+        "views": "View"
+      }
     },
     "clips": "Clips",
     "menu": {
@@ -104,6 +114,13 @@
     "videos": "Videos"
   },
   "streamView": {
+    "appBarView": {
+      "sort": {
+        "game": "Game",
+        "name": "Name",
+        "view": "View"
+      }
+    },
     "filter": "Filter"
   },
   "streamsView": {

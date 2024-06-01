@@ -38,7 +38,7 @@ const emit = defineEmits<{
           variant="text"
           :icon="true"
           size="x-small"
-          :aria-label="t('auth.logout')"
+          :aria-label="t('auth.remove')"
           @click.stop="emit('delete')"
           @keydown.space.stop="emit('delete')"
           @keydown.enter.stop="emit('delete')"
@@ -51,7 +51,11 @@ const emit = defineEmits<{
         <span>{{ props.account.name }}</span>
       </v-list-item-title>
     </v-list-item>
-    <v-list-item v-else> not implemented </v-list-item>
+    <v-list-item v-else :title="props.textAuth" :class="props.colorClass" @click="emit('auth')">
+      <template #prepend>
+        <v-icon>{{ props.iconAuth }}</v-icon>
+      </template>
+    </v-list-item>
   </template>
   <template v-else>
     <template v-if="props.account && props.account.invalid">
@@ -61,6 +65,7 @@ const emit = defineEmits<{
         :loading="props.authenticating"
         :disabled="props.authenticating"
         :color="props.colorAuth"
+        :aria-label="t('auth.authAccount', { name: props.account.name })"
         class="my-1 rounded-e-0"
         @click="emit('auth')"
       >
@@ -82,6 +87,7 @@ const emit = defineEmits<{
         :icon="true"
         :loading="props.authenticating"
         :disabled="props.authenticating"
+        :aria-label="t('auth.removeAccount', { name: props.account.name })"
         class="rounded-s-0 rounded-e"
         @click="emit('delete')"
       >

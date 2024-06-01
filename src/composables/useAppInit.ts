@@ -35,14 +35,13 @@ export default function useAppInit() {
   }
 
   browser.runtime.onMessage.addListener(appMessage)
-  async function appMessage(message: ApplicationMessageType) {
+  function appMessage(message: ApplicationMessageType) {
     switch (message.type) {
       case 'fetchAccounts':
         return fetchAccounts()
       default:
         break
     }
-    return true
   }
 
   async function fetchAccounts() {

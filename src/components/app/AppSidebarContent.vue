@@ -1,10 +1,25 @@
 <script setup lang="ts">
 import type { ViewStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
+import { onMounted, onUnmounted } from 'vue'
+import Mousetrap from 'mousetrap'
 
 const sidebar = defineModel<boolean>('sidebar')
 
 const system = useSystemStore()
+
+onMounted(() => {
+  Mousetrap.bind('alt+1', () => setView('streams'))
+  Mousetrap.bind('alt+2', () => system.accounts.twitch && setView('categories'))
+  Mousetrap.bind('alt+3', () => system.accounts.twitch && setView('search'))
+  Mousetrap.bind('alt+a', () => setView('settings'))
+})
+onUnmounted(() => {
+  Mousetrap.unbind('alt+1')
+  Mousetrap.unbind('alt+2')
+  Mousetrap.unbind('alt+3')
+  Mousetrap.unbind('alt+a')
+})
 
 function setView(view: ViewStore) {
   system.setView(view)

@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import useSystemStore from '@/store/system/useSystemStore'
+import { useI18n } from 'vue-i18n'
 
 const system = useSystemStore()
+const { t } = useI18n()
 </script>
 
 <template>
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">
-      <v-btn v-bind="props" :icon="true" :size="system.appBarHeight" class="rounded-lg">
+      <v-btn v-bind="props" :icon="true" :size="system.appBarHeight" :aria-label="t('common.sort')" class="rounded-lg">
         <v-icon>mdi-sort</v-icon>
       </v-btn>
     </template>
     <v-list class="pa-0">
       <v-list-item
         :active="system.videoOrder === 'time'"
+        :aria-selected="system.videoOrder === 'time'"
+        :aria-label="t('streamList.appBarView.sort.time')"
         role="option"
         height="42"
         width="42"
@@ -26,6 +30,8 @@ const system = useSystemStore()
       </v-list-item>
       <v-list-item
         :active="system.videoOrder === 'trending'"
+        :aria-selected="system.videoOrder === 'trending'"
+        :aria-label="t('streamList.appBarView.sort.trending')"
         height="42"
         width="42"
         class="pa-0 stream-order-item rounded-0"
@@ -37,6 +43,8 @@ const system = useSystemStore()
       </v-list-item>
       <v-list-item
         :active="system.videoOrder === 'views'"
+        :aria-selected="system.videoOrder === 'views'"
+        :aria-label="t('streamList.appBarView.sort.views')"
         height="42"
         width="42"
         class="pa-0 stream-order-item rounded-0"

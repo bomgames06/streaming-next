@@ -17,7 +17,7 @@ import { locale } from '@/plugins/i18n'
 import type { Composer } from 'vue-i18n'
 import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
-import { compact, debounce } from 'lodash'
+import { compact } from 'lodash'
 import type {
   AccountStore,
   AccountDataStore,
@@ -84,6 +84,10 @@ const useSystemStore = defineStore('System', () => {
   const validAccounts = computed(() => {
     return compact(Object.values(accounts.value)).filter((value) => !value.invalid)
   })
+
+  // Computed value
+  const streamFilterComp = computed({ get: () => streamFilter.value, set: setStreamFilter })
+  const streamNameFilterComp = computed({ get: () => streamNameFilter.value, set: setStreamNameFilter })
 
   // System actions
   function setScreen(value: ScreenStore) {
@@ -290,6 +294,9 @@ const useSystemStore = defineStore('System', () => {
     hasAccount,
     mainAccount,
     validAccounts,
+    // computed value
+    streamFilterComp,
+    streamNameFilterComp,
     // utils
     getAccountByType,
     // actions system
@@ -312,10 +319,7 @@ const useSystemStore = defineStore('System', () => {
     setLanguage,
     setShowAlwaysOfflines,
     // view action
-    setStreamFilter: debounce(setStreamFilter, 250),
     setStreamOrder,
-    setStreamNameFilter: debounce(setStreamNameFilter, 2000),
-    setStreamNameFilterWithoutDebounce: setStreamNameFilter,
     // video view action,
     setVideoOrder,
     // clip view action,
