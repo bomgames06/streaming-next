@@ -95,6 +95,8 @@ onUnmounted(() => {
     :icon="true"
     :size="system.appBarHeight"
     :aria-label="t('common.refresh')"
+    :disabled="system.isRefreshing"
+    :loading="system.isRefreshing"
     class="rounded-lg"
     @click="emitter.emit('refresh')"
   >

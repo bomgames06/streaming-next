@@ -5,14 +5,36 @@ import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import AuthActions from '@/components/auth/AuthActions.vue'
+import type { User } from '@/types/userType'
 
+const system = useSystemStore()
 const theme = useTheme()
 const i18n = useI18n()
 
 const sidebar = ref<boolean>(false)
 const sidebarComp = computed(() => sidebar)
+const authenticating = ref<boolean>(false)
 
-const system = useSystemStore()
+async function authenticated({ token, user }: { token: string; user: User }): Promise<void> {
+  system.loading()
+  authenticating.value = true
+  try {
+    system.addAccount({
+      type: user.type,
+      accountId: user.id,
+      name: user.name,
+      login: user.login,
+      avatarUrl: user.avatarUrl,
+      token,
+    })
+
+    await system.fetchAccounts()
+    system.setScreen('home')
+  } finally {
+    system.loaded()
+    authenticating.value = false
+  }
+}
 </script>
 
 <template>
@@ -20,7 +42,7 @@ const system = useSystemStore()
     <v-app-bar :height="system.appBarHeight" class="app-bar">
       <div class="d-flex w-100 position-relative align-center">
         <div class="d-flex align-center profile-content">
-          <v-progress-linear v-if="!!system.loadingCount" absolute indeterminate location="bottom" color="primary" />
+          <v-progress-linear v-if="system.isLoading" absolute indeterminate location="bottom" color="primary" />
           <v-app-bar-nav-icon :size="system.appBarHeight" class="rounded-lg" @click="sidebar = !sidebar" />
           <v-menu :close-on-content-click="false">
             <template #activator="{ props }">
@@ -48,7 +70,7 @@ const system = useSystemStore()
                     </template>
                   </v-list-item>
                 </template>
-                <AuthActions list-item />
+                <AuthActions v-model:authenticating="authenticating" list-item @authenticated="authenticated" />
               </v-list-group>
               <v-list-group color="primary" class="group-indent">
                 <template #activator="{ props }">

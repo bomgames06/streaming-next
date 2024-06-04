@@ -8,7 +8,6 @@ import moment from 'moment'
 export function twitchOAuthWebAuth(state: string, forceVerify?: boolean): string {
   return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/authorize?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=${forceVerify ?? false}&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`
 }
-
 export function twitchOAuthRevoke(token: string): string {
   return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/revoke?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&token=${token}`
 }
@@ -22,8 +21,8 @@ export function generateState(): string {
   return value
 }
 
-export function accountTypeColor(accountType: AccountStoreType, bg?: boolean): string {
-  if (accountType === 'twitch') return `${bg ? 'bg-' : ''}deep-purple`
+export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, text?: boolean): string {
+  if (accountType === 'twitch') return `${bg ? 'bg-' : text ? 'text-' : ''}twitch`
   else throw new Error('accountType is undefined')
 }
 
@@ -71,4 +70,8 @@ export function getTimeByClipPeriod(period?: ClipPeriodStore): Moment | undefine
   if (period === '7d') return moment().subtract('7', 'days')
   if (period === '30d') return moment().subtract('30', 'days')
   return undefined
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => void setTimeout(resolve, ms))
 }

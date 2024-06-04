@@ -25,7 +25,7 @@ async function auth(type: AccountStoreType, forceVerify?: boolean): Promise<void
   try {
     const { token, user } = await AppBusiness.auth(type, forceVerify)
 
-    if (!forceVerify && system.accounts[type] && system.accounts[type]?.accountId !== user.id) {
+    if (type === 'twitch' && !forceVerify && system.accounts[type] && system.accounts[type]?.accountId !== user.id) {
       void AppBusiness.revoke(type, token)
       return await auth(type, true)
     }

@@ -68,6 +68,7 @@ function refresh() {
 const fetching = ref(false)
 async function fetchCategories(category?: CategoryItemType) {
   system.loading()
+  system.refreshing()
   fetching.value = true
   try {
     const account = system.accounts.twitch
@@ -81,6 +82,7 @@ async function fetchCategories(category?: CategoryItemType) {
     if (category) categorySelected.value = category
   } finally {
     system.loaded()
+    system.refreshed()
     fetching.value = false
   }
 }

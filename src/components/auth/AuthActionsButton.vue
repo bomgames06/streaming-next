@@ -57,7 +57,7 @@ const emit = defineEmits<{
       </template>
     </v-list-item>
   </template>
-  <template v-else>
+  <div v-else class="d-flex align-center">
     <template v-if="props.account && props.account.invalid">
       <v-btn
         size="small"
@@ -66,7 +66,7 @@ const emit = defineEmits<{
         :disabled="props.authenticating"
         :color="props.colorAuth"
         :aria-label="t('auth.authAccount', { name: props.account.name })"
-        class="my-1 rounded-e-0"
+        class="my-1 rounded-e-0 flex-grow-1"
         @click="emit('auth')"
       >
         <v-icon size="x-large" class="mr-1">{{ props.iconAuth }}</v-icon>
@@ -100,14 +100,14 @@ const emit = defineEmits<{
         :loading="props.authenticating"
         :disabled="props.authenticating"
         :color="props.colorAuth"
-        class="my-1"
+        class="my-1 flex-grow-1"
         @click="emit('auth')"
       >
         <v-icon size="x-large" class="mr-2">{{ props.iconAuth }}</v-icon>
         <span>{{ props.textAuth }}</span>
       </v-btn>
     </template>
-  </template>
+  </div>
 </template>
 
 <style scoped></style>

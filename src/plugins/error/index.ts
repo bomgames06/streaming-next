@@ -7,7 +7,7 @@ const errorPlugin: Plugin = {
   install(vue) {
     vue.config.errorHandler = (err) => {
       if (isAxiosError(err)) {
-        if (err.status === HttpStatusCode.Unauthorized) {
+        if (err.response?.status === HttpStatusCode.Unauthorized) {
           toastr.error(i18n.global.t('common.unauthorizedAccount'))
           throw err
         }

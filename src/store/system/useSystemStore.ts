@@ -42,6 +42,7 @@ const useSystemStore = defineStore('System', () => {
   const view = ref<ViewStore>('streams')
   const viewData = ref<ViewDataStore>()
   const loadingCount = ref<number>(0)
+  const refreshingCount = ref<number>(0)
   const timer = ref<number>(Date.now())
   const headerAppBarView = ref<HeaderAppBarViewStore>()
 
@@ -84,6 +85,8 @@ const useSystemStore = defineStore('System', () => {
   const validAccounts = computed(() => {
     return compact(Object.values(accounts.value)).filter((value) => !value.invalid)
   })
+  const isLoading = computed(() => !!loadingCount.value)
+  const isRefreshing = computed(() => !!refreshingCount.value)
 
   // Computed value
   const streamFilterComp = computed({ get: () => streamFilter.value, set: setStreamFilter })
@@ -104,6 +107,12 @@ const useSystemStore = defineStore('System', () => {
   }
   function loaded() {
     if (loadingCount.value > 0) loadingCount.value -= 1
+  }
+  function refreshing() {
+    refreshingCount.value += 1
+  }
+  function refreshed() {
+    if (refreshingCount.value > 0) refreshingCount.value -= 1
   }
   function updateTimer() {
     timer.value = Date.now()
@@ -164,7 +173,7 @@ const useSystemStore = defineStore('System', () => {
     }
     saveAccounts()
   }
-  function addAccount(account: Omit<AccountStore, 'id' | 'invalid' | 'favorite' | 'notifications'>) {
+  function addAccount(account: Omit<AccountStore, 'id' | 'invalid'>) {
     const accountItem = accounts.value[account.type]
     if (accountItem) {
       accountItem.invalid = false
@@ -195,6 +204,12 @@ const useSystemStore = defineStore('System', () => {
     const value = Object.values(accounts.value).find((value) => value.token === token)
     if (!value) return
     value.invalid = true
+    saveAccounts()
+  }
+  function updateTokenAccountByToken(token: string, newToken: string) {
+    const value = Object.values(accounts.value).find((value) => value.token === token)
+    if (!value) return
+    value.token = newToken
     saveAccounts()
   }
   function addNotification(accountType: AccountStoreType, id: string) {
@@ -268,6 +283,7 @@ const useSystemStore = defineStore('System', () => {
     view,
     viewData,
     loadingCount,
+    refreshingCount,
     timer,
     headerAppBarView,
     // storage
@@ -294,6 +310,8 @@ const useSystemStore = defineStore('System', () => {
     hasAccount,
     mainAccount,
     validAccounts,
+    isLoading,
+    isRefreshing,
     // computed value
     streamFilterComp,
     streamNameFilterComp,
@@ -304,6 +322,8 @@ const useSystemStore = defineStore('System', () => {
     setView,
     loading,
     loaded,
+    refreshing,
+    refreshed,
     updateTimer,
     setHeaderAppBarView,
     // actions storage
@@ -311,6 +331,7 @@ const useSystemStore = defineStore('System', () => {
     addAccount,
     removeAccount,
     invalidAccountByToken,
+    updateTokenAccountByToken,
     addNotification,
     removeNotification,
     cleanNotification,

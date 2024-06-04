@@ -10,17 +10,19 @@ import type {
   StreamItemLiveType,
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
-import AppBusiness from '@/services/business/appBusiness'
 import { debounce, deburr, orderBy, uniqBy } from 'lodash'
 import emitter from '@/events'
 import { includeUtil } from '@/utils/util'
+import TwitchBusiness from '@/services/business/twitchBusiness'
+import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
+import browser from 'webextension-polyfill'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
-const offlines = ref<StreamItemLiveOfflineType[]>([])
+const offlines = ref<StreamItemLiveType[]>([])
 const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
@@ -51,6 +53,7 @@ const orders = computed(() => {
   if (system.streamOrder === 'name') items.push(orderName)
   if (system.streamOrder === 'view') items.push(orderView)
   if (system.streamOrder === 'game') items.push(orderGame)
+  items.push(orderType)
 
   return items
 })
@@ -59,6 +62,7 @@ const sorts = computed(() => {
 
   if (!filter.value) items.push('desc')
   items.push(system.streamOrderSort ? 'asc' : 'desc')
+  items.push('asc')
 
   return items
 })
@@ -82,7 +86,12 @@ function orderView(value: StreamItemLiveType) {
   return value.status === 'online' && value.viewerCount ? value.viewerCount : orderName(value)
 }
 function orderGame(value: StreamItemLiveType) {
-  return value.status === 'online' ? deburr(value.game).toLowerCase() || '' : orderName(value)
+  return value.status === 'online' && value.type === 'twitch'
+    ? deburr(value.game).toLowerCase() || ''
+    : orderName(value)
+}
+function orderType(value: StreamItemType) {
+  return value.type
 }
 
 function filterItem(value: StreamItemLiveType): boolean {
@@ -93,7 +102,7 @@ function filterItem(value: StreamItemLiveType): boolean {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
       ['game'].includes(system.streamOrder) &&
-      (value.status === 'offline' || !value.game || !includeUtil(value.game, filter.value))
+      (value.status === 'offline' || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
     )
       show = false
   }
@@ -101,36 +110,61 @@ function filterItem(value: StreamItemLiveType): boolean {
   return show
 }
 
+watch(() => system.validAccounts, fetchData)
+
+let fetching = 0
 async function fetchData() {
+  if (fetching) {
+    fetching += 1
+    return
+  }
+  fetching += 1
+
   system.loading()
+  system.refreshing()
   if (fetchTimeout.value) {
     clearTimeout(fetchTimeout.value)
     fetchTimeout.value = undefined
   }
   try {
-    const onlinesFetched: Record<AccountStore['id'], StreamItemLiveOnlineType[]> = await fetchOnline()
+    const onlinesFetched: Record<AccountStore['id'], StreamItemLiveOnlineType[]> = await fetchOnlineTwitch()
     const itemsFetched: StreamItemLiveOnlineType[] = []
     Object.values(onlinesFetched).forEach((value) => itemsFetched.push(...value))
     dump.value = Date.now().toString()
     onlines.value = itemsFetched
     offlines.value = []
 
-    offlines.value = await fetchOfflines(onlinesFetched)
+    offlines.value = await fetchOfflinesTwitch(onlinesFetched)
   } finally {
     system.loaded()
-    fetchTimeout.value = setTimeout(fetchData, 60000)
+    system.refreshed()
+    fetchTimeout.value = setTimeout(fetchData, 60000 * 5)
+    fetching -= 1
+    if (fetching) void fetchData()
   }
 }
 
-async function fetchOnline(): Promise<Record<AccountStore['id'], StreamItemLiveOnlineType[]>> {
+async function fetchOnlineTwitch(): Promise<Record<AccountStore['id'], StreamItemLiveOnlineType[]>> {
   system.loading()
   try {
     const promises: Promise<StreamItemLiveOnlineType[]>[] = []
-    system.validAccounts.forEach((account) => promises.push(AppBusiness.getStreamersOnlineFollowed(account)))
+    system.validAccounts
+      .filter((value) => value.type === 'twitch')
+      .forEach((account) => promises.push(TwitchBusiness.getStreamersOnlineFollowed(account.token, account.accountId)))
     const responses = await Promise.all(promises)
 
     const items: Record<AccountStore['id'], StreamItemLiveOnlineType[]> = {}
-    responses.forEach((value, idx) => (items[system.validAccounts[idx].id] = value))
+    let counts = 0
+    responses.forEach((value, idx) => {
+      items[system.validAccounts[idx].id] = value
+      counts += value.length
+    })
+
+    const message: BackgroundMessageType = {
+      type: 'setCountBadge',
+      count: counts,
+    }
+    void browser.runtime.sendMessage(message)
 
     return items
   } finally {
@@ -138,23 +172,26 @@ async function fetchOnline(): Promise<Record<AccountStore['id'], StreamItemLiveO
   }
 }
 
-async function fetchOfflines(
+async function fetchOfflinesTwitch(
   exclude: Record<AccountStore['id'], StreamItemLiveOnlineType[]>
 ): Promise<StreamItemLiveOfflineType[]> {
   system.loading()
   try {
     const promises: Promise<StreamItemLiveOfflineType[]>[] = []
-    system.validAccounts.forEach((account) =>
-      promises.push(
-        AppBusiness.getStreamersOfflineFollowed(
-          account,
-          exclude[account.id].map((value) => value.id)
+    system.validAccounts
+      .filter((value) => value.type === 'twitch')
+      .forEach((account) =>
+        promises.push(
+          TwitchBusiness.getStreamersOfflineFollowed(
+            account.token,
+            account.accountId,
+            exclude[account.id].map((value) => value.id)
+          )
         )
       )
-    )
 
     const responses = await Promise.all(promises)
-    return responses.reduce((acc, current) => void acc.push(...current) ?? acc, [])
+    return responses.reduce((acc, current) => void acc.push(...current) || acc, [])
   } finally {
     system.loaded()
   }

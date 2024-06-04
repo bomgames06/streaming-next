@@ -36,7 +36,9 @@ async function authenticated({ token, user }: { token: string; user: User }): Pr
   <v-row align="center" justify="center" class="h-100">
     <v-col cols="auto" class="text-center">
       <p>{{ t('auth.mandatoryMessage') }}</p>
-      <AuthButtons v-model:authenticating="authenticating" @authenticated="authenticated" />
+      <div class="d-flex flex-column">
+        <AuthButtons v-model:authenticating="authenticating" @authenticated="authenticated" />
+      </div>
       <small class="d-block text-medium-emphasis">{{ t('auth.twitchExpireMessage') }}</small>
     </v-col>
   </v-row>

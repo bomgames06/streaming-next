@@ -7,6 +7,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
+import { accountTypeColor } from '@/utils/util'
 
 const system = useSystemStore()
 const { t, locale } = useI18n()
@@ -34,11 +35,7 @@ const menu = reactive({
 
 const item = computed(() => props.item)
 const previewImage = computed(() => {
-  if (
-    item.value.type === 'twitch' &&
-    (item.value.status === 'online' || item.value.status === 'video') &&
-    item.value.previewImage
-  )
+  if ((item.value.status === 'online' || item.value.status === 'video') && item.value.previewImage)
     return typeof item.value.previewImage === 'function'
       ? item.value.previewImage(290, 290 * (1 / aspectRatio), props.dump)
       : item.value.previewImage
@@ -75,7 +72,7 @@ function equals(a: StreamItemType, b: StreamItemType) {
 }
 
 function formatStreamDuration(value: StreamItemType) {
-  if (value.status === 'online' && value.startedAt)
+  if (value.status === 'online' && value.type === 'twitch' && value.startedAt)
     return moment.value.duration(moment.value(system.timer).diff(value.startedAt)).format('hh:mm:ss', { trim: false })
   if (value.status === 'video' && value.duration)
     return moment.value.duration(value.duration, 'seconds').format('hh:mm:ss', { trim: false })
@@ -84,7 +81,7 @@ function formatStreamDuration(value: StreamItemType) {
 }
 
 function showMenu(event: PointerEvent) {
-  if (detailItem.value || props.disableContextMenu) return
+  if (detailItem.value || props.disableContextMenu || item.value.type !== 'twitch') return
   menu.x = event.clientX
   menu.y = event.clientY
   menuShow.value = item.value
@@ -99,10 +96,12 @@ function enableDetail() {
 }
 
 function enableVideo() {
+  if (item.value.type !== 'twitch') return
   enableDetail()
   emit('menuItemClick', { type: 'video', item: item.value })
 }
 function enableClip() {
+  if (item.value.type !== 'twitch') return
   enableDetail()
   emit('menuItemClick', { type: 'clip', item: item.value })
 }
@@ -122,7 +121,7 @@ function closeMenu(value?: boolean) {
       @contextmenu.prevent="showMenu"
     >
       <v-menu
-        v-if="isLiveType(item)"
+        v-if="isLiveType(item) && item.type === 'twitch'"
         :model-value="menuShow && equals(menuShow, item)"
         :target="[menu.x, menu.y]"
         @close="closeMenu()"
@@ -158,6 +157,7 @@ function closeMenu(value?: boolean) {
               :src="previewImage"
               :aspect-ratio="aspectRatio"
               :width="previewWidth"
+              cover
               eager
               :alt="t('streamList.streamerPreview', { name: item.name })"
             />
@@ -190,7 +190,14 @@ function closeMenu(value?: boolean) {
         </div>
       </template>
       <v-list-item-title :title="spectatorsText" class="line-height-normal">
-        <div class="d-inline text-body-2 line-height-normal font-weight-black">{{ item.name }}</div>
+        <v-icon v-if="item.type === 'twitch'" :color="accountTypeColor('twitch')" size="x-small" class="mr-1"
+          >mdi-twitch</v-icon
+        >
+        <div
+          :class="`d-inline text-body-2 line-height-normal font-weight-black ${accountTypeColor(item.type, false, true)}`"
+        >
+          {{ item.name }}
+        </div>
         <div
           v-if="(item.status === 'online' || item.status === 'video' || item.status === 'clip') && spectatorsText"
           class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold"
@@ -206,7 +213,7 @@ function closeMenu(value?: boolean) {
       </template>
       <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
         <v-list-item-subtitle
-          v-if="item.status === 'online' && item.game"
+          v-if="item.status === 'online' && item.type === 'twitch' && item.game"
           :title="item.game"
           class="text-caption line-height-normal font-weight-bold"
           >{{ item.game }}</v-list-item-subtitle
@@ -252,6 +259,15 @@ function closeMenu(value?: boolean) {
   position: absolute;
   top: 0;
   right: 0;
+  margin: 1px;
+  padding: 2px;
+  line-height: 1;
+  font-size: 10px !important;
+}
+.account-type-content {
+  position: absolute;
+  top: 0;
+  left: 0;
   margin: 1px;
   padding: 2px;
   line-height: 1;

@@ -9,7 +9,6 @@ import type { User } from '@/types/userType'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type {
   StreamItemClipType,
-  StreamItemLiveOfflineType,
   StreamItemLiveOnlineType,
   StreamItemLiveType,
   StreamItemVideoType,
@@ -18,33 +17,26 @@ import type { CategoryItemType } from '@/components/listCategories/types/categor
 
 async function handlerAccounts<T>(
   type: AccountStoreType,
-  handler: { [key in AccountStoreType]: () => Promise<T> }
+  handler: { [key in AccountStoreType]?: () => Promise<T> }
 ): Promise<T> {
-  if (type === 'twitch') return handler[type]()
+  if (type === 'twitch' && handler['twitch']) return handler['twitch']()
   else throw new Error('Type is undefined')
 }
 
 const AppBusiness = {
   async auth(type: AccountStoreType, forceVerify?: boolean): Promise<{ token: string; user: User }> {
-    return handlerAccounts(type, { twitch: async () => TwitchBusiness.auth(forceVerify) })
-  },
-  async revoke(type: AccountStoreType, token: string): Promise<void> {
-    return handlerAccounts(type, { twitch: async () => TwitchBusiness.revoke(token) })
-  },
-  async getSelfUser(token: string, type: AccountStoreType): Promise<User> {
-    return handlerAccounts(type, { twitch: async () => TwitchBusiness.getSelfUser(token) })
-  },
-  async getStreamersOnlineFollowed(account: AccountStore): Promise<StreamItemLiveOnlineType[]> {
-    return handlerAccounts(account.type, {
-      twitch: async () => TwitchBusiness.getStreamersOnlineFollowed(account.token, account.accountId),
+    return handlerAccounts(type, {
+      twitch: async () => TwitchBusiness.auth(forceVerify),
     })
   },
-  async getStreamersOfflineFollowed(
-    account: AccountStore,
-    excludeIds?: string[]
-  ): Promise<StreamItemLiveOfflineType[]> {
-    return handlerAccounts(account.type, {
-      twitch: async () => TwitchBusiness.getStreamersOfflineFollowed(account.token, account.accountId, excludeIds),
+  async revoke(type: AccountStoreType, token: string): Promise<void> {
+    return handlerAccounts(type, {
+      twitch: async () => TwitchBusiness.revoke(token),
+    })
+  },
+  async getSelfUser(token: string, type: AccountStoreType): Promise<User> {
+    return handlerAccounts(type, {
+      twitch: async () => TwitchBusiness.getSelfUser(token),
     })
   },
   async getUserVideosArchive(

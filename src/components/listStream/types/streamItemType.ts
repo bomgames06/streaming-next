@@ -6,14 +6,14 @@ export type StreamItemLiveOnlineType = {
   status: 'online'
   login: string
   name: string
-  gameId?: string
-  game?: string
-  startedAt: Moment
-  viewerCount?: number
   title?: string
+  viewerCount?: number
 } & {
   type: Extract<AccountStoreType, 'twitch'>
   previewImage?: ((width: number, height: number, dump?: string) => string) | string
+  gameId?: string
+  game?: string
+  startedAt: Moment
 }
 export type StreamItemLiveOfflineType = {
   id: string

@@ -75,6 +75,7 @@ const fetching = ref(false)
 async function fetchStreams() {
   if (!categorySelected.value) return
   system.loading()
+  system.refreshing()
   fetching.value = true
   try {
     const response = await AppBusiness.getStreamsByCategory(
@@ -90,6 +91,7 @@ async function fetchStreams() {
     streams.cursor = response.cursor
   } finally {
     system.loaded()
+    system.refreshed()
     fetching.value = false
   }
 }

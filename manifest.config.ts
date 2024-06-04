@@ -20,7 +20,7 @@ type ManifestBrowser = ManifestBrowserPrefix<Manifest.WebExtensionManifest>
 
 function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
   let extensionPages = ''
-  extensionPages += command === 'serve' ? "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';" : ''
+  extensionPages += "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   extensionPages += `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
   extensionPages += `connect-src 'self' https://api.twitch.tv https://id.twitch.tv https://static-cdn.jtvnw.net${command === 'serve' ? ' ws://localhost:*' : ''};`
   extensionPages += `img-src 'self' https://vod-secure.twitch.tv https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv data:${command === 'serve' ? ' http://localhost:*' : ''};`
@@ -30,24 +30,14 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
   return {
     name: '__MSG_appName__',
     description: '__MSG_appDesc__',
-    '{{chrome}}.manifest_version': 3,
-    '{{firefox}}.manifest_version': 2,
+    manifest_version: 3,
     default_locale: 'en',
     icons: {
       '16': 'icons/16.png',
       '48': 'icons/48.png',
       '128': 'icons/128.png',
     },
-    '{{chrome}}.action': {
-      default_popup: 'src/popup.html',
-      default_title: 'Streaming Next',
-      default_icon: {
-        '16': 'icons/16.png',
-        '48': 'icons/48.png',
-        '128': 'icons/128.png',
-      },
-    },
-    '{{firefox}}.browser_action': {
+    action: {
       default_popup: 'src/popup.html',
       default_title: 'Streaming Next',
       default_icon: {
@@ -60,14 +50,12 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
       page: 'src/option.html',
     },
     background: {
-      '{{chrome}}.service_worker': 'src/background.ts',
-      '{{firefox}}.scripts': ['src/background.ts'],
+      service_worker: 'src/background.ts',
     },
-    permissions: ['identity', 'storage', 'notifications', 'alarms'],
-    '{{chrome}}.content_security_policy': {
+    permissions: ['identity', 'storage', 'notifications', 'alarms', 'debugger'],
+    content_security_policy: {
       extension_pages: extensionPages,
     },
-    '{{firefox}}.content_security_policy': extensionPages,
   }
 }
 

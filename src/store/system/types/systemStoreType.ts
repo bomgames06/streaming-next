@@ -1,7 +1,7 @@
 export type AccountStoreType = 'twitch'
-export type AccountStore<T extends AccountStoreType = AccountStoreType> = {
+export type AccountStore = {
   id: string
-  type: T
+  type: AccountStoreType
   accountId: string
   name: string
   login: string
@@ -10,7 +10,7 @@ export type AccountStore<T extends AccountStoreType = AccountStoreType> = {
   invalid: boolean
 }
 export type AccountDataStore = {
-  [key in AccountStoreType]?: AccountStore<key>
+  [key in AccountStoreType]?: AccountStore
 }
 export type NotificationStore = {
   type: AccountStoreType

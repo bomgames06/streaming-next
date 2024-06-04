@@ -34,13 +34,13 @@ async function auth(message: AuthBackgroundMessageType) {
     if (!accessToken) throw new Error('Token not found')
 
     return accessToken
-  }
+  } else throw new Error('Type is undefined')
 }
 
 async function revoke(message: RevokeBackgroundMessageType): Promise<boolean> {
   if (message.authType === 'twitch') {
     const twitchRevokeUrl = twitchOAuthRevoke(message.token)
     await fetch(twitchRevokeUrl, { method: 'POST' })
-  }
+  } else throw new Error('Type is undefined')
   return true
 }

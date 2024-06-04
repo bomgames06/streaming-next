@@ -47,7 +47,7 @@ export default async function notificationHandler(onlines: StreamItemLiveOnlineT
         onlinesFiltered.map((value) => value.id)
       )
     } catch (e) {
-      if (accounts.twitch && isAxiosError(e) && e.status === HttpStatusCode.Unauthorized) {
+      if (accounts.twitch && isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {
         accounts.twitch.invalid = true
         await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
 

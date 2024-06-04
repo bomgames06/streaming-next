@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios'
 import { Axios } from 'axios'
 
 export default class AxiosBase {
@@ -7,7 +8,7 @@ export default class AxiosBase {
     this._baseUrl = baseUrl
   }
 
-  protected axios() {
+  protected axios(config?: AxiosRequestConfig) {
     return new Axios({
       baseURL: this._baseUrl,
       responseType: 'json',
@@ -18,6 +19,7 @@ export default class AxiosBase {
         }
         return data
       },
+      ...config,
     })
   }
 }

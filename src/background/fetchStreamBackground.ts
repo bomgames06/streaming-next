@@ -1,7 +1,6 @@
 import browser, { Alarms } from 'webextension-polyfill'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
 import type { AccountDataStore } from '@/store/system/types/systemStoreType'
-import AppBusiness from '@/services/business/appBusiness'
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import Alarm = Alarms.Alarm
@@ -11,6 +10,7 @@ import type {
   FetchAccountsApplicationMessageType,
 } from '@/background/types/backgroundMessageType'
 import notificationHandler from '@/background/handlers/notificationHandler'
+import TwitchBusiness from '@/services/business/twitchBusiness'
 
 browser.alarms.create('fetchStream', { periodInMinutes: 0.5 })
 
@@ -25,9 +25,11 @@ async function fetchStreams(alarm?: Alarm): Promise<void> {
   let fetchAccount = false
   try {
     if (accounts.twitch && !accounts.twitch.invalid)
-      onlines.push(...(await AppBusiness.getStreamersOnlineFollowed(accounts.twitch)))
+      onlines.push(
+        ...(await TwitchBusiness.getStreamersOnlineFollowed(accounts.twitch.token, accounts.twitch.accountId))
+      )
   } catch (e) {
-    if (accounts.twitch && isAxiosError(e) && e.status === HttpStatusCode.Unauthorized) {
+    if (accounts.twitch && isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {
       accounts.twitch.invalid = true
       await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
       fetchAccount = true

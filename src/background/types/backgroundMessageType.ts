@@ -20,15 +20,14 @@ export type SetCountBadgeBackgroundMessageType = {
 export type FetchStreamBackgroundMessageType = {
   type: 'fetchStream'
 }
-
-export type FetchAccountsApplicationMessageType = {
-  type: 'fetchAccounts'
-}
-
 export type BackgroundMessageType =
   | AuthBackgroundMessageType
   | RevokeBackgroundMessageType
   | InvalidateBadgeBackgroundMessageType
   | SetCountBadgeBackgroundMessageType
   | FetchStreamBackgroundMessageType
+
+export type FetchAccountsApplicationMessageType = {
+  type: 'fetchAccounts'
+}
 export type ApplicationMessageType = FetchAccountsApplicationMessageType
