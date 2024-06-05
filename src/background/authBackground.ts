@@ -24,7 +24,7 @@ async function auth(message: AuthBackgroundMessageType) {
 
     const response = await browser.identity.launchWebAuthFlow({
       url: twitchUrl,
-      interactive: true,
+      interactive: message.interactive ?? true,
     })
 
     const urlObj = new URL(response.replace('#', '?'))

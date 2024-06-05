@@ -8,9 +8,9 @@ import {
 import type { AccountDataStore, NotificationStore, NotificationTypeStore } from '@/store/system/types/systemStoreType'
 import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
 import TwitchBusiness from '@/services/business/twitchBusiness'
+import type { User } from '@/types/userType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
-import type { User } from '@/types/userType'
 
 type OnlineHistory = {
   twitch: string[]
@@ -54,6 +54,7 @@ export default async function notificationHandler(onlines: StreamItemLiveOnlineT
         const message: FetchAccountsApplicationMessageType = { type: 'fetchAccounts' }
         void browser.runtime.sendMessage(message)
       }
+      return
     }
 
     onlinesFiltered.forEach((online) => {

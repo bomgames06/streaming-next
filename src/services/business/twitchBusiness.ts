@@ -49,11 +49,12 @@ function twitchGameToCategoryItem(): (value: TwitchApiGameType) => CategoryItemT
 }
 
 const TwitchBusiness = {
-  async auth(forceVerify?: boolean): Promise<{ token: string; user: User }> {
+  async auth(forceVerify?: boolean, interactive?: boolean): Promise<{ token: string; user: User }> {
     const message: AuthBackgroundMessageType = {
       type: 'auth',
       authType: 'twitch',
       forceVerify,
+      interactive,
     }
     const accessToken: string = await browser.runtime.sendMessage(message)
     const user = await this.getSelfUser(accessToken)

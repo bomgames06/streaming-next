@@ -4,6 +4,7 @@ export type AuthBackgroundMessageType = {
   type: 'auth'
   authType: AccountStoreType
   forceVerify?: boolean
+  interactive?: boolean
 }
 export type RevokeBackgroundMessageType = {
   type: 'revoke'

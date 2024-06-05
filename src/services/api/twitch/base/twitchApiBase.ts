@@ -2,6 +2,7 @@ import AxiosBase from '@/services/base/axiosBase'
 import type { TwitchApiBaseArrayType } from '../types/twitchApiType'
 import { type AxiosRequestConfig, HttpStatusCode, isAxiosError } from 'axios'
 import useSystemStore from '@/store/system/useSystemStore'
+import emitter from '@/events'
 
 export default class TwitchApiBase extends AxiosBase {
   constructor(path: string) {
@@ -13,15 +14,19 @@ export default class TwitchApiBase extends AxiosBase {
 
     axios.interceptors.response.use(
       (response) => response,
-      (error) => {
+      async (error) => {
         if (isAxiosError(error)) {
           if (error.response?.status === HttpStatusCode.Unauthorized) {
-            const system = useSystemStore()
-            const token = String(error.config?.headers.Authorization || '').substring('Bearer '.length)
-            system.invalidAccountByToken(token)
+            try {
+              const system = useSystemStore()
+              const token = String(error.config?.headers.Authorization || '').substring('Bearer '.length)
+              system.invalidAccountByToken(token)
+            } catch (e) {
+              throw error
+            }
           }
         }
-        return Promise.reject(error)
+        throw error
       }
     )
 

@@ -24,9 +24,13 @@ async function handlerAccounts<T>(
 }
 
 const AppBusiness = {
-  async auth(type: AccountStoreType, forceVerify?: boolean): Promise<{ token: string; user: User }> {
+  async auth(
+    type: AccountStoreType,
+    forceVerify?: boolean,
+    interactive?: boolean
+  ): Promise<{ token: string; user: User }> {
     return handlerAccounts(type, {
-      twitch: async () => TwitchBusiness.auth(forceVerify),
+      twitch: async () => TwitchBusiness.auth(forceVerify, interactive),
     })
   },
   async revoke(type: AccountStoreType, token: string): Promise<void> {

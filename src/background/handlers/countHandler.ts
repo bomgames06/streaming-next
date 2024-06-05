@@ -4,6 +4,7 @@ import browser from 'webextension-polyfill'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 
 browser.action.setBadgeTextColor({ color: '#FFFFFF' })
+void browser.action.setBadgeText({ text: null })
 
 export default async function countHandler(accounts: AccountDataStore, count: number) {
   const accountList = compact(Object.values(accounts))
