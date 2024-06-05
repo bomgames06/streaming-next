@@ -8,11 +8,8 @@ import type { BackgroundMessageType } from '@/background/types/backgroundMessage
 import notificationHandler from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
-import emitter from '@/events'
 
 browser.alarms.create('fetchStream', { periodInMinutes: 0.5 })
-
-emitter.on('invalidToken', ({ handler }) => handler(undefined))
 
 async function fetchStreams(alarm?: Alarm): Promise<void> {
   if (alarm && alarm.name !== 'fetchStream') return
