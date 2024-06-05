@@ -2,7 +2,6 @@ import AxiosBase from '@/services/base/axiosBase'
 import type { TwitchApiBaseArrayType } from '../types/twitchApiType'
 import { type AxiosRequestConfig, HttpStatusCode, isAxiosError } from 'axios'
 import useSystemStore from '@/store/system/useSystemStore'
-import emitter from '@/events'
 
 export default class TwitchApiBase extends AxiosBase {
   constructor(path: string) {

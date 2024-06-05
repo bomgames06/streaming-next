@@ -9,8 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "build:chrome": "vue-tsc && cross-env TARGET=chrome vite build",
-    "build:firefox": "vue-tsc && cross-env TARGET=firefox vite build",
+    "lint": "eslint . --max-warnings 0",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
