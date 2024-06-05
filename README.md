@@ -14,25 +14,25 @@ The application allows:
 
 ## Project requirements
 
-- Node: ^16.0.0
-- Yarn: >=1.22.19
+- Node: ^20.0.0
+- Pnpm: >=9.0.0
 
 ## Project setup
 ```
-yarn install
+pnpm install
 ```
 
 ### Compiles for development
 ```
-yarn serve
+pnpm dev
 ```
 
 ### Compiles and minifies for production
 ```
-yarn build
+pnpm build
 ```
 
 ### Lints and fixes files
 ```
-yarn lint
+pnpm lint
 ```
