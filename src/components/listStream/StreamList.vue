@@ -150,40 +150,42 @@ async function fetchClips() {
     fetching.value = false
   }
 }
+
+function showItem(item: StreamItemType) {
+  return !detailItem.value || equals(detailItem.value, item)
+}
 </script>
 
 <template>
   <v-list class="bg-transparent py-0 my-n1">
     <template v-for="(item, idx) in props.items" :key="`${item.type}:${item.id}`">
-      <div :hidden="detailItem && !equals(detailItem, item)">
-        <StreamListItem
-          v-model:detail-item="detailItem"
-          v-model:menu-show="menuShow"
-          :item="item"
-          :disable-context-menu="props.disableContextMenu"
-          :disable-category-menu="props.disableCategoryMenu"
-          :disable-favorite-menu="props.disableFavoriteMenu"
-          :dump="props.dump"
-          @item-click="itemClick"
-          @menu-item-click="menuItemClick"
-        />
-        <v-divider v-if="idx !== props.items.length - 1 && !detailItem" class="my-1" />
-      </div>
+      <StreamListItem
+        v-show="showItem(item)"
+        v-model:detail-item="detailItem"
+        v-model:menu-show="menuShow"
+        :item="item"
+        :disabled="!showItem(item)"
+        :disable-context-menu="props.disableContextMenu"
+        :disable-category-menu="props.disableCategoryMenu"
+        :disable-favorite-menu="props.disableFavoriteMenu"
+        :show-divider="idx !== props.items.length - 1 && !detailItem"
+        :dump="props.dump"
+        @item-click="itemClick"
+        @menu-item-click="menuItemClick"
+      />
     </template>
   </v-list>
   <template v-if="detailItem">
-    <v-list class="bg-transparent py-0 my-n1">
-      <v-list-item v-if="detailType === 'video'" class="px-1 list-item">
-        <h2>{{ t('streamList.videos') }}</h2>
-        <v-divider class="my-1" />
-        <StreamList :items="videos.items" disable-context-menu />
-      </v-list-item>
-      <v-list-item v-if="detailType === 'clip'" class="px-1 list-item">
-        <h2>{{ t('streamList.clips') }}</h2>
-        <v-divider class="my-1" />
-        <StreamList :items="clips.items" disable-context-menu />
-      </v-list-item>
-    </v-list>
+    <template v-if="detailType === 'video'">
+      <h2 class="mt-2">{{ t('streamList.videos') }}</h2>
+      <v-divider class="mt-1 mb-2" />
+      <StreamList :items="videos.items" disable-context-menu />
+    </template>
+    <template v-if="detailType === 'clip'">
+      <h2 class="mt-2">{{ t('streamList.clips') }}</h2>
+      <v-divider class="mt-1 mb-2" />
+      <StreamList :items="clips.items" disable-context-menu />
+    </template>
     <v-btn
       v-if="hasMoreItems"
       :disabled="fetching"
@@ -199,4 +201,4 @@ async function fetchClips() {
   </template>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

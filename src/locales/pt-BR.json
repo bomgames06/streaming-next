@@ -1,4 +1,14 @@
 {
+  "accessibility": {
+    "focusFilterInput": "{accesskey} + q - Focar no campo de filtro",
+    "global": "Global",
+    "openCategoriesView": "{accesskey} + 2 - Abrir tela de categorias",
+    "openSearchView": "{accesskey} + 3 - Abrir tela de pesquisa",
+    "openSettingsView": "{accesskey} + s - Abrir tela de configurações",
+    "openStreamView": "{accesskey} + 1 - Abrir tela de transmissões ao vivo",
+    "shortkeys": "Atalhos",
+    "streamView": "Tela: Transmissão ao vivo"
+  },
   "appLayout": {
     "accounts": "Contas",
     "addAccount": "Adicionar",
@@ -40,7 +50,11 @@
     "searchMore": "Buscar mais"
   },
   "common": {
+    "asc": "Crescente",
+    "back": "Voltar",
     "close": "Fechar",
+    "desc": "Decrescente",
+    "favorite": "Favorito",
     "loaded": "Carregado",
     "loading": "Carregando",
     "loadingError": "Erro para carregar aplicação",
@@ -54,6 +68,11 @@
   "languages": {
     "en": "Inglês",
     "pt-BR": "Português - Brasil"
+  },
+  "menuExpansion": {
+    "hideMenu": "Esconder menu",
+    "menuContent": "Conteúdo do menu",
+    "showMenu": "Mostrar menu"
   },
   "searchView": {
     "fillFieldToSearchChannels": "Preencha o campo \"Pesquisar\" para buscar os canais",
@@ -124,7 +143,14 @@
     "filter": "Filtro"
   },
   "streamsView": {
+    "favorites": "Favoritos",
     "hideOfflines": "Esconder offlines",
     "showOfflines": "Mostrar offlines"
+  },
+  "views": {
+    "categories": "Categorias",
+    "search": "Pesquisar",
+    "settings": "Configurações",
+    "streams": "Transmissões ao vivo"
   }
 }

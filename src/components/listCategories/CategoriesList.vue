@@ -103,17 +103,23 @@ watch([categorySelected, detailItem], () => {
       system.setHeaderAppBarView('categoryStreams')
     })
 })
+
+function showItem(category: CategoryItemType) {
+  return !categorySelected.value || categorySelected.value.id === category.id
+}
 </script>
 
 <template>
   <v-list class="bg-transparent category-list py-0">
     <v-list-item
       v-for="category in props.items"
-      v-show="!categorySelected || categorySelected.id === category.id"
+      v-show="showItem(category)"
       :key="category.id"
+      :disabled="!showItem(category)"
       class="pa-0"
       @click="clickCategory(category)"
     >
+      <v-tooltip :disabled="!categorySelected" activator="parent" :text="t('common.back')" location="bottom" />
       <v-card
         height="100%"
         :class="{

@@ -6,3 +6,4 @@ export const STORAGE_KEY_LANGUAGE = 'language' as const
 export const STORAGE_KEY_SHOW_ALWAYS_OFFLINES = 'showAlwaysOfflines' as const
 export const STORAGE_KEY_STREAM_ORDER = 'streamOrder' as const
 export const STORAGE_KEY_STREAM_ORDER_SORT = 'streamOrderSort' as const
+export const STORAGE_KEY_SHOW_FAVORITES = 'showFavorites' as const

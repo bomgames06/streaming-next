@@ -12,10 +12,10 @@ const system = useSystemStore()
 <template>
   <v-app>
     <LoadingLayout v-if="system.screen === 'loading'" :loaded="loaded" />
-    <v-main v-else-if="system.screen === 'home'">
-      <v-container class="h-100 overflow-y-auto pa-3">
+    <v-main v-else-if="system.screen === 'home'" class="d-flex">
+      <div class="overflow-y-auto flex-grow-1">
         <SettingsView />
-      </v-container>
+      </div>
     </v-main>
     <div id="toastr-content" />
   </v-app>

@@ -16,6 +16,8 @@ import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
+import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
+import MenuExpansion from '@/components/menuExpansion/MenuExpansion.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -44,8 +46,17 @@ const itemsFiltered = computed(() =>
     sorts.value
   )
 )
-const showOfflinesComp = computed(() => !!filter.value || system.showAlwaysOfflines || showOfflines.value)
-const renderOfflinesComp = computed(() => !filter.value && offlines.value.length && !system.showAlwaysOfflines)
+const showOfflinesComp = computed(
+  () => !!filter.value || system.showAlwaysOfflines || showOfflines.value || system.showFavoritesComp
+)
+const renderOfflinesComp = computed(
+  () =>
+    !filter.value &&
+    offlines.value.length &&
+    !system.showAlwaysOfflines &&
+    !detailItem.value &&
+    !system.showFavoritesComp
+)
 const orders = computed(() => {
   const items: ((item: StreamItemLiveType) => string | number)[] = []
 
@@ -98,6 +109,7 @@ function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
   if (!showOfflinesComp.value && value.status === 'offline') show = false
+  else if (system.showFavoritesComp && !notificationItemEnabled(value)) show = false
   else if (filter.value) {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
@@ -108,6 +120,10 @@ function filterItem(value: StreamItemLiveType): boolean {
   }
 
   return show
+}
+
+function notificationItemEnabled(item: StreamItemType) {
+  return system.notifications.some((value) => value.type === item.type && value.id === item.id)
 }
 
 watch(() => system.validAccounts, fetchData)
@@ -199,17 +215,34 @@ async function fetchOfflinesTwitch(
 </script>
 
 <template>
-  <v-row>
-    <v-col cols="12">
-      <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
-    </v-col>
-    <v-col v-if="renderOfflinesComp && !detailItem" cols="12">
-      <v-btn height="54" block @click="showOfflines = !showOfflines">
-        <v-icon size="x-large" class="mr-2">mdi-wifi-off</v-icon>
-        <span>{{ showOfflinesComp ? t('streamsView.hideOfflines') : t('streamsView.showOfflines') }}</span>
-      </v-btn>
-    </v-col>
-  </v-row>
+  <MenuExpansion v-if="!detailItem">
+    <v-row dense>
+      <v-col>
+        <v-switch
+          v-model="system.showFavoritesComp"
+          hide-details
+          density="compact"
+          color="primary"
+          :true-value="true"
+          :false-value="false"
+          :label="t('streamsView.favorites')"
+        />
+      </v-col>
+    </v-row>
+  </MenuExpansion>
+  <ViewContainer>
+    <v-row>
+      <v-col cols="12">
+        <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
+      </v-col>
+      <v-col v-if="renderOfflinesComp" cols="12">
+        <v-btn height="54" block @click="showOfflines = !showOfflines">
+          <v-icon size="x-large" class="mr-2">mdi-wifi-off</v-icon>
+          <span>{{ showOfflinesComp ? t('streamsView.hideOfflines') : t('streamsView.showOfflines') }}</span>
+        </v-btn>
+      </v-col>
+    </v-row>
+  </ViewContainer>
 </template>
 
 <style scoped></style>

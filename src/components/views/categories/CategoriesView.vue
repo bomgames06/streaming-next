@@ -8,6 +8,7 @@ import AppBusiness from '@/services/business/appBusiness'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, uniqBy } from 'lodash'
+import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -96,19 +97,21 @@ watch(categorySelected, () => {
 </script>
 
 <template>
-  <CategoriesList v-model:category-selected="categorySelected" :items="items" />
-  <v-btn
-    v-if="categories.cursor && !categorySelected"
-    :disabled="fetching"
-    :loading="fetching"
-    height="54"
-    block
-    class="mt-2"
-    @click="fetchCategories()"
-  >
-    <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
-    <span>{{ t('categoriesView.searchMore') }}</span>
-  </v-btn>
+  <ViewContainer>
+    <CategoriesList v-model:category-selected="categorySelected" :items="items" />
+    <v-btn
+      v-if="categories.cursor && !categorySelected"
+      :disabled="fetching"
+      :loading="fetching"
+      height="54"
+      block
+      class="mt-2"
+      @click="fetchCategories()"
+    >
+      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+      <span>{{ t('categoriesView.searchMore') }}</span>
+    </v-btn>
+  </ViewContainer>
 </template>
 
 <style scoped></style>

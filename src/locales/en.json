@@ -1,4 +1,14 @@
 {
+  "accessibility": {
+    "focusFilterInput": "{accesskey} + q - Focus on filter input",
+    "global": "Global",
+    "openCategoriesView": "{accesskey} + 2 - Open Categories view",
+    "openSearchView": "{accesskey} + 3 - Open Search view",
+    "openSettingsView": "{accesskey} + s - Open Settings view",
+    "openStreamView": "{accesskey} + 1 - Open Stream view",
+    "shortkeys": "Shortkeys",
+    "streamView": "View: Stream"
+  },
   "appLayout": {
     "accounts": "Accounts",
     "addAccount": "Add",
@@ -40,7 +50,11 @@
     "searchMore": "Search more"
   },
   "common": {
+    "asc": "Ascendent",
+    "back": "Back",
     "close": "Close",
+    "desc": "Descendent",
+    "favorite": "Favorite",
     "loaded": "Loaded",
     "loading": "Loading",
     "loadingError": "Error loading application",
@@ -54,6 +68,11 @@
   "languages": {
     "en": "English",
     "pt-BR": "Portuguese - Brazil"
+  },
+  "menuExpansion": {
+    "hideMenu": "Hide menu",
+    "menuContent": "Menu content",
+    "showMenu": "Show menu"
   },
   "searchView": {
     "fillFieldToSearchChannels": "Fill in the \"Search\" field to search the channels",
@@ -124,7 +143,14 @@
     "filter": "Filter"
   },
   "streamsView": {
+    "favorites": "Favorites",
     "hideOfflines": "Hide offlines",
     "showOfflines": "Show offlines"
+  },
+  "views": {
+    "categories": "Categories",
+    "search": "Search",
+    "settings": "Settings",
+    "streams": "Streams"
   }
 }

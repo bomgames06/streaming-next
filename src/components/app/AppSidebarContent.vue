@@ -1,25 +1,12 @@
 <script setup lang="ts">
 import type { ViewStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
-import { onMounted, onUnmounted } from 'vue'
-import Mousetrap from 'mousetrap'
+import { useI18n } from 'vue-i18n'
 
 const sidebar = defineModel<boolean>('sidebar')
 
 const system = useSystemStore()
-
-onMounted(() => {
-  Mousetrap.bind('alt+1', () => setView('streams'))
-  Mousetrap.bind('alt+2', () => system.accounts.twitch && setView('categories'))
-  Mousetrap.bind('alt+3', () => system.accounts.twitch && setView('search'))
-  Mousetrap.bind('alt+a', () => setView('settings'))
-})
-onUnmounted(() => {
-  Mousetrap.unbind('alt+1')
-  Mousetrap.unbind('alt+2')
-  Mousetrap.unbind('alt+3')
-  Mousetrap.unbind('alt+a')
-})
+const { t } = useI18n()
 
 function setView(view: ViewStore) {
   system.setView(view)
@@ -36,17 +23,47 @@ function setView(view: ViewStore) {
     class="list-content"
     @update:selected="setView($event[0])"
   >
-    <v-list-item :value="'streams' as ViewStore">
+    <v-list-item
+      role="option"
+      :value="'streams' as ViewStore"
+      :aria-selected="system.view === 'streams'"
+      :aria-label="t('views.streams')"
+      accesskey="1"
+    >
+      <v-tooltip activator="parent" :text="t('views.streams')" location="end" />
       <v-icon>mdi-format-list-text</v-icon>
     </v-list-item>
-    <v-list-item v-if="system.accounts.twitch" :value="'categories' as ViewStore">
+    <v-list-item
+      v-if="system.accounts.twitch && !system.accounts.twitch.invalid"
+      role="option"
+      :value="'categories' as ViewStore"
+      :aria-selected="system.view === 'categories'"
+      :aria-label="t('views.categories')"
+      accesskey="2"
+    >
+      <v-tooltip activator="parent" :text="t('views.categories')" location="end" />
       <v-icon>mdi-controller</v-icon>
     </v-list-item>
-    <v-list-item v-if="system.accounts.twitch" :value="'search' as ViewStore">
+    <v-list-item
+      v-if="system.accounts.twitch && !system.accounts.twitch.invalid"
+      role="option"
+      :value="'search' as ViewStore"
+      :aria-selected="system.view === 'search'"
+      :aria-label="t('views.search')"
+      accesskey="3"
+    >
+      <v-tooltip activator="parent" :text="t('views.search')" location="end" />
       <v-icon>mdi-magnify</v-icon>
     </v-list-item>
     <v-spacer />
-    <v-list-item :value="'settings' as ViewStore">
+    <v-list-item
+      role="option"
+      :value="'settings' as ViewStore"
+      :aria-selected="system.view === 'settings'"
+      :aria-label="t('views.settings')"
+      accesskey="s"
+    >
+      <v-tooltip activator="parent" :text="t('views.settings')" location="end" />
       <v-icon>mdi-cog</v-icon>
     </v-list-item>
   </v-list>

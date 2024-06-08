@@ -8,6 +8,7 @@ import {
   STORAGE_KEY_NOTIFICATION_TYPE,
   STORAGE_KEY_NOTIFICATIONS,
   STORAGE_KEY_SHOW_ALWAYS_OFFLINES,
+  STORAGE_KEY_SHOW_FAVORITES,
   STORAGE_KEY_STREAM_ORDER,
   STORAGE_KEY_STREAM_ORDER_SORT,
 } from '@/types/syncStorageKeysTypes'
@@ -59,6 +60,7 @@ const useSystemStore = defineStore('System', () => {
   const streamOrder = ref<StreamOrderStore>('name')
   const streamOrderSort = ref<StreamOrderSortStore>(true)
   const streamNameFilter = ref<string>('')
+  const showFavorites = ref<boolean>(false)
 
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
@@ -91,6 +93,7 @@ const useSystemStore = defineStore('System', () => {
   // Computed value
   const streamFilterComp = computed({ get: () => streamFilter.value, set: setStreamFilter })
   const streamNameFilterComp = computed({ get: () => streamNameFilter.value, set: setStreamNameFilter })
+  const showFavoritesComp = computed({ get: () => showFavorites.value, set: setShowFavorites })
 
   // System actions
   function setScreen(value: ScreenStore) {
@@ -132,6 +135,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_SHOW_ALWAYS_OFFLINES,
       STORAGE_KEY_STREAM_ORDER,
       STORAGE_KEY_STREAM_ORDER_SORT,
+      STORAGE_KEY_SHOW_FAVORITES,
     ])
 
     accounts.value = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
@@ -142,6 +146,7 @@ const useSystemStore = defineStore('System', () => {
     showAlwaysOfflines.value = syncStorage[STORAGE_KEY_SHOW_ALWAYS_OFFLINES] ?? false
     streamOrder.value = syncStorage[STORAGE_KEY_STREAM_ORDER] ?? 'name'
     streamOrderSort.value = syncStorage[STORAGE_KEY_STREAM_ORDER_SORT] ?? true
+    showFavorites.value = syncStorage[STORAGE_KEY_SHOW_FAVORITES] ?? false
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -261,6 +266,10 @@ const useSystemStore = defineStore('System', () => {
   function setStreamNameFilter(value: string) {
     streamNameFilter.value = value
   }
+  function setShowFavorites(value: boolean) {
+    showFavorites.value = value
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: showFavorites.value })
+  }
 
   // Video view actions
   function setVideoOrder(value: VideoOrderStore) {
@@ -315,6 +324,7 @@ const useSystemStore = defineStore('System', () => {
     // computed value
     streamFilterComp,
     streamNameFilterComp,
+    showFavoritesComp,
     // utils
     getAccountByType,
     // actions system

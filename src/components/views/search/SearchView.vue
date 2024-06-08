@@ -6,6 +6,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import AppBusiness from '@/services/business/appBusiness'
 import { debounce } from 'lodash'
+import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -62,28 +63,30 @@ watch(
 </script>
 
 <template>
-  <template v-if="system.streamNameFilter">
-    <StreamList :items="channels.items" disable-favorite-menu />
-    <v-btn
-      v-if="channels.cursor"
-      :disabled="fetching"
-      :loading="fetching"
-      height="54"
-      block
-      class="mt-2"
-      @click="fetchChannels()"
-    >
-      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
-      <span>{{ t('searchView.searchMore') }}</span>
-    </v-btn>
-  </template>
-  <v-row v-else align="center" justify="center" class="h-100">
-    <v-col cols="auto">
-      <p class="text-center text-h6">
-        {{ t('searchView.fillFieldToSearchChannels') }}
-      </p>
-    </v-col>
-  </v-row>
+  <ViewContainer>
+    <template v-if="system.streamNameFilter">
+      <StreamList :items="channels.items" disable-favorite-menu />
+      <v-btn
+        v-if="channels.cursor"
+        :disabled="fetching"
+        :loading="fetching"
+        height="54"
+        block
+        class="mt-2"
+        @click="fetchChannels()"
+      >
+        <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+        <span>{{ t('searchView.searchMore') }}</span>
+      </v-btn>
+    </template>
+    <v-row v-else align="center" justify="center" class="h-100">
+      <v-col cols="auto">
+        <p class="text-center text-h6">
+          {{ t('searchView.fillFieldToSearchChannels') }}
+        </p>
+      </v-col>
+    </v-row>
+  </ViewContainer>
 </template>
 
 <style scoped></style>
