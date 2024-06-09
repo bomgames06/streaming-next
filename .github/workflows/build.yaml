@@ -1,0 +1,92 @@
+name: Build Workflow
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true &&
+      (startsWith(github.event.pull_request.head.ref, 'fix/') || startsWith(github.event.pull_request.head.ref, 'dev'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check Typescript
+        run: pnpm check
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          git fetch
+          if [[ "${{ github.head_ref }}" = "dev" ]]; then
+            echo "This is the 'dev' branch. Checking out 'dev', bumping a minor version, and returning to the original branch."
+            git checkout dev
+            version=$(npm --no-git-tag-version version minor)
+            git add package.json
+            git commit -m "Bump version to $version"
+            git checkout -
+          elif [[ "${{ github.head_ref }}" =~ fix/* ]]; then
+            echo "This is a fix branch. Doing a patch version bump."
+            version=$(npm --no-git-tag-version version patch)
+            git add package.json
+            git commit -m "Bump version to $version"
+          else
+            echo "Error: not 'dev' or 'fix' branch."
+            exit 0
+          fi
+
+      - name: Build
+        run: pnpm build
+
+      - name: Push
+        run: |
+          version=$(node -p "require('./package.json').version")
+          git tag "v$version"
+          git push origin main --tags
+          if [[ "${{ github.head_ref }}" = "dev" ]]; then
+            git checkout dev
+            git push origin dev
+          fi
