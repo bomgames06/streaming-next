@@ -143,6 +143,8 @@ function onIntersect(isIntersecting: boolean) {
 
 <template>
   <div v-intersect="onIntersect" class="content-size">
+    <link v-if="previewImage" rel="preload" :href="previewImage" as="image" />
+    <link v-if="item.status === 'offline' && item.profileImage" rel="preload" :href="item.profileImage" as="image" />
     <template v-if="itemIntersected">
       <v-hover v-slot="{ props: hoverProps, isHovering }">
         <v-list-item
