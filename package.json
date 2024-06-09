@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
+    "check": "vue-tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "preinstall": "npx only-allow pnpm"
   },
