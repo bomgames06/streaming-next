@@ -5,12 +5,16 @@
 Streaming Next is an extension to view, track and notify about streamers and category on the Twitch platform.
 
 The application allows:
-- List online and offline followers;
-- View streamer videos and clips;
-- List categories and referring streamers;
-- Search streamers;
-- Notify all, partial or none when going online;
-- And others;
+- List online and offline followers.
+- View streamer videos and clips.
+- List categories and referring streamers.
+- Search streamers.
+- Notify all, partial or none when going online.
+- And others.
+
+## Stores
+
+- [Chrome Web Store](https://chrome.google.com/webstore/detail/streaming-next/kjhokibigaobhcmjabhjbhncapklgjkb)
 
 ## Project requirements
 

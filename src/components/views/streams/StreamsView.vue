@@ -17,11 +17,9 @@ import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
-import { useTheme } from 'vuetify'
 import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
-const theme = useTheme()
 const { t } = useI18n()
 
 const showOfflines = ref<boolean>(false)
@@ -246,75 +244,71 @@ async function fetchOfflinesTwitch(
 <template>
   <ViewContainer>
     <template #top>
-      <v-sheet color="surface-light" position="sticky" class="px-2 py-1 top-0 filter-content">
-        <v-row role="group" dense :aria-labelledby="filterLabelId" class="mx-0">
+      <v-sheet color="surface-light" class="px-2 py-1 top-0 filter-content">
+        <v-row role="group" dense :aria-label="t('common.filter')" class="mx-0">
           <v-col :id="filterLabelId" cols="auto">
-            <v-icon :aria-label="t('common.filter')" aria-hidden="false">mdi-filter</v-icon>
+            <v-icon>mdi-filter</v-icon>
           </v-col>
           <v-col cols="auto" class="d-flex">
             <v-divider vertical class="h-75 align-self-center" />
           </v-col>
           <v-col cols="auto">
             <v-btn
+              v-tooltip="t('common.favorite', 2)"
               role="checkbox"
               :aria-checked="system.showFavoritesComp"
               :aria-label="t('common.favorite', 2)"
               :icon="true"
               :disabled="!!detailItem"
-              class="rounded-lg"
               size="24"
               accesskey="b"
+              class="rounded-lg"
               @click="toggleFavorite"
             >
-              <v-icon
-                size="18"
-                :color="system.showFavoritesComp ? (theme.current.value.dark ? 'yellow' : 'warning') : ''"
-                >{{ 'mdi-star' }}</v-icon
-              >
+              <v-icon size="18" :color="system.showFavoritesComp ? 'primary' : ''">{{
+                system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
+              }}</v-icon>
             </v-btn>
           </v-col>
           <v-col v-if="system.notificationType === 'partial'" cols="auto">
             <v-btn
+              v-tooltip="t('common.notification', 2)"
               role="checkbox"
               :aria-checked="system.showNotificationsComp"
               :aria-label="t('common.notification', 2)"
               :icon="true"
               :disabled="!!detailItem"
-              class="rounded-lg"
               size="24"
               accesskey="n"
+              class="rounded-lg"
               @click="toggleNotification"
             >
-              <v-icon
-                size="18"
-                :color="system.showNotificationsComp ? (theme.current.value.dark ? 'yellow' : 'warning') : ''"
-                >{{ 'mdi-bell' }}</v-icon
-              >
+              <v-icon size="18" :color="system.showNotificationsComp ? 'primary' : ''">{{
+                system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
+              }}</v-icon>
             </v-btn>
           </v-col>
           <v-col cols="auto">
             <v-btn
+              v-tooltip="t('common.offlines')"
               role="checkbox"
               :aria-checked="showOfflines"
-              :aria-label="t('streamsView.showOfflines')"
+              :aria-label="t('common.offlines')"
               :icon="true"
               :disabled="!renderOfflinesComp"
-              class="rounded-lg"
               size="24"
               accesskey="o"
+              class="rounded-lg"
               @click="toggleOffline"
             >
-              <v-icon size="18">{{ showOfflinesComp ? 'mdi-wifi-off' : 'mdi-wifi' }}</v-icon>
+              <v-icon size="18" :color="showOfflinesComp ? 'primary' : ''"> mdi-wifi-off </v-icon>
             </v-btn>
           </v-col>
         </v-row>
       </v-sheet>
+      <v-divider />
     </template>
-    <v-row>
-      <v-col cols="12">
-        <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
-      </v-col>
-    </v-row>
+    <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
   </ViewContainer>
 </template>
 
