@@ -17,7 +17,6 @@ declare module 'vue' {
     CategoriesList: typeof import('./src/components/listCategories/CategoriesList.vue')['default']
     CategoriesListItemAppBarView: typeof import('./src/components/listCategories/appBarView/CategoriesListItemAppBarView.vue')['default']
     CategoriesView: typeof import('./src/components/views/categories/CategoriesView.vue')['default']
-    MenuExpansion: typeof import('./src/components/menuExpansion/MenuExpansion.vue')['default']
     SearchAppBarView: typeof import('./src/components/views/search/SearchAppBarView.vue')['default']
     SearchView: typeof import('./src/components/views/search/SearchView.vue')['default']
     SettingsView: typeof import('./src/components/views/settings/SettingsView.vue')['default']

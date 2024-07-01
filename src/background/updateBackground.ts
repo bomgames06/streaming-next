@@ -1,6 +1,7 @@
 import browser from 'webextension-polyfill'
 import {
   STORAGE_KEY_ACCOUNTS,
+  STORAGE_KEY_FAVORITES,
   STORAGE_KEY_NOTIFICATION_TYPE,
   STORAGE_KEY_NOTIFICATIONS,
   STORAGE_KEY_STREAM_ORDER,
@@ -60,8 +61,15 @@ async function migrateOldSave(details: browser.Runtime.OnInstalledDetailsType) {
   await browser.storage.sync.remove(keys)
 }
 
+async function upgradeFavorites(details: browser.Runtime.OnInstalledDetailsType) {
+  if (!details.previousVersion || !isVersionLowerOrEqual(details.previousVersion, '1.3.1')) return
+  const syncStorage = await browser.storage.sync.get([STORAGE_KEY_NOTIFICATIONS])
+  await browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: syncStorage[STORAGE_KEY_NOTIFICATIONS] })
+}
+
 browser.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'update') {
     void migrateOldSave(details)
+    void upgradeFavorites(details)
   }
 })

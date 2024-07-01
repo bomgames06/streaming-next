@@ -19,7 +19,7 @@ const props = defineProps<{
   items: StreamItemType[]
   disableContextMenu?: boolean
   disableCategoryMenu?: boolean
-  disableFavoriteMenu?: boolean
+  disableNotificationMenu?: boolean
   dump?: string
 }>()
 
@@ -157,7 +157,7 @@ function showItem(item: StreamItemType) {
 </script>
 
 <template>
-  <v-list class="bg-transparent py-0 my-n1">
+  <v-list class="bg-transparent py-0">
     <template v-for="(item, idx) in props.items" :key="`${item.type}:${item.id}`">
       <StreamListItem
         v-show="showItem(item)"
@@ -167,12 +167,12 @@ function showItem(item: StreamItemType) {
         :disabled="!showItem(item)"
         :disable-context-menu="props.disableContextMenu"
         :disable-category-menu="props.disableCategoryMenu"
-        :disable-favorite-menu="props.disableFavoriteMenu"
-        :show-divider="idx !== props.items.length - 1 && !detailItem"
+        :disable-notification-menu="props.disableNotificationMenu"
         :dump="props.dump"
         @item-click="itemClick"
         @menu-item-click="menuItemClick"
       />
+      <v-divider v-if="idx !== props.items.length - 1 && !detailItem" />
     </template>
   </v-list>
   <template v-if="detailItem">

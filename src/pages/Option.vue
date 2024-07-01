@@ -4,7 +4,7 @@ import LoadingLayout from '@/layouts/loading/LoadingLayout.vue'
 import SettingsView from '@/components/views/settings/SettingsView.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 
-const { loaded } = useAppInit()
+const { loaded } = useAppInit(true)
 
 const system = useSystemStore()
 </script>

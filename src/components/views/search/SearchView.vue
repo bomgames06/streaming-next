@@ -65,7 +65,7 @@ watch(
 <template>
   <ViewContainer>
     <template v-if="system.streamNameFilter">
-      <StreamList :items="channels.items" disable-favorite-menu />
+      <StreamList :items="channels.items" disable-notification-menu />
       <v-btn
         v-if="channels.cursor"
         :disabled="fetching"
