@@ -58,9 +58,9 @@ export function twitchDurationToSeconds(duration: string): number {
   if (!match) return 0
 
   const time: string[] = []
-  if (match[2]) time.push(match[2] || '0')
-  if (match[4]) time.push(match[4] || '0')
-  if (match[6]) time.push(match[6] || '0')
+  time.push(match[2] || '0')
+  time.push(match[4] || '0')
+  time.push(match[6] || '0')
 
   return moment.duration(time.join(':')).asSeconds()
 }
