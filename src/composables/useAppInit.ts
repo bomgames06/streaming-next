@@ -5,7 +5,7 @@ import { nextTick, onUnmounted, ref, watch } from 'vue'
 import type { ApplicationMessageType, FetchStreamBackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 
-export default function useAppInit() {
+export default function useAppInit(noAuth?: boolean) {
   const system = useSystemStore()
   const theme = useTheme()
   const i18n = useI18n()
@@ -27,7 +27,7 @@ export default function useAppInit() {
       loaded.value = true
       await nextTick()
 
-      if (!system.hasAccount || system.isEveryAccountInvalid) return void system.setScreen('auth')
+      if (!noAuth && (!system.hasAccount || system.isEveryAccountInvalid)) return void system.setScreen('auth')
       system.setScreen('home')
     } catch (e) {
       error.value = true

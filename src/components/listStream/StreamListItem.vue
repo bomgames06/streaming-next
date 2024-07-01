@@ -20,8 +20,7 @@ const props = defineProps<{
   disabled?: boolean
   disableContextMenu?: boolean
   disableCategoryMenu?: boolean
-  disableFavoriteMenu?: boolean
-  showDivider?: boolean
+  disableNotificationMenu?: boolean
   dump?: string
 }>()
 const emit = defineEmits<{
@@ -60,6 +59,9 @@ const spectatorsText = computed(() => {
 })
 const notificationEnabled = computed(() =>
   system.notifications.some((value) => value.type === item.value.type && value.id === item.value.id)
+)
+const favoriteEnabled = computed(() =>
+  system.favorites.some((value) => value.type === item.value.type && value.id === item.value.id)
 )
 const dataDiff = computed(() => {
   let duration: Duration | undefined
@@ -143,22 +145,100 @@ function onIntersect(isIntersecting: boolean) {
 
 <template>
   <div v-intersect="onIntersect" class="content-size">
-    <link v-if="previewImage" rel="preload" :href="previewImage" as="image" />
-    <link v-if="item.status === 'offline' && item.profileImage" rel="preload" :href="item.profileImage" as="image" />
-    <template v-if="itemIntersected">
-      <v-hover v-slot="{ props: hoverProps, isHovering }">
-        <v-list-item
-          v-bind="hoverProps"
-          :id="id"
-          :disabled="props.disabled"
-          class="px-1 list-item"
-          height="64"
-          @click.prevent="emit('itemClick', { item: props.item, middle: false })"
-          @mousedown.middle.prevent="emit('itemClick', { item: props.item, middle: true })"
-          @contextmenu.prevent="showMenu"
-          @focusin="focusedItem = true"
-          @focusout="focusedItem = false"
-        >
+    <link v-if="previewImage" rel="prefetch" :href="previewImage" />
+    <link v-if="item.status === 'offline' && item.profileImage" rel="prefetch" :href="item.profileImage" />
+    <v-hover v-slot="{ props: hoverProps, isHovering }">
+      <v-list-item
+        v-bind="hoverProps"
+        :id="id"
+        :disabled="props.disabled"
+        class="px-1 list-item"
+        height="64"
+        @click.prevent="emit('itemClick', { item: props.item, middle: false })"
+        @mousedown.middle.prevent="emit('itemClick', { item: props.item, middle: true })"
+        @contextmenu.prevent="showMenu"
+        @focusin="focusedItem = true"
+        @focusout="focusedItem = false"
+      >
+        <template v-if="itemIntersected" #prepend>
+          <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
+            <div class="mr-2 position-relative">
+              <v-img
+                :src="previewImage"
+                :aspect-ratio="aspectRatio"
+                :width="previewWidth"
+                cover
+                :alt="t('streamList.streamerPreview', { name: item.name })"
+              />
+              <v-card
+                v-if="isHovering || focusedItem || item.status === 'video' || item.status === 'clip'"
+                class="start-at-content text-caption bg-background"
+              >
+                {{
+                  isHovering || focusedItem || item.status === 'video' || item.status === 'clip'
+                    ? formatStreamDuration(item)
+                    : null
+                }}
+              </v-card>
+              <div class="badge-content">
+                <v-card
+                  v-if="item.status === 'online' && system.notificationType === 'partial' && notificationEnabled"
+                  class="bg-background badge-item"
+                >
+                  <v-icon
+                    :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                    :aria-label="t('common.notification')"
+                    aria-hidden="false"
+                    size="x-small"
+                    >mdi-bell</v-icon
+                  >
+                </v-card>
+                <v-card v-if="item.status === 'online' && favoriteEnabled" class="bg-background badge-item">
+                  <v-icon
+                    :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                    :aria-label="t('common.favorite')"
+                    aria-hidden="false"
+                    size="x-small"
+                    >mdi-star</v-icon
+                  >
+                </v-card>
+              </div>
+            </div>
+          </template>
+          <div v-if="item.status === 'offline'" class="mr-2 position-relative">
+            <v-img
+              :src="item.profileImage"
+              :aspect-ratio="aspectRatio"
+              :width="previewWidth"
+              cover
+              :alt="t('streamList.streamerProfile', { name: item.name })"
+            />
+            <div class="badge-content">
+              <v-card
+                v-if="system.notificationType === 'partial' && notificationEnabled"
+                class="bg-background badge-item"
+              >
+                <v-icon
+                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                  :aria-label="t('common.notification')"
+                  aria-hidden="false"
+                  size="x-small"
+                  >mdi-bell</v-icon
+                >
+              </v-card>
+              <v-card v-if="favoriteEnabled" class="bg-background badge-item">
+                <v-icon
+                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                  :aria-label="t('common.favorite')"
+                  aria-hidden="false"
+                  size="x-small"
+                  >mdi-star</v-icon
+                >
+              </v-card>
+            </div>
+          </div>
+        </template>
+        <template v-if="itemIntersected" #default>
           <v-tooltip :disabled="!detailItem" activator="parent" :text="t('common.back')" location="bottom" />
           <v-menu
             v-if="isLiveType(item) && item.type === 'twitch'"
@@ -169,8 +249,16 @@ function onIntersect(isIntersecting: boolean) {
           >
             <v-list :id="contextMenuListId" @keydown.prevent="onKeyDownEsc($event, () => (menuShow = undefined))">
               <v-list-item
-                v-if="system.notificationType === 'partial' && !props.disableFavoriteMenu"
-                :prepend-icon="notificationEnabled ? 'mdi-star' : 'mdi-star-outline'"
+                v-if="!props.disableNotificationMenu"
+                :prepend-icon="favoriteEnabled ? 'mdi-star' : 'mdi-star-outline'"
+                :title="favoriteEnabled ? t('streamList.menu.removeFavorite') : t('streamList.menu.addFavorite')"
+                @click="
+                  favoriteEnabled ? system.removeFavorite(item.type, item.id) : system.addFavorite(item.type, item.id)
+                "
+              />
+              <v-list-item
+                v-if="system.notificationType === 'partial' && !props.disableNotificationMenu"
+                :prepend-icon="notificationEnabled ? 'mdi-bell' : 'mdi-bell-outline'"
                 :title="
                   notificationEnabled
                     ? t('streamList.menu.disableNotification')
@@ -198,59 +286,6 @@ function onIntersect(isIntersecting: boolean) {
               />
             </v-list>
           </v-menu>
-          <template #prepend>
-            <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
-              <div class="mr-2 position-relative">
-                <v-img
-                  :src="previewImage"
-                  :aspect-ratio="aspectRatio"
-                  :width="previewWidth"
-                  cover
-                  :alt="t('streamList.streamerPreview', { name: item.name })"
-                />
-                <v-card
-                  v-if="isHovering || focusedItem || item.status === 'video' || item.status === 'clip'"
-                  class="start-at-content text-caption bg-background"
-                >
-                  {{
-                    isHovering || focusedItem || item.status === 'video' || item.status === 'clip'
-                      ? formatStreamDuration(item)
-                      : null
-                  }}
-                </v-card>
-                <v-card
-                  v-if="item.status === 'online' && notificationEnabled"
-                  class="notification-content text-caption bg-background"
-                >
-                  <v-icon
-                    :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                    :aria-label="t('common.favorite')"
-                    aria-hidden="false"
-                    size="x-small"
-                    >mdi-star</v-icon
-                  >
-                </v-card>
-              </div>
-            </template>
-            <div v-if="item.status === 'offline'" class="mr-2 position-relative">
-              <v-img
-                :src="item.profileImage"
-                :aspect-ratio="aspectRatio"
-                :width="previewWidth"
-                cover
-                :alt="t('streamList.streamerProfile', { name: item.name })"
-              />
-              <v-card v-if="notificationEnabled" class="notification-content text-caption bg-background">
-                <v-icon
-                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                  :aria-label="t('common.favorite')"
-                  aria-hidden="false"
-                  size="x-small"
-                  >mdi-star</v-icon
-                >
-              </v-card>
-            </div>
-          </template>
           <v-list-item-title :title="spectatorsText" class="line-height-normal">
             <v-icon v-if="item.type === 'twitch'" :color="accountTypeColor('twitch')" size="x-small" class="mr-1"
               >mdi-twitch</v-icon
@@ -295,10 +330,9 @@ function onIntersect(isIntersecting: boolean) {
               >{{ dataDiff }}</v-list-item-subtitle
             >
           </template>
-        </v-list-item>
-      </v-hover>
-      <v-divider v-if="props.showDivider" class="my-1" />
-    </template>
+        </template>
+      </v-list-item>
+    </v-hover>
   </div>
 </template>
 
@@ -309,7 +343,7 @@ function onIntersect(isIntersecting: boolean) {
   }
 }
 .content-size {
-  height: 69px;
+  height: 64px;
 }
 .line-height-normal {
   line-height: 1.33;
@@ -323,11 +357,15 @@ function onIntersect(isIntersecting: boolean) {
   line-height: 1;
   font-size: 10px !important;
 }
-.notification-content {
+.badge-content {
+  display: flex;
+  gap: 2px;
   position: absolute;
   top: 0;
   right: 0;
   margin: 1px;
+}
+.badge-item {
   padding: 2px;
   line-height: 1;
   font-size: 10px !important;

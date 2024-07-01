@@ -57,12 +57,27 @@ function openDonation(middle?: boolean) {
               <v-radio :label="i18n.t('settings.notificationType.none')" :value="'none' as NotificationTypeStore" />
             </v-radio-group>
           </v-col>
-          <v-col v-if="system.notificationType === 'partial'" cols="12">
-            <v-btn
-              prepend-icon="mdi-broom"
-              :text="i18n.t('settings.cleanNotifications')"
-              @click="system.cleanNotification()"
-            />
+          <v-col cols="12">
+            <v-row>
+              <v-col cols="auto">
+                <v-btn
+                  prepend-icon="mdi-broom"
+                  :disabled="!system.favorites.length"
+                  :text="i18n.t('settings.favorites')"
+                  :aria-label="i18n.t('settings.cleanFavorites')"
+                  @click="system.cleanFavorite()"
+                />
+              </v-col>
+              <v-col v-if="system.notificationType === 'partial'" cols="auto">
+                <v-btn
+                  prepend-icon="mdi-broom"
+                  :disabled="!system.notifications.length"
+                  :text="i18n.t('settings.notifications')"
+                  :aria-label="i18n.t('settings.cleanNotifications')"
+                  @click="system.cleanNotification()"
+                />
+              </v-col>
+            </v-row>
           </v-col>
           <v-col cols="12">
             <v-switch

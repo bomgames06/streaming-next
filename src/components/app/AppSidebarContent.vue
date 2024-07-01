@@ -8,27 +8,22 @@ const sidebar = defineModel<boolean>('sidebar')
 const system = useSystemStore()
 const { t } = useI18n()
 
-function setView(view: ViewStore) {
+function openView(view: ViewStore) {
   system.setView(view)
   sidebar.value = false
 }
 </script>
 
 <template>
-  <v-list
-    :selected="[system.view]"
-    mandatory
-    nav
-    color="primary"
-    class="list-content"
-    @update:selected="setView($event[0])"
-  >
+  <v-list :selected="[system.view]" mandatory nav color="primary" class="list-content">
     <v-list-item
+      tag="button"
       role="option"
       :value="'streams' as ViewStore"
       :aria-selected="system.view === 'streams'"
       :aria-label="t('views.streams')"
       accesskey="1"
+      @click="openView('streams')"
     >
       <v-tooltip activator="parent" :text="t('views.streams')" location="end" />
       <v-icon>mdi-format-list-text</v-icon>
@@ -40,6 +35,7 @@ function setView(view: ViewStore) {
       :aria-selected="system.view === 'categories'"
       :aria-label="t('views.categories')"
       accesskey="2"
+      @click="openView('categories')"
     >
       <v-tooltip activator="parent" :text="t('views.categories')" location="end" />
       <v-icon>mdi-controller</v-icon>
@@ -51,6 +47,7 @@ function setView(view: ViewStore) {
       :aria-selected="system.view === 'search'"
       :aria-label="t('views.search')"
       accesskey="3"
+      @click="openView('search')"
     >
       <v-tooltip activator="parent" :text="t('views.search')" location="end" />
       <v-icon>mdi-magnify</v-icon>
@@ -62,6 +59,7 @@ function setView(view: ViewStore) {
       :aria-selected="system.view === 'settings'"
       :aria-label="t('views.settings')"
       accesskey="s"
+      @click="openView('settings')"
     >
       <v-tooltip activator="parent" :text="t('views.settings')" location="end" />
       <v-icon>mdi-cog</v-icon>

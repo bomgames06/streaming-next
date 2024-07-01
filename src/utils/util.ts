@@ -12,10 +12,10 @@ export function twitchOAuthRevoke(token: string): string {
   return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/revoke?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&token=${token}`
 }
 
-export function generateState(): string {
+export function generateState(size?: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let value = ''
-  for (let i = 0; i < 50; i += 1) {
+  for (let i = 0; i < (size || 50); i += 1) {
     value += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return value
@@ -26,7 +26,7 @@ export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, te
   else throw new Error('accountType is undefined')
 }
 
-function twitchUrl(name: string): string {
+export function twitchUrl(name: string): string {
   return `https://twitch.tv/${name}`
 }
 export function accountProfileUrl(account: AccountStore): string {
