@@ -11,6 +11,8 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import AppBusiness from '@/services/business/appBusiness'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
+import { VList } from 'vuetify/components/VList'
+import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -33,6 +35,7 @@ const videos = reactive<{ items: StreamItemVideoType[]; cursor?: string }>({
 const clips = reactive<{ items: StreamItemClipType[]; cursor?: string }>({
   items: [],
 })
+const keyListItem = uuidV4()
 
 const hasMoreItems = computed(() => {
   if (detailType.value === 'video') return !!videos.cursor
@@ -157,8 +160,8 @@ function showItem(item: StreamItemType) {
 </script>
 
 <template>
-  <v-list class="bg-transparent py-0">
-    <template v-for="(item, idx) in props.items" :key="`${item.type}:${item.id}`">
+  <v-list :accesskey="detailItem ? undefined : 'l'" class="bg-transparent py-0">
+    <template v-for="(item, idx) in props.items" :key="`${keyListItem}:${item.type}:${item.id}`">
       <StreamListItem
         v-show="showItem(item)"
         v-model:detail-item="detailItem"

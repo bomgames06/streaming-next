@@ -1,9 +1,9 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="d-flex flex-column min-h-100">
+  <div class="d-flex flex-column h-100">
     <slot name="top" />
-    <v-container class="pa-3 flex-grow-1 d-flex flex-column">
+    <v-container class="pa-3 flex-grow-1 overflow-y-auto">
       <slot />
     </v-container>
   </div>
