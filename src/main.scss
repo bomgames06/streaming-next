@@ -10,3 +10,13 @@ body {
   font-size: initial;
   height: 100%;
 }
+
+.clearable-appbar {
+  .v-field__clearable {
+    margin-left: 0;
+    font-size: 10px;
+  }
+  .v-field {
+    padding-right: 4px;
+  }
+}

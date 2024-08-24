@@ -26,7 +26,10 @@ function sortLabelOption(text: string, selected: boolean) {
     color="primary"
     autofocus
     single-line
+    clearable
+    persistent-clear
     accesskey="q"
+    class="clearable-appbar"
   />
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">

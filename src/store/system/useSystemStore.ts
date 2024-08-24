@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, toRaw } from 'vue'
 import browser from 'webextension-polyfill'
 import {
   STORAGE_KEY_ACCOUNTS,
@@ -14,6 +14,7 @@ import {
   STORAGE_KEY_STREAM_ORDER,
   STORAGE_KEY_STREAM_ORDER_SORT,
 } from '@/types/syncStorageKeysTypes'
+import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
 import type { Locales } from '@/plugins/i18n'
 import { locale } from '@/plugins/i18n'
@@ -36,7 +37,9 @@ import type {
   VideoOrderStore,
   ViewStore,
   ViewDataStore,
+  AccountCacheStreamsDataStore,
 } from '@/store/system/types/systemStoreType'
+import type { StreamItemLiveOfflineType } from '@/components/listStream/types/streamItemType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -57,6 +60,7 @@ const useSystemStore = defineStore('System', () => {
   const dark = ref<boolean>(false)
   const language = ref<Locales>(locale)
   const showAlwaysOfflines = ref<boolean>(false)
+  const accountsCacheStreams = ref<AccountCacheStreamsDataStore>({})
 
   // View
   const streamFilter = ref<string>('')
@@ -144,6 +148,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_SHOW_FAVORITES,
       STORAGE_KEY_SHOW_NOTIFICATIONS,
     ])
+    const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
     accounts.value = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
     notifications.value = syncStorage[STORAGE_KEY_NOTIFICATIONS] ?? []
@@ -156,6 +161,7 @@ const useSystemStore = defineStore('System', () => {
     streamOrderSort.value = syncStorage[STORAGE_KEY_STREAM_ORDER_SORT] ?? true
     showFavorites.value = syncStorage[STORAGE_KEY_SHOW_FAVORITES] ?? false
     showNotifications.value = syncStorage[STORAGE_KEY_SHOW_NOTIFICATIONS] ?? false
+    accountsCacheStreams.value = localStorage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] ?? {}
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -163,7 +169,7 @@ const useSystemStore = defineStore('System', () => {
 
   // utils
   function saveAccounts() {
-    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: toRaw(accounts.value) })
   }
   function getAccountByType(type: AccountStoreType) {
     const value = accounts.value[type]
@@ -203,6 +209,7 @@ const useSystemStore = defineStore('System', () => {
       }
     }
     saveAccounts()
+    setAccountCacheStreams(account.type, [])
   }
   function removeAccount(accountType: AccountStoreType) {
     const account = accounts.value[accountType]
@@ -228,46 +235,50 @@ const useSystemStore = defineStore('System', () => {
   }
   function addNotification(accountType: AccountStoreType, id: string) {
     notifications.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function removeNotification(accountType: AccountStoreType, id: string) {
     notifications.value = notifications.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function addFavorite(accountType: AccountStoreType, id: string) {
     favorites.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function removeFavorite(accountType: AccountStoreType, id: string) {
     favorites.value = favorites.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function cleanNotification() {
     notifications.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function cleanFavorite() {
     favorites.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function setNotificationType(type: NotificationTypeStore) {
     notificationType.value = type
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: notificationType.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: toRaw(notificationType.value) })
   }
   function setDark(value: boolean, theme: ThemeInstance) {
     dark.value = value
     theme.global.name.value = dark.value ? 'dark' : 'light'
-    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: dark.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: toRaw(dark.value) })
   }
   function setLanguage(value: Locales, i18n: Composer) {
     language.value = value
     i18n.locale.value = language.value
     document.documentElement.setAttribute('lang', language.value)
-    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: language.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: toRaw(language.value) })
   }
   function setShowAlwaysOfflines(value: boolean) {
     showAlwaysOfflines.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: showAlwaysOfflines.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: toRaw(showAlwaysOfflines.value) })
+  }
+  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveOfflineType[]) {
+    accountsCacheStreams.value[accountType] = value
+    void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: toRaw(accountsCacheStreams.value) })
   }
 
   // View actions
@@ -281,19 +292,19 @@ const useSystemStore = defineStore('System', () => {
       streamOrder.value = value
       if (!streamOrderSort.value) streamOrderSort.value = true
     }
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: streamOrder.value })
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: streamOrderSort.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: toRaw(streamOrder.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: toRaw(streamOrderSort.value) })
   }
   function setStreamNameFilter(value: string) {
     streamNameFilter.value = value
   }
   function setShowFavorites(value: boolean) {
     showFavorites.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: showFavorites.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: toRaw(showFavorites.value) })
   }
   function setShowNotifications(value: boolean) {
     showNotifications.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: showNotifications.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: toRaw(showNotifications.value) })
   }
 
   // Video view actions
@@ -328,6 +339,7 @@ const useSystemStore = defineStore('System', () => {
     dark,
     language,
     showAlwaysOfflines,
+    accountsCacheStreams,
     // view
     streamFilter,
     streamOrder,
@@ -379,6 +391,7 @@ const useSystemStore = defineStore('System', () => {
     setDark,
     setLanguage,
     setShowAlwaysOfflines,
+    setAccountCacheStreams,
     // view action
     setStreamOrder,
     // video view action,
