@@ -12,8 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.event.pull_request.merged == true &&
-      (startsWith(github.event.pull_request.head.ref, 'fix/') || startsWith(github.event.pull_request.head.ref, 'dev'))
+    if: github.event.pull_request.merged == true &&(
+      startsWith(github.event.pull_request.head.ref, 'fix/') ||
+      startsWith(github.event.pull_request.head.ref, 'dev')
+      )
 
     steps:
       - name: Checkout
@@ -24,53 +26,37 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Check Typescript
-        run: pnpm check
+        run: bun run check
 
       - name: Run lint
-        run: pnpm lint
+        run: bun run lint
 
       - name: Configure git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
       - name: Bump version
         id: bump_version
         run: |
           git fetch
-          if [[ "${{ github.head_ref }}" = "dev" ]]; then
+          if [[ "${{ github.head_ref }}" == "dev" ]]; then
             echo "This is the 'dev' branch. Checking out 'dev', bumping a minor version, and returning to the original branch."
             git checkout dev
             version=$(npm --no-git-tag-version version minor)
             git add package.json
             git commit -m "Bump version to $version"
             git checkout -
-          elif [[ "${{ github.head_ref }}" =~ fix/* ]]; then
+          elif [[ "${{ github.head_ref }}" =~ ^fix/ ]]; then
             echo "This is a fix branch. Doing a patch version bump."
             version=$(npm --no-git-tag-version version patch)
             git add package.json
@@ -81,7 +67,7 @@ jobs:
           fi
 
       - name: Build
-        run: pnpm build
+        run: bun run build
 
       - name: Push
         env:
@@ -89,8 +75,8 @@ jobs:
         run: |
           version=$(node -p "require('./package.json').version")
           git tag "v$version"
-          git push origin main --tags
-          if [[ "${{ github.head_ref }}" = "dev" ]]; then
+          git push https://$GITHUB_ACTOR:${{ secrets.ACCESS_TOKEN }}@github.com/$GITHUB_REPOSITORY.git main --tags
+          if [[ "${{ github.head_ref }}" == "dev" ]]; then
             git checkout dev
-            git push origin dev
+            git push https://$GITHUB_ACTOR:${{ secrets.ACCESS_TOKEN }}@github.com/$GITHUB_REPOSITORY.git dev
           fi

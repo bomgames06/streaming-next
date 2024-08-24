@@ -11,7 +11,7 @@
     "build": "vue-tsc && vite build",
     "check": "vue-tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "bunx only-allow bun"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",

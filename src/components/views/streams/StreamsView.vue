@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { AccountStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import StreamList from '@/components/listStream/StreamList.vue'
@@ -24,7 +23,7 @@ const { t } = useI18n()
 
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
-const offlines = ref<StreamItemLiveType[]>([])
+const offlines = ref<StreamItemLiveOfflineType[]>([])
 const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
@@ -170,11 +169,9 @@ async function fetchData() {
     fetchTimeout.value = undefined
   }
   try {
-    const onlinesFetched: Record<AccountStore['id'], StreamItemLiveOnlineType[]> = await fetchOnlineTwitch()
-    const itemsFetched: StreamItemLiveOnlineType[] = []
-    Object.values(onlinesFetched).forEach((value) => itemsFetched.push(...value))
+    const onlinesFetched: StreamItemLiveOnlineType[] = await fetchOnlineTwitch()
     dump.value = Date.now().toString()
-    onlines.value = itemsFetched
+    onlines.value = onlinesFetched
     offlines.value = []
 
     offlines.value = await fetchOfflinesTwitch(onlinesFetched)
@@ -187,25 +184,19 @@ async function fetchData() {
   }
 }
 
-async function fetchOnlineTwitch(): Promise<Record<AccountStore['id'], StreamItemLiveOnlineType[]>> {
+async function fetchOnlineTwitch(): Promise<StreamItemLiveOnlineType[]> {
   system.loading()
   try {
-    const promises: Promise<StreamItemLiveOnlineType[]>[] = []
-    system.validAccounts
-      .filter((value) => value.type === 'twitch')
-      .forEach((account) => promises.push(TwitchBusiness.getStreamersOnlineFollowed(account.token, account.accountId)))
-    const responses = await Promise.all(promises)
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
 
-    const items: Record<AccountStore['id'], StreamItemLiveOnlineType[]> = {}
-    let counts = 0
-    responses.forEach((value, idx) => {
-      items[system.validAccounts[idx].id] = value
-      counts += value.length
-    })
+    const items: StreamItemLiveOnlineType[] = await TwitchBusiness.getStreamersOnlineFollowed(
+      system.accounts.twitch.token,
+      system.accounts.twitch.accountId
+    )
 
     const message: BackgroundMessageType = {
       type: 'setCountBadge',
-      count: counts,
+      count: items.length,
     }
     void browser.runtime.sendMessage(message)
 
@@ -215,26 +206,16 @@ async function fetchOnlineTwitch(): Promise<Record<AccountStore['id'], StreamIte
   }
 }
 
-async function fetchOfflinesTwitch(
-  exclude: Record<AccountStore['id'], StreamItemLiveOnlineType[]>
-): Promise<StreamItemLiveOfflineType[]> {
+async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise<StreamItemLiveOfflineType[]> {
   system.loading()
   try {
-    const promises: Promise<StreamItemLiveOfflineType[]>[] = []
-    system.validAccounts
-      .filter((value) => value.type === 'twitch')
-      .forEach((account) =>
-        promises.push(
-          TwitchBusiness.getStreamersOfflineFollowed(
-            account.token,
-            account.accountId,
-            exclude[account.id].map((value) => value.id)
-          )
-        )
-      )
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
 
-    const responses = await Promise.all(promises)
-    return responses.reduce((acc, current) => void acc.push(...current) || acc, [])
+    return TwitchBusiness.getStreamersOfflineFollowed(
+      system.accounts.twitch.token,
+      system.accounts.twitch.accountId,
+      exclude.map((value) => value.id)
+    )
   } finally {
     system.loaded()
   }

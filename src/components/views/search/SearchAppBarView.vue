@@ -18,7 +18,9 @@ const mandatoryRule = (value: string) => !!value || t('common.mandatoryField')
     single-line
     :rules="[mandatoryRule]"
     hide-details
-    class="mr-2"
+    clearable
+    persistent-clear
+    class="mr-2 clearable-appbar"
   />
 </template>
 
