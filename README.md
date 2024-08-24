@@ -19,24 +19,24 @@ The application allows:
 ## Project requirements
 
 - Node: ^20.0.0
-- Pnpm: >=9.0.0
+- Bun: >=1.1.0
 
 ## Project setup
 ```
-pnpm install
+bun install
 ```
 
 ### Compiles for development
 ```
-pnpm dev
+bun run dev
 ```
 
 ### Compiles and minifies for production
 ```
-pnpm build
+bun run build
 ```
 
 ### Lints and fixes files
 ```
-pnpm lint
+bun run lint
 ```
