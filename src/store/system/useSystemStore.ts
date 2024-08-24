@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, toRaw } from 'vue'
 import browser from 'webextension-polyfill'
 import {
   STORAGE_KEY_ACCOUNTS,
@@ -14,6 +14,7 @@ import {
   STORAGE_KEY_STREAM_ORDER,
   STORAGE_KEY_STREAM_ORDER_SORT,
 } from '@/types/syncStorageKeysTypes'
+import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
 import type { Locales } from '@/plugins/i18n'
 import { locale } from '@/plugins/i18n'
@@ -36,7 +37,9 @@ import type {
   VideoOrderStore,
   ViewStore,
   ViewDataStore,
+  AccountCacheStreamsDataStore,
 } from '@/store/system/types/systemStoreType'
+import type { StreamItemLiveOfflineType } from '@/components/listStream/types/streamItemType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -57,6 +60,7 @@ const useSystemStore = defineStore('System', () => {
   const dark = ref<boolean>(false)
   const language = ref<Locales>(locale)
   const showAlwaysOfflines = ref<boolean>(false)
+  const accountsCacheStreams = ref<AccountCacheStreamsDataStore>({})
 
   // View
   const streamFilter = ref<string>('')
@@ -144,6 +148,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_SHOW_FAVORITES,
       STORAGE_KEY_SHOW_NOTIFICATIONS,
     ])
+    const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
     accounts.value = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
     notifications.value = syncStorage[STORAGE_KEY_NOTIFICATIONS] ?? []
@@ -156,6 +161,7 @@ const useSystemStore = defineStore('System', () => {
     streamOrderSort.value = syncStorage[STORAGE_KEY_STREAM_ORDER_SORT] ?? true
     showFavorites.value = syncStorage[STORAGE_KEY_SHOW_FAVORITES] ?? false
     showNotifications.value = syncStorage[STORAGE_KEY_SHOW_NOTIFICATIONS] ?? false
+    accountsCacheStreams.value = localStorage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] ?? {}
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -203,6 +209,7 @@ const useSystemStore = defineStore('System', () => {
       }
     }
     saveAccounts()
+    setAccountCacheStreams(account.type, [])
   }
   function removeAccount(accountType: AccountStoreType) {
     const account = accounts.value[accountType]
@@ -269,6 +276,10 @@ const useSystemStore = defineStore('System', () => {
     showAlwaysOfflines.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: showAlwaysOfflines.value })
   }
+  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveOfflineType[]) {
+    accountsCacheStreams.value[accountType] = value
+    void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: toRaw(accountsCacheStreams.value) })
+  }
 
   // View actions
   function setStreamFilter(value: string) {
@@ -328,6 +339,7 @@ const useSystemStore = defineStore('System', () => {
     dark,
     language,
     showAlwaysOfflines,
+    accountsCacheStreams,
     // view
     streamFilter,
     streamOrder,
@@ -379,6 +391,7 @@ const useSystemStore = defineStore('System', () => {
     setDark,
     setLanguage,
     setShowAlwaysOfflines,
+    setAccountCacheStreams,
     // view action
     setStreamOrder,
     // video view action,

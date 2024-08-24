@@ -18,6 +18,7 @@ import type {
 } from '@/store/system/types/systemStoreType'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
 import type { TwitchApiGameType, TwitchApiStreamsFollowedType } from '@/services/api/twitch/types/twitchApiType'
+import useSystemStore from '@/store/system/useSystemStore'
 
 function twitchStreamToStreamOnline(): (value: TwitchApiStreamsFollowedType) => StreamItemLiveOnlineType {
   return (value) => ({
@@ -94,16 +95,10 @@ const TwitchBusiness = {
       excludeIds ?? (await this.getStreamersOnlineFollowed(token, userId)).map((value) => value.id)
 
     const channelFollowed = await TwitchApi.channels.followed(token, userId)
-    const streamersOfflineIds = !excludes
-      ? []
-      : channelFollowed
-          .filter((value) => !excludes.some((id) => id === value.broadcaster_id))
-          .map((value) => value.broadcaster_id)
-    const streamersOffline = !streamersOfflineIds.length
-      ? []
-      : await TwitchApi.users.usersByIds(token, streamersOfflineIds)
+    const streamersOfflineIds = !excludes ? [] : channelFollowed.map((value) => value.broadcaster_id)
+    const usersOffline = !streamersOfflineIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersOfflineIds)
 
-    return streamersOffline.map((value) => ({
+    const streamersOffline: StreamItemLiveOfflineType[] = usersOffline.map((value) => ({
       type: 'twitch',
       status: 'offline',
       id: value.id,
@@ -111,6 +106,11 @@ const TwitchBusiness = {
       name: value.display_name,
       profileImage: value.profile_image_url,
     }))
+
+    const system = useSystemStore()
+    system.setAccountCacheStreams('twitch', streamersOffline)
+
+    return streamersOffline.filter((value) => !excludes.some((id) => id === value.id))
   },
   async getUsersByIds(token: string, ids: string[]): Promise<User[]> {
     const response = await TwitchApi.users.usersByIds(token, ids)

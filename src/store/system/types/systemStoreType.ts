@@ -1,3 +1,5 @@
+import type { StreamItemLiveOfflineType } from '@/components/listStream/types/streamItemType'
+
 export type AccountStoreType = 'twitch'
 export type AccountStore = {
   id: string
@@ -11,6 +13,9 @@ export type AccountStore = {
 }
 export type AccountDataStore = {
   [key in AccountStoreType]?: AccountStore
+}
+export type AccountCacheStreamsDataStore = {
+  [key in AccountStoreType]?: StreamItemLiveOfflineType[]
 }
 export type NotificationStore = {
   type: AccountStoreType

@@ -172,7 +172,7 @@ async function fetchData() {
     const onlinesFetched: StreamItemLiveOnlineType[] = await fetchOnlineTwitch()
     dump.value = Date.now().toString()
     onlines.value = onlinesFetched
-    offlines.value = []
+    offlines.value = system.accountsCacheStreams?.twitch || []
 
     offlines.value = await fetchOfflinesTwitch(onlinesFetched)
   } finally {
