@@ -169,7 +169,7 @@ const useSystemStore = defineStore('System', () => {
 
   // utils
   function saveAccounts() {
-    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: toRaw(accounts.value) })
   }
   function getAccountByType(type: AccountStoreType) {
     const value = accounts.value[type]
@@ -235,46 +235,46 @@ const useSystemStore = defineStore('System', () => {
   }
   function addNotification(accountType: AccountStoreType, id: string) {
     notifications.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function removeNotification(accountType: AccountStoreType, id: string) {
     notifications.value = notifications.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function addFavorite(accountType: AccountStoreType, id: string) {
     favorites.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function removeFavorite(accountType: AccountStoreType, id: string) {
     favorites.value = favorites.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function cleanNotification() {
     notifications.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: [...notifications.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
   }
   function cleanFavorite() {
     favorites.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: [...favorites.value] })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
   }
   function setNotificationType(type: NotificationTypeStore) {
     notificationType.value = type
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: notificationType.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: toRaw(notificationType.value) })
   }
   function setDark(value: boolean, theme: ThemeInstance) {
     dark.value = value
     theme.global.name.value = dark.value ? 'dark' : 'light'
-    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: dark.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: toRaw(dark.value) })
   }
   function setLanguage(value: Locales, i18n: Composer) {
     language.value = value
     i18n.locale.value = language.value
     document.documentElement.setAttribute('lang', language.value)
-    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: language.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: toRaw(language.value) })
   }
   function setShowAlwaysOfflines(value: boolean) {
     showAlwaysOfflines.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: showAlwaysOfflines.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: toRaw(showAlwaysOfflines.value) })
   }
   function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveOfflineType[]) {
     accountsCacheStreams.value[accountType] = value
@@ -292,19 +292,19 @@ const useSystemStore = defineStore('System', () => {
       streamOrder.value = value
       if (!streamOrderSort.value) streamOrderSort.value = true
     }
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: streamOrder.value })
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: streamOrderSort.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: toRaw(streamOrder.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: toRaw(streamOrderSort.value) })
   }
   function setStreamNameFilter(value: string) {
     streamNameFilter.value = value
   }
   function setShowFavorites(value: boolean) {
     showFavorites.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: showFavorites.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: toRaw(showFavorites.value) })
   }
   function setShowNotifications(value: boolean) {
     showNotifications.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: showNotifications.value })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: toRaw(showNotifications.value) })
   }
 
   // Video view actions
