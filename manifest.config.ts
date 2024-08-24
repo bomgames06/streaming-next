@@ -52,7 +52,7 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
     background: {
       service_worker: 'src/background.ts',
     },
-    permissions: ['identity', 'storage', 'notifications', 'alarms', 'debugger'],
+    permissions: ['identity', 'storage', 'notifications', 'alarms'],
     content_security_policy: {
       extension_pages: extensionPages,
     },

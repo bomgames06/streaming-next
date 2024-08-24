@@ -54,11 +54,15 @@
     "back": "Back",
     "close": "Close",
     "desc": "Descendent",
-    "favorite": "Favorite",
+    "favorite": "Favorite | Favorites",
+    "filter": "Filter",
     "loaded": "Loaded",
     "loading": "Loading",
     "loadingError": "Error loading application",
     "mandatoryField": "Mandatory field",
+    "notification": "Notification | Notifications",
+    "offlines": "Offlines",
+    "onlines": "Onlines",
     "projectName": "Streaming Next",
     "refresh": "Refresh",
     "sort": "Sort",
@@ -80,14 +84,17 @@
     "searchMore": "Search more"
   },
   "settings": {
+    "cleanFavorites": "Clean favorites",
     "cleanNotifications": "Clean notifications",
     "darkMode": "Dark mode",
+    "favorites": "Favorites",
     "languages": "Languages",
     "notificationType": {
       "all": "All",
       "none": "None",
       "partial": "Partial"
     },
+    "notifications": "Notifications",
     "showAlwaysOfflines": "Always show offlines",
     "sponsor": "Sponsor",
     "sponsorProfile": "Sponsor {name}",
@@ -119,10 +126,12 @@
     },
     "clips": "Clips",
     "menu": {
+      "addFavorite": "Add Favorite",
       "category": "Category",
       "clips": "Clips",
       "disableNotification": "Disable notification",
       "enableNotification": "Enable notification",
+      "removeFavorite": "Remove favorite",
       "videos": "Videos"
     },
     "offline": "Offline",

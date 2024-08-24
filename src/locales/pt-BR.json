@@ -54,11 +54,15 @@
     "back": "Voltar",
     "close": "Fechar",
     "desc": "Decrescente",
-    "favorite": "Favorito",
+    "favorite": "Favorito | Favoritos",
+    "filter": "Filtro",
     "loaded": "Carregado",
     "loading": "Carregando",
     "loadingError": "Erro para carregar aplicação",
     "mandatoryField": "Campo obrigatório",
+    "notification": "Notificação | Notificações",
+    "offlines": "Offlines",
+    "onlines": "Onlines",
     "projectName": "Streaming Next",
     "refresh": "Atualizar",
     "sort": "Ordenar",
@@ -80,14 +84,17 @@
     "searchMore": "Buscar mais"
   },
   "settings": {
+    "cleanFavorites": "Limpar favoritos",
     "cleanNotifications": "Limpar notificações",
     "darkMode": "Modo dark",
+    "favorites": "Favoritos",
     "languages": "Idiomas",
     "notificationType": {
       "all": "Todos",
       "none": "Nenhum",
       "partial": "Parcial"
     },
+    "notifications": "Notificações",
     "showAlwaysOfflines": "Mostrar offlines sempre",
     "sponsor": "Apoiar",
     "sponsorProfile": "Apoiar {name}",
@@ -119,10 +126,12 @@
     },
     "clips": "Clipes",
     "menu": {
+      "addFavorite": "Adicionar favorito",
       "category": "Categoria",
       "clips": "Clipes",
       "disableNotification": "Desabilitar notificação",
       "enableNotification": "Ativar notificação",
+      "removeFavorite": "Remover favorito",
       "videos": "Vídeos"
     },
     "offline": "Offline",

@@ -5,12 +5,18 @@ import {
   STORAGE_KEY_NOTIFICATION_TYPE,
   STORAGE_KEY_NOTIFICATIONS,
 } from '@/types/syncStorageKeysTypes'
-import type { AccountDataStore, NotificationStore, NotificationTypeStore } from '@/store/system/types/systemStoreType'
+import type {
+  AccountDataStore,
+  AccountStoreType,
+  NotificationStore,
+  NotificationTypeStore,
+} from '@/store/system/types/systemStoreType'
 import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { User } from '@/types/userType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
+import { generateState, twitchUrl } from '@/utils/util'
 
 type OnlineHistory = {
   twitch: string[]
@@ -61,7 +67,7 @@ export default async function notificationHandler(onlines: StreamItemLiveOnlineT
       const user = users.find((value) => value.id === online.id)
       if (!user) return
 
-      browser.notifications.create(`message-${online.login}`, {
+      browser.notifications.create(`${generateState(10)}-N-${online.type}-${online.login}`, {
         type: 'basic',
         iconUrl: user.avatarUrl,
         title: online.name,
@@ -76,3 +82,10 @@ export default async function notificationHandler(onlines: StreamItemLiveOnlineT
   started = true
   await browser.storage.session.set({ [STORAGE_KEY_STARTED]: started })
 }
+
+browser.notifications.onClicked.addListener((notificationId) => {
+  const match = notificationId.match(/^([a-zA-Z0-9]{10})-N-(.+)-(.+)$/)
+  if (match && match[3]) {
+    if (match[2] === ('twitch' as AccountStoreType)) void browser.tabs.create({ url: twitchUrl(match[3]) })
+  }
+})

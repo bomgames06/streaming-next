@@ -2,23 +2,13 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
-import { onMounted, onUnmounted, ref } from 'vue'
-import Mousetrap from 'mousetrap'
+import { ref } from 'vue'
 import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
 const filterTextFieldRef = ref<HTMLInputElement | null>(null)
-
-onMounted(() => {
-  Mousetrap.bind('alt+q', () => {
-    if (filterTextFieldRef.value) filterTextFieldRef.value.focus()
-  })
-})
-onUnmounted(() => {
-  Mousetrap.unbind('alt+q')
-})
 
 function sortLabelOption(text: string, selected: boolean) {
   let value = text

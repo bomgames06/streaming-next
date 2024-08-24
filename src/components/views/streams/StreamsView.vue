@@ -17,7 +17,7 @@ import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
-import MenuExpansion from '@/components/menuExpansion/MenuExpansion.vue'
+import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -30,6 +30,7 @@ const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
+const filterLabelId = uuidV4()
 
 const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
 watch(
@@ -47,7 +48,12 @@ const itemsFiltered = computed(() =>
   )
 )
 const showOfflinesComp = computed(
-  () => !!filter.value || system.showAlwaysOfflines || showOfflines.value || system.showFavoritesComp
+  () =>
+    !!filter.value ||
+    system.showAlwaysOfflines ||
+    showOfflines.value ||
+    system.showFavoritesComp ||
+    system.showNotificationsComp
 )
 const renderOfflinesComp = computed(
   () =>
@@ -55,7 +61,8 @@ const renderOfflinesComp = computed(
     offlines.value.length &&
     !system.showAlwaysOfflines &&
     !detailItem.value &&
-    !system.showFavoritesComp
+    !system.showFavoritesComp &&
+    !system.showNotificationsComp
 )
 const orders = computed(() => {
   const items: ((item: StreamItemLiveType) => string | number)[] = []
@@ -87,6 +94,16 @@ onMounted(() => {
   fetchData()
 })
 
+function toggleFavorite() {
+  system.showFavoritesComp = !system.showFavoritesComp
+}
+function toggleNotification() {
+  system.showNotificationsComp = !system.showNotificationsComp
+}
+function toggleOffline() {
+  showOfflines.value = !showOfflines.value
+}
+
 function orderStatus(value: StreamItemLiveType) {
   return value.status
 }
@@ -109,7 +126,14 @@ function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
   if (!showOfflinesComp.value && value.status === 'offline') show = false
-  else if (system.showFavoritesComp && !notificationItemEnabled(value)) show = false
+  else if (
+    !(
+      (!system.showFavoritesComp && !system.showNotificationsComp) ||
+      (system.showFavoritesComp && favoriteItemEnabled(value)) ||
+      (system.showNotificationsComp && notificationItemEnabled(value))
+    )
+  )
+    show = false
   else if (filter.value) {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
@@ -122,6 +146,9 @@ function filterItem(value: StreamItemLiveType): boolean {
   return show
 }
 
+function favoriteItemEnabled(item: StreamItemType) {
+  return system.favorites.some((value) => value.type === item.type && value.id === item.id)
+}
 function notificationItemEnabled(item: StreamItemType) {
   return system.notifications.some((value) => value.type === item.type && value.id === item.id)
 }
@@ -215,34 +242,78 @@ async function fetchOfflinesTwitch(
 </script>
 
 <template>
-  <MenuExpansion v-if="!detailItem">
-    <v-row dense>
-      <v-col>
-        <v-switch
-          v-model="system.showFavoritesComp"
-          hide-details
-          density="compact"
-          color="primary"
-          :true-value="true"
-          :false-value="false"
-          :label="t('streamsView.favorites')"
-        />
-      </v-col>
-    </v-row>
-  </MenuExpansion>
   <ViewContainer>
-    <v-row>
-      <v-col cols="12">
-        <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
-      </v-col>
-      <v-col v-if="renderOfflinesComp" cols="12">
-        <v-btn height="54" block @click="showOfflines = !showOfflines">
-          <v-icon size="x-large" class="mr-2">mdi-wifi-off</v-icon>
-          <span>{{ showOfflinesComp ? t('streamsView.hideOfflines') : t('streamsView.showOfflines') }}</span>
-        </v-btn>
-      </v-col>
-    </v-row>
+    <template #top>
+      <v-sheet color="surface-light" class="px-2 py-1 top-0 filter-content">
+        <v-row role="group" dense :aria-label="t('common.filter')" class="mx-0">
+          <v-col :id="filterLabelId" cols="auto">
+            <v-icon>mdi-filter</v-icon>
+          </v-col>
+          <v-col cols="auto" class="d-flex">
+            <v-divider vertical class="h-75 align-self-center" />
+          </v-col>
+          <v-col cols="auto">
+            <v-btn
+              v-tooltip="t('common.favorite', 2)"
+              role="checkbox"
+              :aria-checked="system.showFavoritesComp"
+              :aria-label="t('common.favorite', 2)"
+              :icon="true"
+              :disabled="!!detailItem"
+              size="24"
+              accesskey="b"
+              class="rounded-lg"
+              @click="toggleFavorite"
+            >
+              <v-icon size="18" :color="system.showFavoritesComp ? 'primary' : ''">{{
+                system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
+              }}</v-icon>
+            </v-btn>
+          </v-col>
+          <v-col v-if="system.notificationType === 'partial'" cols="auto">
+            <v-btn
+              v-tooltip="t('common.notification', 2)"
+              role="checkbox"
+              :aria-checked="system.showNotificationsComp"
+              :aria-label="t('common.notification', 2)"
+              :icon="true"
+              :disabled="!!detailItem"
+              size="24"
+              accesskey="n"
+              class="rounded-lg"
+              @click="toggleNotification"
+            >
+              <v-icon size="18" :color="system.showNotificationsComp ? 'primary' : ''">{{
+                system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
+              }}</v-icon>
+            </v-btn>
+          </v-col>
+          <v-col cols="auto">
+            <v-btn
+              v-tooltip="t('common.offlines')"
+              role="checkbox"
+              :aria-checked="showOfflines"
+              :aria-label="t('common.offlines')"
+              :icon="true"
+              :disabled="!renderOfflinesComp"
+              size="24"
+              accesskey="o"
+              class="rounded-lg"
+              @click="toggleOffline"
+            >
+              <v-icon size="18" :color="showOfflinesComp ? 'primary' : ''"> mdi-wifi-off </v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-sheet>
+      <v-divider />
+    </template>
+    <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
   </ViewContainer>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.filter-content {
+  z-index: 10;
+}
+</style>
