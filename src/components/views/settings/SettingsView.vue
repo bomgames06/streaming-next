@@ -12,14 +12,15 @@ const theme = useTheme()
 const i18n = useI18n()
 
 const appVersion = import.meta.env.__APP_VERSION__
-const githubName = import.meta.env.VITE_GITHUB_NAME
+const githubUrl = import.meta.env.VITE_GITHUB_URL
 const buyMeACoffeName = import.meta.env.VITE_BUY_ME_A_COFFE_NAME
+const buyMeACoffeUrl = import.meta.env.VITE_BUY_ME_A_COFFE_URL
 
 function openGithub(middle?: boolean) {
-  browser.tabs.create({ url: `https://github.com/${githubName}`, active: !middle })
+  browser.tabs.create({ url: githubUrl, active: !middle })
 }
 function openDonation(middle?: boolean) {
-  browser.tabs.create({ url: `https://www.buymeacoffee.com/${buyMeACoffeName}`, active: !middle })
+  browser.tabs.create({ url: buyMeACoffeUrl, active: !middle })
 }
 </script>
 
@@ -112,13 +113,13 @@ function openDonation(middle?: boolean) {
               v-bind="props"
               variant="text"
               :color="isHovering ? 'white' : ''"
-              :aria-label="i18n.t('settings.githubProfile', { name: githubName })"
+              :aria-label="i18n.t('settings.github')"
               class="about-button"
               @click="openGithub(false)"
               @mousedown.middle.prevent="openGithub(true)"
             >
               <v-icon class="mr-1">mdi-github</v-icon>
-              <span>{{ githubName }}</span>
+              <span>{{ i18n.t('settings.github') }}</span>
             </v-btn>
           </template>
         </v-hover>

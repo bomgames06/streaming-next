@@ -88,7 +88,7 @@
     "cleanNotifications": "Clean notifications",
     "darkMode": "Dark mode",
     "favorites": "Favorites",
-    "githubProfile": "Github {name}",
+    "github": "Github",
     "languages": "Languages",
     "notificationType": {
       "all": "All",
