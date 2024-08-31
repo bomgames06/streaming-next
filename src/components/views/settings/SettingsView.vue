@@ -107,22 +107,16 @@ function openDonation(middle?: boolean) {
       >
         <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
         <v-divider vertical class="mx-1" />
-        <v-hover>
-          <template #default="{ isHovering, props }">
-            <v-btn
-              v-bind="props"
-              variant="text"
-              :color="isHovering ? 'white' : ''"
-              :aria-label="i18n.t('settings.github')"
-              class="about-button"
-              @click="openGithub(false)"
-              @mousedown.middle.prevent="openGithub(true)"
-            >
-              <v-icon class="mr-1">mdi-github</v-icon>
-              <span>{{ i18n.t('settings.github') }}</span>
-            </v-btn>
-          </template>
-        </v-hover>
+        <v-btn
+          variant="text"
+          :aria-label="i18n.t('settings.github')"
+          class="about-button"
+          @click="openGithub(false)"
+          @mousedown.middle.prevent="openGithub(true)"
+        >
+          <v-icon class="mr-1">mdi-github</v-icon>
+          <span>{{ i18n.t('settings.github') }}</span>
+        </v-btn>
         <v-divider vertical class="mx-1" />
         <v-hover>
           <template #default="{ isHovering, props }">
