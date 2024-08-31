@@ -12,11 +12,11 @@ const theme = useTheme()
 const i18n = useI18n()
 
 const appVersion = import.meta.env.__APP_VERSION__
-const twitterName = import.meta.env.VITE_TWITTER_NAME
+const githubName = import.meta.env.VITE_GITHUB_NAME
 const buyMeACoffeName = import.meta.env.VITE_BUY_ME_A_COFFE_NAME
 
-function openTwitter(middle?: boolean) {
-  browser.tabs.create({ url: `https://twitter.com/${twitterName}`, active: !middle })
+function openGithub(middle?: boolean) {
+  browser.tabs.create({ url: `https://github.com/${githubName}`, active: !middle })
 }
 function openDonation(middle?: boolean) {
   browser.tabs.create({ url: `https://www.buymeacoffee.com/${buyMeACoffeName}`, active: !middle })
@@ -111,14 +111,14 @@ function openDonation(middle?: boolean) {
             <v-btn
               v-bind="props"
               variant="text"
-              :color="isHovering ? 'blue-darken-1' : ''"
-              :aria-label="i18n.t('settings.twitterProfile', { name: twitterName })"
+              :color="isHovering ? 'white' : ''"
+              :aria-label="i18n.t('settings.githubProfile', { name: githubName })"
               class="about-button"
-              @click="openTwitter(false)"
-              @mousedown.middle.prevent="openTwitter(true)"
+              @click="openGithub(false)"
+              @mousedown.middle.prevent="openGithub(true)"
             >
-              <v-icon class="mr-1">mdi-twitter</v-icon>
-              <span>{{ twitterName }}</span>
+              <v-icon class="mr-1">mdi-github</v-icon>
+              <span>{{ githubName }}</span>
             </v-btn>
           </template>
         </v-hover>
@@ -129,7 +129,7 @@ function openDonation(middle?: boolean) {
               v-bind="props"
               variant="text"
               :color="isHovering ? 'red' : ''"
-              :aria-label="i18n.t('settings.sponsorProfile', { name: twitterName })"
+              :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
               class="about-button"
               @click="openDonation(false)"
               @mousedown.middle.prevent="openDonation(true)"
