@@ -39,6 +39,26 @@ watch(
   }
 )
 
+const orders = computed(() => {
+  const items: ((item: StreamItemLiveType) => string | number)[] = []
+
+  if (!filter.value) items.push(orderStatus)
+  if (system.streamOrder === 'name') items.push(orderName)
+  if (system.streamOrder === 'view') items.push(orderView)
+  if (system.streamOrder === 'game') items.push(orderGame)
+  items.push(orderType)
+
+  return items
+})
+const sorts = computed(() => {
+  const items: ('asc' | 'desc')[] = []
+
+  if (!filter.value) items.push('desc')
+  items.push(system.streamOrderSort ? 'asc' : 'desc')
+  items.push('asc')
+
+  return items
+})
 const itemsFiltered = computed(() =>
   orderBy(
     uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem),
@@ -63,26 +83,6 @@ const renderOfflinesComp = computed(
     !system.showFavoritesComp &&
     !system.showNotificationsComp
 )
-const orders = computed(() => {
-  const items: ((item: StreamItemLiveType) => string | number)[] = []
-
-  if (!filter.value) items.push(orderStatus)
-  if (system.streamOrder === 'name') items.push(orderName)
-  if (system.streamOrder === 'view') items.push(orderView)
-  if (system.streamOrder === 'game') items.push(orderGame)
-  items.push(orderType)
-
-  return items
-})
-const sorts = computed(() => {
-  const items: ('asc' | 'desc')[] = []
-
-  if (!filter.value) items.push('desc')
-  items.push(system.streamOrderSort ? 'asc' : 'desc')
-  items.push('asc')
-
-  return items
-})
 
 emitter.on('refresh', fetchData)
 onUnmounted(() => {
@@ -225,28 +225,28 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
 <template>
   <ViewContainer>
     <template #top>
-      <v-sheet color="surface-light" class="px-2 py-1 top-0 filter-content">
-        <v-row role="group" dense :aria-label="t('common.filter')" class="mx-0">
+      <v-sheet class="px-2 py-1 top-0 filter-content" color="surface-light">
+        <v-row :aria-label="t('common.filter')" class="mx-0" dense role="group">
           <v-col :id="filterLabelId" cols="auto">
             <v-icon>mdi-filter</v-icon>
           </v-col>
-          <v-col cols="auto" class="d-flex">
-            <v-divider vertical class="h-75 align-self-center" />
+          <v-col class="d-flex" cols="auto">
+            <v-divider class="h-75 align-self-center" vertical />
           </v-col>
           <v-col cols="auto">
             <v-btn
               v-tooltip="t('common.favorite', 2)"
-              role="checkbox"
+              accesskey="b"
               :aria-checked="system.showFavoritesComp"
               :aria-label="t('common.favorite', 2)"
-              :icon="true"
-              :disabled="!!detailItem"
-              size="24"
-              accesskey="b"
               class="rounded-lg"
+              :disabled="!!detailItem"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleFavorite"
             >
-              <v-icon size="18" :color="system.showFavoritesComp ? 'primary' : ''">{{
+              <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
                 system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
               }}</v-icon>
             </v-btn>
@@ -254,17 +254,17 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
           <v-col v-if="system.notificationType === 'partial'" cols="auto">
             <v-btn
               v-tooltip="t('common.notification', 2)"
-              role="checkbox"
+              accesskey="n"
               :aria-checked="system.showNotificationsComp"
               :aria-label="t('common.notification', 2)"
-              :icon="true"
-              :disabled="!!detailItem"
-              size="24"
-              accesskey="n"
               class="rounded-lg"
+              :disabled="!!detailItem"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleNotification"
             >
-              <v-icon size="18" :color="system.showNotificationsComp ? 'primary' : ''">{{
+              <v-icon :color="system.showNotificationsComp ? 'primary' : ''" size="18">{{
                 system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
               }}</v-icon>
             </v-btn>
@@ -272,24 +272,24 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
           <v-col cols="auto">
             <v-btn
               v-tooltip="t('common.offlines')"
-              role="checkbox"
+              accesskey="o"
               :aria-checked="showOfflines"
               :aria-label="t('common.offlines')"
-              :icon="true"
-              :disabled="!renderOfflinesComp"
-              size="24"
-              accesskey="o"
               class="rounded-lg"
+              :disabled="!renderOfflinesComp"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleOffline"
             >
-              <v-icon size="18" :color="showOfflinesComp ? 'primary' : ''"> mdi-wifi-off </v-icon>
+              <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
             </v-btn>
           </v-col>
         </v-row>
       </v-sheet>
       <v-divider />
     </template>
-    <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
+    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" />
   </ViewContainer>
 </template>
 

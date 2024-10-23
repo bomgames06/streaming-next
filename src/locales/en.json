@@ -100,6 +100,8 @@
     "sponsor": "Sponsor",
     "sponsorProfile": "Sponsor {name}",
     "title": "Settings",
+    "twitter": "Twitter",
+    "twitterProfile": "Twitter {name}",
     "version": "Version: {version}"
   },
   "simpleLayout": {

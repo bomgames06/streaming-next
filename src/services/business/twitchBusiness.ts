@@ -66,7 +66,7 @@ const TwitchBusiness = {
     const message: RevokeBackgroundMessageType = {
       type: 'revoke',
       authType: 'twitch',
-      token: token,
+      token,
     }
     await browser.runtime.sendMessage(message)
   },
@@ -216,7 +216,7 @@ const TwitchBusiness = {
   ): Promise<{ items: StreamItemLiveOnlineType[]; cursor?: string }> {
     const response = await TwitchApi.streams.stream(token, {
       game_id: [categoryId],
-      language: language,
+      language,
       first: limit?.toString(),
       after: cursor,
     })

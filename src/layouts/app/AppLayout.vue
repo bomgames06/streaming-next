@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import useSystemStore from '@/store/system/useSystemStore'
 import type { Ref } from 'vue'
-import { onMounted, onUnmounted } from 'vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
@@ -91,31 +90,31 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
     </ul>
   </div>
   <v-layout>
-    <v-app-bar :height="system.appBarHeight" class="app-bar">
+    <v-app-bar class="app-bar" :height="system.appBarHeight">
       <div class="d-flex w-100 position-relative align-center">
         <div class="d-flex align-center profile-content">
-          <v-progress-linear v-if="system.isLoading" absolute indeterminate location="bottom" color="primary" />
-          <v-app-bar-nav-icon :size="system.appBarHeight" class="rounded-lg" @click="sidebar = !sidebar" />
+          <v-progress-linear v-if="system.isLoading" absolute color="primary" indeterminate location="bottom" />
+          <v-app-bar-nav-icon class="rounded-lg" :size="system.appBarHeight" @click="sidebar = !sidebar" />
           <v-menu :close-on-content-click="false">
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
-                variant="text"
-                :height="system.appBarHeight"
                 class="text-none text-body-2 px-2 profile-button flex-grow-1 flex-shrink-1"
+                :height="system.appBarHeight"
+                variant="text"
               >
                 <v-avatar
-                  :image="system.mainAccount?.avatarUrl"
-                  :icon="!system.mainAccount?.avatarUrl ? 'mdi-account' : ''"
-                  :size="system.appBarHeight * (26 / 36)"
                   class="mr-1"
+                  :icon="!system.mainAccount?.avatarUrl ? 'mdi-account' : ''"
+                  :image="system.mainAccount?.avatarUrl"
+                  :size="system.appBarHeight * (26 / 36)"
                 />
                 <span class="font-weight-bold d-inline-block text-truncate">{{ system.mainAccount?.name }}</span>
               </v-btn>
             </template>
             <template #default="{ isActive }">
               <v-list class="py-0" @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))">
-                <v-list-group color="primary" class="group-indent">
+                <v-list-group class="group-indent" color="primary">
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.accounts')">
                       <template #prepend>
@@ -125,7 +124,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   </template>
                   <AuthActions v-model:authenticating="authenticating" list-item @authenticated="authenticated" />
                 </v-list-group>
-                <v-list-group color="primary" class="group-indent">
+                <v-list-group class="group-indent" color="primary">
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.language')">
                       <template #prepend>
@@ -136,9 +135,9 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   <v-list-item
                     v-for="locale in locales"
                     :key="locale"
-                    role="option"
                     :active="locale === system.language"
                     :aria-selected="locale === system.language"
+                    role="option"
                     :title="i18n.t(`languages.${locale}`, 0, { locale: locale })"
                     @click="system.setLanguage(locale, i18n)"
                   />

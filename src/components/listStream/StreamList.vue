@@ -58,8 +58,7 @@ function itemClick(value: { item: StreamItemType; middle?: boolean }): void {
 }
 
 watch(props.items, (items) => {
-  if (!detailItem.value) return
-  else detailItem.value = items.find((value) => equals(value, detailItem.value!))
+  if (detailItem.value) detailItem.value = items.find((value) => equals(value, detailItem.value!))
 })
 
 function menuItemClick(value: { type: 'video' | 'clip'; item: StreamItemType }): void {
@@ -166,12 +165,12 @@ function showItem(item: StreamItemType) {
         v-show="showItem(item)"
         v-model:detail-item="detailItem"
         v-model:menu-show="menuShow"
-        :item="item"
-        :disabled="!showItem(item)"
-        :disable-context-menu="props.disableContextMenu"
         :disable-category-menu="props.disableCategoryMenu"
+        :disable-context-menu="props.disableContextMenu"
         :disable-notification-menu="props.disableNotificationMenu"
+        :disabled="!showItem(item)"
         :dump="props.dump"
+        :item="item"
         @item-click="itemClick"
         @menu-item-click="menuItemClick"
       />
@@ -182,23 +181,23 @@ function showItem(item: StreamItemType) {
     <template v-if="detailType === 'video'">
       <h2 class="mt-2">{{ t('streamList.videos') }}</h2>
       <v-divider class="mt-1 mb-2" />
-      <StreamList :items="videos.items" disable-context-menu />
+      <StreamList disable-context-menu :items="videos.items" />
     </template>
     <template v-if="detailType === 'clip'">
       <h2 class="mt-2">{{ t('streamList.clips') }}</h2>
       <v-divider class="mt-1 mb-2" />
-      <StreamList :items="clips.items" disable-context-menu />
+      <StreamList disable-context-menu :items="clips.items" />
     </template>
     <v-btn
       v-if="hasMoreItems"
-      :disabled="fetching"
-      :loading="fetching"
-      height="54"
       block
       class="mt-2"
+      :disabled="fetching"
+      height="54"
+      :loading="fetching"
       @click="fetchMore()"
     >
-      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
       <span>{{ t('streamList.searchMore') }}</span>
     </v-btn>
   </template>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { HeaderAppBarViewStore } from '@/store/system/types/systemStoreType'
+import type { HeaderAppBarViewStore, ViewStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
-import type { ViewStore } from '@/store/system/types/systemStoreType'
 import type { Component } from 'vue'
 import StreamsAppBarView from '@/components/views/streams/StreamsAppBarView.vue'
 import StreamListVideosAppBarView from '@/components/listStream/appBarView/StreamListVideosAppBarView.vue'

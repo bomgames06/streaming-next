@@ -11,16 +11,16 @@ const mandatoryRule = (value: string) => !!value || t('common.mandatoryField')
 <template>
   <v-text-field
     v-model.trim="system.streamNameFilter"
-    variant="outlined"
-    :label="t('searchView.search')"
-    color="primary"
     autofocus
-    single-line
-    :rules="[mandatoryRule]"
-    hide-details
-    clearable
-    persistent-clear
     class="mr-2 clearable-appbar"
+    clearable
+    color="primary"
+    hide-details
+    :label="t('searchView.search')"
+    persistent-clear
+    :rules="[mandatoryRule]"
+    single-line
+    variant="outlined"
   />
 </template>
 

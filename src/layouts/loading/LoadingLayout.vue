@@ -12,20 +12,20 @@ const { t } = useI18n()
 
 <template>
   <SimpleLayout>
-    <v-row align="center" justify="center" class="h-100">
-      <v-col cols="auto" aria-live="polite" class="text-center">
+    <v-row align="center" class="h-100" justify="center">
+      <v-col aria-live="polite" class="text-center" cols="auto">
         <h1 aria-atomic="true" class="text-primary">{{ t('common.projectName') }}</h1>
         <div class="d-flex justify-center">
           <template v-if="props.error">
-            <v-icon aria-hidden="true" color="error" size="20" class="mr-2">mdi-close-thick</v-icon>
+            <v-icon aria-hidden="true" class="mr-2" color="error" size="20">mdi-close-thick</v-icon>
             <p key="text" aria-atomic="true" class="text-error">{{ t('common.loadingError') }}</p>
           </template>
           <template v-else-if="props.loaded">
-            <v-icon aria-hidden="true" color="success" size="20" class="mr-2">mdi-check-bold</v-icon>
+            <v-icon aria-hidden="true" class="mr-2" color="success" size="20">mdi-check-bold</v-icon>
             <p key="text" aria-atomic="true">{{ t('common.loaded') }}</p>
           </template>
           <template v-else>
-            <v-progress-circular aria-hidden="true" indeterminate color="primary" size="20" class="mr-2" />
+            <v-progress-circular aria-hidden="true" class="mr-2" color="primary" indeterminate size="20" />
             <p key="text" aria-atomic="true">{{ t('common.loading') }}</p>
           </template>
         </div>

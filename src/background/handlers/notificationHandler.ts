@@ -1,5 +1,6 @@
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
 import browser from 'webextension-polyfill'
+import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS,
   STORAGE_KEY_NOTIFICATION_TYPE,
@@ -11,28 +12,33 @@ import type {
   NotificationStore,
   NotificationTypeStore,
 } from '@/store/system/types/systemStoreType'
+import type { StorageSessionTypes } from '@/types/sessionStorageKeysTypes'
 import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { User } from '@/types/userType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
 import { generateState, twitchUrl } from '@/utils/util'
+import { uniqBy } from 'lodash'
 
-type OnlineHistory = {
+export type OnlineHistory = {
   twitch: string[]
 }
 
 export default async function notificationHandler(onlines: StreamItemLiveOnlineType[]) {
-  const syncStorage = await browser.storage.sync.get([
+  const syncStorage: StorageSyncTypes = (await browser.storage.sync.get([
     STORAGE_KEY_NOTIFICATION_TYPE,
     STORAGE_KEY_NOTIFICATIONS,
     STORAGE_KEY_ACCOUNTS,
-  ])
+  ])) as StorageSyncTypes
 
   const accounts: AccountDataStore = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
   if (!accounts.twitch || accounts.twitch.invalid) return
 
-  const sessionStorage = await browser.storage.session.get([STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED])
+  const sessionStorage: StorageSessionTypes = (await browser.storage.session.get([
+    STORAGE_KEY_ONLINE_HISTORY,
+    STORAGE_KEY_STARTED,
+  ])) as StorageSessionTypes
 
   const onlineHistory: OnlineHistory = sessionStorage[STORAGE_KEY_ONLINE_HISTORY] ?? { twitch: [] }
   const notificationType: NotificationTypeStore = syncStorage[STORAGE_KEY_NOTIFICATION_TYPE] ?? 'none'
@@ -63,7 +69,7 @@ export default async function notificationHandler(onlines: StreamItemLiveOnlineT
       return
     }
 
-    onlinesFiltered.forEach((online) => {
+    uniqBy(onlinesFiltered, (item) => `${item.type}:${item.id}`).forEach((online) => {
       const user = users.find((value) => value.id === online.id)
       if (!user) return
 

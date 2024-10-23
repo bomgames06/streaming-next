@@ -26,7 +26,8 @@ async function setCountBadge(count: number) {
   else await browser.action.setBadgeText({ text: null })
 }
 
-browser.runtime.onMessage.addListener((message: BackgroundMessageType) => {
+browser.runtime.onMessage.addListener((messageValue: unknown) => {
+  const message = messageValue as BackgroundMessageType
   switch (message.type) {
     case 'invalidateBadge':
       return setInvalidBadge()

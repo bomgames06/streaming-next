@@ -26,22 +26,22 @@ const emit = defineEmits<{
       v-if="props.account"
       :class="props.colorClass"
       @click="emit('click', false)"
-      @keydown.space="emit('click', false)"
       @keydown.enter="emit('click', false)"
+      @keydown.space="emit('click', false)"
       @mousedown.middle.prevent="emit('click', true)"
     >
       <template #prepend>
-        <v-avatar :image="props.account.avatarUrl" :icon="!props.account.avatarUrl ? 'mdi-account' : ''" size="small" />
+        <v-avatar :icon="!props.account.avatarUrl ? 'mdi-account' : ''" :image="props.account.avatarUrl" size="small" />
       </template>
       <template #append>
         <v-btn
-          variant="text"
+          :aria-label="t('auth.remove')"
           :icon="true"
           size="x-small"
-          :aria-label="t('auth.remove')"
+          variant="text"
           @click.stop="emit('delete')"
-          @keydown.space.stop="emit('delete')"
           @keydown.enter.stop="emit('delete')"
+          @keydown.space.stop="emit('delete')"
         >
           <v-icon size="large">{{ props.account.invalid ? 'mdi-delete' : 'mdi-logout' }}</v-icon>
         </v-btn>
@@ -51,7 +51,7 @@ const emit = defineEmits<{
         <span>{{ props.account.name }}</span>
       </v-list-item-title>
     </v-list-item>
-    <v-list-item v-else :title="props.textAuth" :class="props.colorClass" @click="emit('auth')">
+    <v-list-item v-else :class="props.colorClass" :title="props.textAuth" @click="emit('auth')">
       <template #prepend>
         <v-icon>{{ props.iconAuth }}</v-icon>
       </template>
@@ -60,35 +60,35 @@ const emit = defineEmits<{
   <div v-else class="d-flex align-center">
     <template v-if="props.account && props.account.invalid">
       <v-btn
-        size="small"
-        height="28"
-        :loading="props.authenticating"
-        :disabled="props.authenticating"
-        :color="props.colorAuth"
         :aria-label="t('auth.authAccount', { name: props.account.name })"
         class="my-1 rounded-e-0 flex-grow-1"
+        :color="props.colorAuth"
+        :disabled="props.authenticating"
+        height="28"
+        :loading="props.authenticating"
+        size="small"
         @click="emit('auth')"
       >
-        <v-icon size="x-large" class="mr-1">{{ props.iconAuth }}</v-icon>
-        <v-icon size="x-large" color="red-lighten-4" class="mr-4">mdi-close-circle</v-icon>
+        <v-icon class="mr-1" size="x-large">{{ props.iconAuth }}</v-icon>
+        <v-icon class="mr-4" color="red-lighten-4" size="x-large">mdi-close-circle</v-icon>
         <v-avatar
-          :image="props.account.avatarUrl"
-          :icon="!props.account.avatarUrl ? 'mdi-account' : ''"
-          size="22"
           class="mr-1"
+          :icon="!props.account.avatarUrl ? 'mdi-account' : ''"
+          :image="props.account.avatarUrl"
+          size="22"
         />
         <span>{{ props.account.name }}</span>
       </v-btn>
       <v-btn
-        variant="tonal"
-        size="x-small"
-        height="28"
-        color="error"
-        :icon="true"
-        :loading="props.authenticating"
-        :disabled="props.authenticating"
         :aria-label="t('auth.removeAccount', { name: props.account.name })"
         class="rounded-s-0 rounded-e"
+        color="error"
+        :disabled="props.authenticating"
+        height="28"
+        :icon="true"
+        :loading="props.authenticating"
+        size="x-small"
+        variant="tonal"
         @click="emit('delete')"
       >
         <v-icon size="x-large"> mdi-delete </v-icon>
@@ -96,14 +96,14 @@ const emit = defineEmits<{
     </template>
     <template v-else>
       <v-btn
-        size="small"
-        :loading="props.authenticating"
-        :disabled="props.authenticating"
-        :color="props.colorAuth"
         class="my-1 flex-grow-1"
+        :color="props.colorAuth"
+        :disabled="props.authenticating"
+        :loading="props.authenticating"
+        size="small"
         @click="emit('auth')"
       >
-        <v-icon size="x-large" class="mr-2">{{ props.iconAuth }}</v-icon>
+        <v-icon class="mr-2" size="x-large">{{ props.iconAuth }}</v-icon>
         <span>{{ props.textAuth }}</span>
       </v-btn>
     </template>

@@ -1,25 +1,26 @@
 {
+  "root": true,
   "env": {
     "webextensions": true,
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "node": true
   },
   "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:vue/vue3-recommended",
-    "plugin:prettier/recommended"
+    "vuetify",
+    "@vue/eslint-config-typescript",
+    "plugin:prettier/recommended",
+    "./.eslintrc-auto-import.json"
   ],
-  "overrides": [],
-  "parser": "vue-eslint-parser",
-  "parserOptions": {
-    "parser": "@typescript-eslint/parser",
-    "ecmaVersion": "latest",
-    "sourceType": "module"
-  },
-  "plugins": ["@typescript-eslint", "vue"],
   "rules": {
     "@typescript-eslint/consistent-type-imports": ["error"],
-    "vue/multi-word-component-names": "off"
+    "vue/multi-word-component-names": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": ["error", {
+      "functions": false,
+      "classes": true,
+      "variables": true,
+      "allowNamedExports": false
+    }]
   }
 }

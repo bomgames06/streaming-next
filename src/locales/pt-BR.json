@@ -100,6 +100,8 @@
     "sponsor": "Apoiar",
     "sponsorProfile": "Apoiar {name}",
     "title": "Configurações",
+    "twitter": "Twitter",
+    "twitterProfile": "Twitter {name}",
     "version": "Versão: {version}"
   },
   "simpleLayout": {

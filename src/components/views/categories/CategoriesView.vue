@@ -101,14 +101,14 @@ watch(categorySelected, () => {
     <CategoriesList v-model:category-selected="categorySelected" :items="items" />
     <v-btn
       v-if="categories.cursor && !categorySelected"
-      :disabled="fetching"
-      :loading="fetching"
-      height="54"
       block
       class="mt-2"
+      :disabled="fetching"
+      height="54"
+      :loading="fetching"
       @click="fetchCategories()"
     >
-      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
       <span>{{ t('categoriesView.searchMore') }}</span>
     </v-btn>
   </ViewContainer>

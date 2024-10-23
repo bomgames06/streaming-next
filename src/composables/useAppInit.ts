@@ -35,7 +35,8 @@ export default function useAppInit(noAuth?: boolean) {
   }
 
   browser.runtime.onMessage.addListener(appMessage)
-  function appMessage(message: ApplicationMessageType) {
+  function appMessage(messageValue: unknown) {
+    const message = messageValue as ApplicationMessageType
     switch (message.type) {
       case 'fetchAccounts':
         return fetchAccounts()

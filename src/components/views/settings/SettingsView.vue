@@ -15,12 +15,17 @@ const appVersion = import.meta.env.__APP_VERSION__
 const githubUrl = import.meta.env.VITE_GITHUB_URL
 const buyMeACoffeName = import.meta.env.VITE_BUY_ME_A_COFFE_NAME
 const buyMeACoffeUrl = import.meta.env.VITE_BUY_ME_A_COFFE_URL
+const twitterName = import.meta.env.VITE_TWITTER_NAME
+const twitterUrl = import.meta.env.VITE_TWITTER_URL
 
 function openGithub(middle?: boolean) {
   browser.tabs.create({ url: githubUrl, active: !middle })
 }
 function openDonation(middle?: boolean) {
   browser.tabs.create({ url: buyMeACoffeUrl, active: !middle })
+}
+function openTwitter(middle?: boolean) {
+  browser.tabs.create({ url: twitterUrl, active: !middle })
 }
 </script>
 
@@ -33,21 +38,21 @@ function openDonation(middle?: boolean) {
         <v-row>
           <v-col cols="12">
             <v-select
-              :model-value="system.language"
-              :label="i18n.t('settings.languages')"
-              :items="locales"
-              :item-value="(item) => item"
               :item-title="(item) => i18n.t(`languages.${item}`, 0, { locale: item })"
+              :item-value="(item) => item"
+              :items="locales"
+              :label="i18n.t('settings.languages')"
+              :model-value="system.language"
               @update:model-value="system.setLanguage($event, i18n)"
             />
           </v-col>
           <v-col cols="12">
             <v-radio-group
-              :model-value="system.notificationType"
+              class="mx-n3"
+              color="primary"
               inline
               label="Notificações"
-              color="primary"
-              class="mx-n3"
+              :model-value="system.notificationType"
               @update:model-value="system.setNotificationType($event || system.notificationType)"
             >
               <v-radio :label="i18n.t('settings.notificationType.all')" :value="'all' as NotificationTypeStore" />
@@ -62,19 +67,19 @@ function openDonation(middle?: boolean) {
             <v-row>
               <v-col cols="auto">
                 <v-btn
-                  prepend-icon="mdi-broom"
-                  :disabled="!system.favorites.length"
-                  :text="i18n.t('settings.favorites')"
                   :aria-label="i18n.t('settings.cleanFavorites')"
+                  :disabled="!system.favorites.length"
+                  prepend-icon="mdi-broom"
+                  :text="i18n.t('settings.favorites')"
                   @click="system.cleanFavorite()"
                 />
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
                 <v-btn
-                  prepend-icon="mdi-broom"
-                  :disabled="!system.notifications.length"
-                  :text="i18n.t('settings.notifications')"
                   :aria-label="i18n.t('settings.cleanNotifications')"
+                  :disabled="!system.notifications.length"
+                  prepend-icon="mdi-broom"
+                  :text="i18n.t('settings.notifications')"
                   @click="system.cleanNotification()"
                 />
               </v-col>
@@ -82,21 +87,21 @@ function openDonation(middle?: boolean) {
           </v-col>
           <v-col cols="12">
             <v-switch
+              color="primary"
+              :false-value="false"
+              :label="i18n.t('settings.darkMode')"
               :model-value="system.dark"
               :true-value="true"
-              :false-value="false"
-              color="primary"
-              :label="i18n.t('settings.darkMode')"
               @update:model-value="system.setDark(!!$event, theme)"
             />
           </v-col>
           <v-col cols="12">
             <v-switch
+              color="primary"
+              :false-value="false"
+              :label="i18n.t('settings.showAlwaysOfflines')"
               :model-value="system.showAlwaysOfflines"
               :true-value="true"
-              :false-value="false"
-              color="primary"
-              :label="i18n.t('settings.showAlwaysOfflines')"
               @update:model-value="system.setShowAlwaysOfflines(!!$event)"
             />
           </v-col>
@@ -106,26 +111,43 @@ function openDonation(middle?: boolean) {
         class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-subtitle-2 d-flex align-center justify-center"
       >
         <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
-        <v-divider vertical class="mx-1" />
+        <v-divider class="mx-1" vertical />
         <v-btn
-          variant="text"
           :aria-label="i18n.t('settings.github')"
           class="about-button"
+          variant="text"
           @click="openGithub(false)"
           @mousedown.middle.prevent="openGithub(true)"
         >
           <v-icon class="mr-1">mdi-github</v-icon>
           <span>{{ i18n.t('settings.github') }}</span>
         </v-btn>
-        <v-divider vertical class="mx-1" />
+        <v-divider class="mx-1" vertical />
         <v-hover>
           <template #default="{ isHovering, props }">
             <v-btn
               v-bind="props"
+              :aria-label="i18n.t('settings.twitterProfile', { name: twitterName })"
+              class="about-button"
+              :color="isHovering ? 'blue-darken-1' : ''"
               variant="text"
-              :color="isHovering ? 'red' : ''"
+              @click="openTwitter(false)"
+              @mousedown.middle.prevent="openTwitter(true)"
+            >
+              <v-icon class="mr-1">mdi-twitter</v-icon>
+              <span>{{ i18n.t('settings.twitter') }}</span>
+            </v-btn>
+          </template>
+        </v-hover>
+        <v-divider class="mx-1" vertical />
+        <v-hover>
+          <template #default="{ isHovering, props }">
+            <v-btn
+              v-bind="props"
               :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
               class="about-button"
+              :color="isHovering ? 'red' : ''"
+              variant="text"
               @click="openDonation(false)"
               @mousedown.middle.prevent="openDonation(true)"
             >

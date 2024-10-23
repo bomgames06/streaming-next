@@ -40,7 +40,8 @@ void fetchStreams()
 
 browser.alarms.onAlarm.addListener(fetchStreams)
 
-browser.runtime.onMessage.addListener((message: BackgroundMessageType) => {
+browser.runtime.onMessage.addListener((messageValue: unknown) => {
+  const message = messageValue as BackgroundMessageType
   switch (message.type) {
     case 'fetchStream':
       return fetchStreams()

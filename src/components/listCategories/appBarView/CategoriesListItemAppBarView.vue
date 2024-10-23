@@ -40,24 +40,24 @@ const items: {
 
 <template>
   <v-select
-    :model-value="system.languageCategoryStream"
-    :label="t('categoriesList.appBarView.language')"
-    :items="items"
-    :item-title="(value) => t(value.textI18n)"
-    variant="outlined"
-    color="primary"
-    single-line
     clearable
+    color="primary"
+    :item-title="(value) => t(value.textI18n)"
+    :items="items"
+    :label="t('categoriesList.appBarView.language')"
+    :model-value="system.languageCategoryStream"
     persistent-clear
+    single-line
+    variant="outlined"
     @update:model-value="system.setLanguageCategoryStream"
   />
   <v-btn
-    :icon="true"
-    :size="system.appBarHeight"
     :aria-label="t('common.refresh')"
-    :disabled="system.isRefreshing"
-    :loading="system.isRefreshing"
     class="rounded-lg"
+    :disabled="system.isRefreshing"
+    :icon="true"
+    :loading="system.isRefreshing"
+    :size="system.appBarHeight"
     @click="emitter.emit('refresh')"
   >
     <v-icon>mdi-refresh</v-icon>

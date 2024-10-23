@@ -16,7 +16,7 @@ const system = useSystemStore()
 
 <template>
   <v-app>
-    <LoadingLayout v-if="system.screen === 'loading'" :loaded="loaded" :error="error" />
+    <LoadingLayout v-if="system.screen === 'loading'" :error="error" :loaded="loaded" />
     <SimpleLayout v-else-if="system.screen === 'auth'">
       <AuthContent />
     </SimpleLayout>

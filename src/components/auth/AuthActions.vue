@@ -51,16 +51,16 @@ function openProfile(account?: AccountStore, middle?: boolean): void {
 
 <template>
   <AuthActionsButton
-    :list-item="props.listItem"
-    :text-auth="t('auth.twitchAuth')"
-    icon-auth="mdi-twitch"
+    :account="system.accounts.twitch"
+    :authenticating="authenticating"
     :color-auth="accountTypeColor('twitch')"
     :color-class="accountTypeColor('twitch', true)"
-    :authenticating="authenticating"
-    :account="system.accounts.twitch"
+    icon-auth="mdi-twitch"
+    :list-item="props.listItem"
+    :text-auth="t('auth.twitchAuth')"
     @auth="auth('twitch', $event)"
-    @delete="system.removeAccount('twitch')"
     @click="clickAccount(system.accounts.twitch, $event)"
+    @delete="system.removeAccount('twitch')"
   />
 </template>
 
