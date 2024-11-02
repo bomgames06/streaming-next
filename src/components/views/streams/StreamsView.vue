@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import StreamList from '@/components/listStream/StreamList.vue'
 import type {
-  StreamItemLiveOfflineType,
   StreamItemLiveOnlineType,
+  StreamItemLiveStreamType,
   StreamItemLiveType,
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
+import { isOfflineStream, isOnlineStream } from '@/components/listStream/types/streamItemType'
 import { debounce, deburr, orderBy, uniqBy } from 'lodash'
 import emitter from '@/events'
 import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
@@ -23,13 +21,17 @@ const { t } = useI18n()
 
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
-const offlines = ref<StreamItemLiveOfflineType[]>([])
+const streams = ref<StreamItemLiveStreamType[]>([])
 const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
 const filterLabelId = uuidV4()
+
+const offlines = computed(() =>
+  streams.value.filter((value) => !onlines.value.some((item) => item.id === value.id && item.type === value.type))
+)
 
 const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
 watch(
@@ -104,7 +106,7 @@ function toggleOffline() {
 }
 
 function orderStatus(value: StreamItemLiveType) {
-  return value.status
+  return isOnlineStream(value) ? 1 : 0
 }
 function orderName(value: StreamItemLiveType) {
   return deburr(value.name).toLowerCase()
@@ -124,7 +126,7 @@ function orderType(value: StreamItemType) {
 function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
-  if (!showOfflinesComp.value && value.status === 'offline') show = false
+  if (!showOfflinesComp.value && isOfflineStream(value)) show = false
   else if (
     !(
       (!system.showFavoritesComp && !system.showNotificationsComp) ||
@@ -137,7 +139,7 @@ function filterItem(value: StreamItemLiveType): boolean {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
       ['game'].includes(system.streamOrder) &&
-      (value.status === 'offline' || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
+      (isOfflineStream(value) || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
     )
       show = false
   }
@@ -169,12 +171,7 @@ async function fetchData() {
     fetchTimeout.value = undefined
   }
   try {
-    const onlinesFetched: StreamItemLiveOnlineType[] = await fetchOnlineTwitch()
-    dump.value = Date.now().toString()
-    onlines.value = onlinesFetched
-    offlines.value = system.accountsCacheStreams?.twitch || []
-
-    offlines.value = await fetchOfflinesTwitch(onlinesFetched)
+    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
   } finally {
     system.loaded()
     system.refreshed()
@@ -184,10 +181,13 @@ async function fetchData() {
   }
 }
 
-async function fetchOnlineTwitch(): Promise<StreamItemLiveOnlineType[]> {
+async function fetchOnlineTwitch(): Promise<void> {
   system.loading()
   try {
-    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) {
+      onlines.value = []
+      return
+    }
 
     const items: StreamItemLiveOnlineType[] = await TwitchBusiness.getStreamersOnlineFollowed(
       system.accounts.twitch.token,
@@ -200,21 +200,25 @@ async function fetchOnlineTwitch(): Promise<StreamItemLiveOnlineType[]> {
     }
     void browser.runtime.sendMessage(message)
 
-    return items
+    dump.value = Date.now().toString()
+    onlines.value = items
   } finally {
     system.loaded()
   }
 }
 
-async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise<StreamItemLiveOfflineType[]> {
+async function fetchStreamsTwitch(): Promise<void> {
   system.loading()
   try {
-    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) {
+      streams.value = []
+      return
+    }
 
-    return TwitchBusiness.getStreamersOfflineFollowed(
+    streams.value = system.accountsCacheStreams?.twitch || []
+    streams.value = await TwitchBusiness.getStreamersFollowed(
       system.accounts.twitch.token,
-      system.accounts.twitch.accountId,
-      exclude.map((value) => value.id)
+      system.accounts.twitch.accountId
     )
   } finally {
     system.loaded()

@@ -5,7 +5,6 @@ import type { NotificationTypeStore } from '@/store/system/types/systemStoreType
 import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import browser from 'webextension-polyfill'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -107,55 +106,62 @@ function openTwitter(middle?: boolean) {
           </v-col>
         </v-row>
       </div>
-      <div
-        class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-subtitle-2 d-flex align-center justify-center"
-      >
-        <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
-        <v-divider class="mx-1" vertical />
-        <v-btn
-          :aria-label="i18n.t('settings.github')"
-          class="about-button"
-          variant="text"
-          @click="openGithub(false)"
-          @mousedown.middle.prevent="openGithub(true)"
-        >
-          <v-icon class="mr-1">mdi-github</v-icon>
-          <span>{{ i18n.t('settings.github') }}</span>
-        </v-btn>
-        <v-divider class="mx-1" vertical />
-        <v-hover>
-          <template #default="{ isHovering, props }">
-            <v-btn
-              v-bind="props"
-              :aria-label="i18n.t('settings.twitterProfile', { name: twitterName })"
-              class="about-button"
-              :color="isHovering ? 'blue-darken-1' : ''"
-              variant="text"
-              @click="openTwitter(false)"
-              @mousedown.middle.prevent="openTwitter(true)"
-            >
-              <v-icon class="mr-1">mdi-twitter</v-icon>
-              <span>{{ i18n.t('settings.twitter') }}</span>
-            </v-btn>
-          </template>
-        </v-hover>
-        <v-divider class="mx-1" vertical />
-        <v-hover>
-          <template #default="{ isHovering, props }">
-            <v-btn
-              v-bind="props"
-              :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
-              class="about-button"
-              :color="isHovering ? 'red' : ''"
-              variant="text"
-              @click="openDonation(false)"
-              @mousedown.middle.prevent="openDonation(true)"
-            >
-              <v-icon class="mr-1">mdi-heart</v-icon>
-              <span>{{ i18n.t('settings.sponsor') }}</span>
-            </v-btn>
-          </template>
-        </v-hover>
+      <div class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-subtitle-2">
+        <div class="d-flex align-center justify-center text-center">
+          <v-hover>
+            <template #default="{ isHovering, props }">
+              <v-btn
+                v-bind="props"
+                :aria-label="i18n.t('settings.github')"
+                class="about-button"
+                :color="isHovering ? 'primary' : ''"
+                variant="text"
+                @click="openGithub(false)"
+                @mousedown.middle.prevent="openGithub(true)"
+              >
+                <v-icon class="mr-1">mdi-github</v-icon>
+                <span>{{ i18n.t('settings.github') }}</span>
+              </v-btn>
+            </template>
+          </v-hover>
+          <v-divider class="mx-1" vertical />
+          <v-hover>
+            <template #default="{ isHovering, props }">
+              <v-btn
+                v-bind="props"
+                :aria-label="i18n.t('settings.twitterProfile', { name: twitterName })"
+                class="about-button"
+                :color="isHovering ? 'blue-darken-1' : ''"
+                variant="text"
+                @click="openTwitter(false)"
+                @mousedown.middle.prevent="openTwitter(true)"
+              >
+                <v-icon class="mr-1">mdi-twitter</v-icon>
+                <span>{{ i18n.t('settings.twitter') }}</span>
+              </v-btn>
+            </template>
+          </v-hover>
+          <v-divider class="mx-1" vertical />
+          <v-hover>
+            <template #default="{ isHovering, props }">
+              <v-btn
+                v-bind="props"
+                :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
+                class="about-button"
+                :color="isHovering ? 'red' : ''"
+                variant="text"
+                @click="openDonation(false)"
+                @mousedown.middle.prevent="openDonation(true)"
+              >
+                <v-icon class="mr-1">mdi-heart</v-icon>
+                <span>{{ i18n.t('settings.sponsor') }}</span>
+              </v-btn>
+            </template>
+          </v-hover>
+        </div>
+        <div class="mt-1">
+          <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
+        </div>
       </div>
     </div>
   </ViewContainer>

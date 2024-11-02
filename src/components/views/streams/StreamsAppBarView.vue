@@ -2,7 +2,6 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
-import { ref } from 'vue'
 import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()

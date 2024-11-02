@@ -15,12 +15,14 @@ export type TwitchApiBasePaginationRequestType = {
   before?: string
 }
 
+export type TwitchApiBroadcasterType = 'affiliate' | 'partner' | ''
+
 export type TwitchApiUserType = {
   id: string
   login: string
   display_name: string
   type: 'admin' | 'global_mod' | 'staff' | ''
-  broadcaster_type: 'affiliate' | 'partner' | ''
+  broadcaster_type: TwitchApiBroadcasterType
   description: string
   profile_image_url: string
   offline_image_url: string

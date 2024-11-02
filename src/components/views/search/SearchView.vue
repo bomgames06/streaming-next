@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import type { StreamItemLiveType } from '@/components/listStream/types/streamItemType'
-import { reactive, ref, watch } from 'vue'
-import StreamList from '@/components/listStream/StreamList.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import AppBusiness from '@/services/business/appBusiness'
 import { debounce } from 'lodash'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()

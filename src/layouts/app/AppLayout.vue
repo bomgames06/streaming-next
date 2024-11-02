@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import useSystemStore from '@/store/system/useSystemStore'
-import type { Ref } from 'vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
-import AuthActions from '@/components/auth/AuthActions.vue'
 import type { User } from '@/types/userType'
 import Mousetrap from 'mousetrap'
 import { onKeyDownEsc } from '@/utils/util'

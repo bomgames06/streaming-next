@@ -1,7 +1,6 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
-import { nextTick, onUnmounted, ref, watch } from 'vue'
 import type { ApplicationMessageType, FetchStreamBackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 

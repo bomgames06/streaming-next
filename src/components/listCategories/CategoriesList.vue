@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import type { StreamItemLiveOnlineType, StreamItemType } from '@/components/listStream/types/streamItemType'
-import StreamList from '@/components/listStream/StreamList.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import { useI18n } from 'vue-i18n'

@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { computed, ref, toRaw } from 'vue'
 import browser from 'webextension-polyfill'
 import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
@@ -40,7 +39,7 @@ import type {
   ViewDataStore,
   ViewStore,
 } from '@/store/system/types/systemStoreType'
-import type { StreamItemLiveOfflineType } from '@/components/listStream/types/streamItemType'
+import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -74,7 +73,7 @@ const useSystemStore = defineStore('System', () => {
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
   // Clip view
-  const clipPeriod = ref<ClipPeriodStore>('24h')
+  const clipPeriod = ref<ClipPeriodStore>('7d')
   // Category stream view
   const languageCategoryStream = ref<LanguageCategoryStreamStore>()
 
@@ -277,7 +276,7 @@ const useSystemStore = defineStore('System', () => {
     showAlwaysOfflines.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: toRaw(showAlwaysOfflines.value) })
   }
-  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveOfflineType[]) {
+  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveStreamType[]) {
     accountsCacheStreams.value[accountType] = value
     void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: toRaw(accountsCacheStreams.value) })
   }

@@ -4,10 +4,9 @@ import type {
   StreamItemType,
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
-import StreamListItem from '@/components/listStream/StreamListItem.vue'
+import { isContentStream, isStream } from '@/components/listStream/types/streamItemType'
 import browser from 'webextension-polyfill'
 import { streamItemProfileUrl } from '@/utils/util'
-import { computed, nextTick, reactive, ref, watch } from 'vue'
 import AppBusiness from '@/services/business/appBusiness'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
@@ -23,6 +22,7 @@ const props = defineProps<{
   disableCategoryMenu?: boolean
   disableNotificationMenu?: boolean
   dump?: string
+  parent?: StreamItemType
 }>()
 
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
@@ -50,10 +50,9 @@ function equals(a: StreamItemType, b: StreamItemType) {
 function itemClick(value: { item: StreamItemType; middle?: boolean }): void {
   if (detailItem.value) return void (detailItem.value = undefined)
   if (value.item.type === 'twitch') {
-    if (value.item.status === 'online' || value.item.status === 'offline')
+    if (isStream(value.item))
       return void browser.tabs.create({ url: streamItemProfileUrl(value.item), active: !value.middle })
-    if (value.item.status === 'video' || value.item.status === 'clip')
-      return void browser.tabs.create({ url: value.item.url, active: !value.middle })
+    if (isContentStream(value.item)) return void browser.tabs.create({ url: value.item.url, active: !value.middle })
   }
 }
 
@@ -80,7 +79,7 @@ function enableVideo() {
   fetchVideos()
 }
 function enableClip() {
-  system.setClipPeriod('24h')
+  system.setClipPeriod('7d')
   detailType.value = 'clip'
   fetchClips()
 }
@@ -171,6 +170,7 @@ function showItem(item: StreamItemType) {
         :disabled="!showItem(item)"
         :dump="props.dump"
         :item="item"
+        :parent="props.parent"
         @item-click="itemClick"
         @menu-item-click="menuItemClick"
       />
@@ -181,12 +181,12 @@ function showItem(item: StreamItemType) {
     <template v-if="detailType === 'video'">
       <h2 class="mt-2">{{ t('streamList.videos') }}</h2>
       <v-divider class="mt-1 mb-2" />
-      <StreamList disable-context-menu :items="videos.items" />
+      <StreamList disable-context-menu :items="videos.items" :parent="detailItem" />
     </template>
     <template v-if="detailType === 'clip'">
       <h2 class="mt-2">{{ t('streamList.clips') }}</h2>
       <v-divider class="mt-1 mb-2" />
-      <StreamList disable-context-menu :items="clips.items" />
+      <StreamList disable-context-menu :items="clips.items" :parent="detailItem" />
     </template>
     <v-btn
       v-if="hasMoreItems"

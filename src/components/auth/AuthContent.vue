@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
-import AuthButtons from '@/components/auth/AuthActions.vue'
 import type { User } from '@/types/userType'
-import { ref } from 'vue'
 
 const system = useSystemStore()
 const { t } = useI18n()

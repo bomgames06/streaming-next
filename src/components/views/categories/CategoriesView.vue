@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import CategoriesList from '@/components/listCategories/CategoriesList.vue'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import type { ViewDataStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, uniqBy } from 'lodash'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()

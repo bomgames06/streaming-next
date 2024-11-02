@@ -5,7 +5,6 @@ import type { AccountStore, AccountStoreType } from '@/store/system/types/system
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import type { User } from '@/types/userType'
-import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
 import browser from 'webextension-polyfill'
 
 const system = useSystemStore()

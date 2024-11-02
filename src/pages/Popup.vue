@@ -3,11 +3,7 @@ import SimpleLayout from '@/layouts/simple/SimpleLayout.vue'
 import useAppInit from '@/composables/useAppInit'
 import useSystemStore from '@/store/system/useSystemStore'
 import LoadingLayout from '@/layouts/loading/LoadingLayout.vue'
-import AuthContent from '@/components/auth/AuthContent.vue'
 import AppLayout from '@/layouts/app/AppLayout.vue'
-import AppSidebarContent from '@/components/app/AppSidebarContent.vue'
-import AppViewContent from '@/components/app/AppViewContent.vue'
-import AppBarViewContent from '@/components/app/AppBarViewContent.vue'
 
 const { loaded, error } = useAppInit()
 
