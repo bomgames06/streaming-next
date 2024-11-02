@@ -64,8 +64,6 @@ export default {
     "useCssVars": true,
     "useId": true,
     "useModel": true,
-    "useRoute": true,
-    "useRouter": true,
     "useSlots": true,
     "useTemplateRef": true,
     "watch": true,

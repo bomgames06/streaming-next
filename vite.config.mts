@@ -36,12 +36,7 @@ export default defineConfig(({ command }) => {
         disableAutoLaunch: true,
       }),
       AutoImport({
-        imports: [
-          'vue',
-          {
-            'vue-router/auto': ['useRoute', 'useRouter'],
-          },
-        ],
+        imports: ['vue'],
         dts: 'src/auto-imports.d.ts',
         eslintrc: {
           enabled: true,
