@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import useAppInit from '@/composables/useAppInit'
 import LoadingLayout from '@/layouts/loading/LoadingLayout.vue'
-import SettingsView from '@/components/views/settings/SettingsView.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 
 const { loaded } = useAppInit(true)

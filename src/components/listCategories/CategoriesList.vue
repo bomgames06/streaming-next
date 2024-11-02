@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import type { StreamItemLiveOnlineType, StreamItemType } from '@/components/listStream/types/streamItemType'
-import StreamList from '@/components/listStream/StreamList.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import { useI18n } from 'vue-i18n'
@@ -115,20 +113,20 @@ function showItem(category: CategoryItemType) {
       v-for="category in props.items"
       v-show="showItem(category)"
       :key="category.id"
-      :disabled="!showItem(category)"
       class="pa-0"
+      :disabled="!showItem(category)"
       @click="clickCategory(category)"
     >
-      <v-tooltip :disabled="!categorySelected" activator="parent" :text="t('common.back')" location="bottom" />
+      <v-tooltip activator="parent" :disabled="!categorySelected" location="bottom" :text="t('common.back')" />
       <v-card
-        height="100%"
         :class="{
           'category-item-card': true,
           'd-flex': true,
           'flex-column': !categorySelected,
         }"
+        height="100%"
       >
-        <v-img :src="categoryImg(category)" :width="categorySelected && 108" :max-width="categorySelected && 108" />
+        <v-img :max-width="categorySelected && 108" :src="categoryImg(category)" :width="categorySelected && 108" />
         <p
           :class="{
             'text-truncate': !categorySelected,
@@ -146,17 +144,17 @@ function showItem(category: CategoryItemType) {
     </v-list-item>
   </v-list>
   <div v-if="categorySelected" class="mt-3">
-    <StreamList v-model:detail-item="detailItem" :items="streams.items" disable-category-menu />
+    <StreamList v-model:detail-item="detailItem" disable-category-menu :items="streams.items" />
     <v-btn
       v-if="streams.cursor && !detailItem"
-      :disabled="fetching"
-      :loading="fetching"
-      height="54"
       block
       class="mt-2"
+      :disabled="fetching"
+      height="54"
+      :loading="fetching"
       @click="fetchStreams()"
     >
-      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
       <span>{{ t('categoriesList.searchMore') }}</span>
     </v-btn>
   </div>

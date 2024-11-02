@@ -16,7 +16,7 @@ export default class TwitchApiSearchEndpoint extends TwitchApiBase {
   ): Promise<TwitchApiBaseArrayType<TwitchApiSearchChannelType>> {
     const params = new URLSearchParams()
     params.append('query', request.query.trim())
-    if (request.live_only != undefined) params.append('live_only', String(request.live_only))
+    if (request.live_only != null) params.append('live_only', String(request.live_only))
     if (request.first) params.append('first', request.first)
     if (request.after) params.append('after', request.after)
     if (request.before) params.append('before', request.before)

@@ -88,6 +88,7 @@
     "cleanNotifications": "Limpar notificações",
     "darkMode": "Modo dark",
     "favorites": "Favoritos",
+    "github": "Github",
     "languages": "Idiomas",
     "notificationType": {
       "all": "Todos",
@@ -99,6 +100,7 @@
     "sponsor": "Apoiar",
     "sponsorProfile": "Apoiar {name}",
     "title": "Configurações",
+    "twitter": "Twitter",
     "twitterProfile": "Twitter {name}",
     "version": "Versão: {version}"
   },

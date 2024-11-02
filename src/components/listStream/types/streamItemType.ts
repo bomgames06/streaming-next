@@ -8,12 +8,12 @@ export type StreamItemLiveOnlineType = {
   name: string
   title?: string
   viewerCount?: number
-} & {
   type: Extract<AccountStoreType, 'twitch'>
   previewImage?: ((width: number, height: number, dump?: string) => string) | string
   gameId?: string
   game?: string
   startedAt: Moment
+  verified: boolean
 }
 export type StreamItemLiveOfflineType = {
   id: string
@@ -22,6 +22,16 @@ export type StreamItemLiveOfflineType = {
   login: string
   name: string
   profileImage?: string
+  verified: boolean
+}
+export type StreamItemLiveStreamType = {
+  id: string
+  type: AccountStoreType
+  status: 'stream'
+  login: string
+  name: string
+  profileImage?: string
+  verified: boolean
 }
 export type StreamItemVideoType = {
   id: string
@@ -51,6 +61,16 @@ export type StreamItemClipType = {
   type: Extract<AccountStoreType, 'twitch'>
   previewImage?: string
 }
-export type StreamItemLiveType = StreamItemLiveOnlineType | StreamItemLiveOfflineType
+export type StreamItemLiveType = StreamItemLiveOnlineType | StreamItemLiveOfflineType | StreamItemLiveStreamType
 
 export type StreamItemType = StreamItemLiveType | StreamItemVideoType | StreamItemClipType
+
+export const isOnlineStream = (item: StreamItemType): item is StreamItemLiveOnlineType => item.status === 'online'
+export const isOfflineStream = (item: StreamItemType): item is StreamItemLiveOfflineType | StreamItemLiveStreamType =>
+  item.status === 'offline' || item.status === 'stream'
+export const isStream = (
+  item: StreamItemType
+): item is StreamItemLiveOnlineType | StreamItemLiveOfflineType | StreamItemLiveStreamType =>
+  item.status === 'online' || item.status === 'offline' || item.status === 'stream'
+export const isContentStream = (item: StreamItemType): item is StreamItemVideoType | StreamItemClipType =>
+  item.status === 'video' || item.status === 'clip'

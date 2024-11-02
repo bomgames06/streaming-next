@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import CategoriesList from '@/components/listCategories/CategoriesList.vue'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import type { ViewDataStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, uniqBy } from 'lodash'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -101,14 +98,14 @@ watch(categorySelected, () => {
     <CategoriesList v-model:category-selected="categorySelected" :items="items" />
     <v-btn
       v-if="categories.cursor && !categorySelected"
-      :disabled="fetching"
-      :loading="fetching"
-      height="54"
       block
       class="mt-2"
+      :disabled="fetching"
+      height="54"
+      :loading="fetching"
       @click="fetchCategories()"
     >
-      <v-icon size="x-large" class="mr-2">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
       <span>{{ t('categoriesView.searchMore') }}</span>
     </v-btn>
   </ViewContainer>

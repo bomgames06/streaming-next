@@ -6,6 +6,7 @@ import type {
   StreamItemClipType,
   StreamItemLiveOfflineType,
   StreamItemLiveOnlineType,
+  StreamItemLiveStreamType,
   StreamItemLiveType,
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
@@ -17,11 +18,22 @@ import type {
   VideoOrderStore,
 } from '@/store/system/types/systemStoreType'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import type { TwitchApiGameType, TwitchApiStreamsFollowedType } from '@/services/api/twitch/types/twitchApiType'
+import type {
+  TwitchApiBroadcasterType,
+  TwitchApiGameType,
+  TwitchApiStreamsFollowedType,
+  TwitchApiUserType,
+} from '@/services/api/twitch/types/twitchApiType'
 import useSystemStore from '@/store/system/useSystemStore'
 
-function twitchStreamToStreamOnline(): (value: TwitchApiStreamsFollowedType) => StreamItemLiveOnlineType {
-  return (value) => ({
+function isStreamVerified(value?: TwitchApiBroadcasterType): value is 'partner' {
+  return value === 'partner'
+}
+
+function twitchStreamToStreamOnline(
+  value: TwitchApiStreamsFollowedType & { user?: TwitchApiUserType }
+): StreamItemLiveOnlineType {
+  return {
     type: 'twitch',
     status: 'online',
     id: value.user_id,
@@ -37,7 +49,8 @@ function twitchStreamToStreamOnline(): (value: TwitchApiStreamsFollowedType) => 
       if (dump) image += `&dump=${dump}`
       return image
     },
-  })
+    verified: isStreamVerified(value.user?.broadcaster_type),
+  }
 }
 function twitchGameToCategoryItem(): (value: TwitchApiGameType) => CategoryItemType {
   return (value) => ({
@@ -66,7 +79,7 @@ const TwitchBusiness = {
     const message: RevokeBackgroundMessageType = {
       type: 'revoke',
       authType: 'twitch',
-      token: token,
+      token,
     }
     await browser.runtime.sendMessage(message)
   },
@@ -81,36 +94,42 @@ const TwitchBusiness = {
       avatarUrl: response.profile_image_url,
     }
   },
-  async getStreamersOnlineFollowed(token: string, userId: string): Promise<StreamItemLiveOnlineType[]> {
-    const response = await TwitchApi.streams.followed(token, userId)
-
-    return response.map(twitchStreamToStreamOnline())
-  },
-  async getStreamersOfflineFollowed(
+  async getStreamersOnlineFollowed(
     token: string,
     userId: string,
-    excludeIds?: string[]
-  ): Promise<StreamItemLiveOfflineType[]> {
-    const excludes: string[] =
-      excludeIds ?? (await this.getStreamersOnlineFollowed(token, userId)).map((value) => value.id)
+    noFetchUser?: boolean
+  ): Promise<StreamItemLiveOnlineType[]> {
+    const response = await TwitchApi.streams.followed(token, userId)
 
+    const streamersIds = !noFetchUser ? response.map((value) => value.user_id) : []
+    const users = !streamersIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersIds)
+
+    return response
+      .map((value) => ({
+        ...value,
+        user: users.find((user) => user.id === value.user_id),
+      }))
+      .map(twitchStreamToStreamOnline)
+  },
+  async getStreamersFollowed(token: string, userId: string): Promise<StreamItemLiveStreamType[]> {
     const channelFollowed = await TwitchApi.channels.followed(token, userId)
-    const streamersOfflineIds = !excludes ? [] : channelFollowed.map((value) => value.broadcaster_id)
-    const usersOffline = !streamersOfflineIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersOfflineIds)
+    const streamersIds = channelFollowed.map((value) => value.broadcaster_id)
+    const users = !streamersIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersIds)
 
-    const streamersOffline: StreamItemLiveOfflineType[] = usersOffline.map((value) => ({
+    const streamers: StreamItemLiveStreamType[] = users.map((value) => ({
       type: 'twitch',
-      status: 'offline',
+      status: 'stream',
       id: value.id,
       login: value.login,
       name: value.display_name,
       profileImage: value.profile_image_url,
+      verified: isStreamVerified(value.broadcaster_type),
     }))
 
     const system = useSystemStore()
-    system.setAccountCacheStreams('twitch', streamersOffline)
+    system.setAccountCacheStreams('twitch', streamers)
 
-    return streamersOffline.filter((value) => !excludes.some((id) => id === value.id))
+    return streamers
   },
   async getUsersByIds(token: string, ids: string[]): Promise<User[]> {
     const response = await TwitchApi.users.usersByIds(token, ids)
@@ -216,14 +235,14 @@ const TwitchBusiness = {
   ): Promise<{ items: StreamItemLiveOnlineType[]; cursor?: string }> {
     const response = await TwitchApi.streams.stream(token, {
       game_id: [categoryId],
-      language: language,
+      language,
       first: limit?.toString(),
       after: cursor,
     })
 
     return {
       cursor: response.pagination.cursor,
-      items: response.data.map(twitchStreamToStreamOnline()),
+      items: response.data.map(twitchStreamToStreamOnline),
     }
   },
   async getCategoryById(token: string, categoryId: string): Promise<CategoryItemType[]> {
@@ -245,31 +264,41 @@ const TwitchBusiness = {
       after: cursor,
     })
 
+    const streamersIds = response.data.map((value) => value.id)
+    const users = !streamersIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersIds)
+
     return {
       cursor: response.pagination.cursor,
-      items: response.data.map((value) =>
-        value.is_live
-          ? {
-              type: 'twitch',
-              status: 'online',
-              id: value.id,
-              login: value.broadcaster_login,
-              name: value.display_name,
-              title: value.title,
-              gameId: value.game_id,
-              game: value.game_name,
-              startedAt: moment(value.started_at),
-              profileImage: value.thumbnail_url,
-            }
-          : {
-              type: 'twitch',
-              status: 'offline',
-              id: value.id,
-              login: value.broadcaster_login,
-              name: value.display_name,
-              profileImage: value.thumbnail_url,
-            }
-      ),
+      items: response.data
+        .map((value) => ({
+          ...value,
+          user: users.find((user) => user.id === value.id),
+        }))
+        .map((value) =>
+          value.is_live
+            ? ({
+                type: 'twitch',
+                status: 'online',
+                id: value.id,
+                login: value.broadcaster_login,
+                name: value.display_name,
+                title: value.title,
+                gameId: value.game_id,
+                game: value.game_name,
+                startedAt: moment(value.started_at),
+                previewImage: value.thumbnail_url,
+                verified: isStreamVerified(value.user?.broadcaster_type),
+              } as StreamItemLiveOnlineType)
+            : ({
+                type: 'twitch',
+                status: 'offline',
+                id: value.id,
+                login: value.broadcaster_login,
+                name: value.display_name,
+                profileImage: value.thumbnail_url,
+                verified: isStreamVerified(value.user?.broadcaster_type),
+              } as StreamItemLiveOfflineType)
+        ),
     }
   },
 }

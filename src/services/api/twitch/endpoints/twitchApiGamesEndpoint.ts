@@ -27,6 +27,7 @@ export default class TwitchApiGamesEndpoint extends TwitchApiBase {
 
     return response.data
   }
+
   async games(token: string, request: TwitchApiGamesRequestType): Promise<TwitchApiGameType[]> {
     const params = new URLSearchParams()
     if (request.id) request.id.forEach((value) => params.append('id', value))

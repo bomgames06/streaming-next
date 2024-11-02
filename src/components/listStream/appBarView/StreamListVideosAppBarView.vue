@@ -10,7 +10,7 @@ const { t } = useI18n()
 <template>
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">
-      <v-btn v-bind="props" :icon="true" :size="system.appBarHeight" :aria-label="t('common.sort')" class="rounded-lg">
+      <v-btn v-bind="props" :aria-label="t('common.sort')" class="rounded-lg" :icon="true" :size="system.appBarHeight">
         <v-icon>mdi-sort</v-icon>
       </v-btn>
     </template>
@@ -18,12 +18,12 @@ const { t } = useI18n()
       <v-list class="pa-0" @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))">
         <v-list-item
           :active="system.videoOrder === 'time'"
-          :aria-selected="system.videoOrder === 'time'"
           :aria-label="t('streamList.appBarView.sort.time')"
-          role="option"
-          height="42"
-          width="42"
+          :aria-selected="system.videoOrder === 'time'"
           class="pa-0 stream-order-item rounded-0"
+          height="42"
+          role="option"
+          width="42"
           @click="system.setVideoOrder('time')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
@@ -32,12 +32,12 @@ const { t } = useI18n()
         </v-list-item>
         <v-list-item
           :active="system.videoOrder === 'trending'"
-          :aria-selected="system.videoOrder === 'trending'"
           :aria-label="t('streamList.appBarView.sort.trending')"
-          role="option"
-          height="42"
-          width="42"
+          :aria-selected="system.videoOrder === 'trending'"
           class="pa-0 stream-order-item rounded-0"
+          height="42"
+          role="option"
+          width="42"
           @click="system.setVideoOrder('trending')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
@@ -46,12 +46,12 @@ const { t } = useI18n()
         </v-list-item>
         <v-list-item
           :active="system.videoOrder === 'views'"
-          :aria-selected="system.videoOrder === 'views'"
           :aria-label="t('streamList.appBarView.sort.views')"
-          role="option"
-          height="42"
-          width="42"
+          :aria-selected="system.videoOrder === 'views'"
           class="pa-0 stream-order-item rounded-0"
+          height="42"
+          role="option"
+          width="42"
           @click="system.setVideoOrder('views')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">

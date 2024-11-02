@@ -17,7 +17,7 @@ export default class TwitchApiClipsEndpoint extends TwitchApiBase {
     if (request.game_id) request.game_id.forEach((value) => params.append('game_id', value))
     if (request.started_at) params.append('started_at', request.started_at.toISOString())
     if (request.ended_at) params.append('ended_at', request.ended_at.toISOString())
-    if (request.is_featured != undefined) params.append('is_featured', String(request.is_featured))
+    if (request.is_featured != null) params.append('is_featured', String(request.is_featured))
     if (request.first) params.append('first', request.first)
     if (request.after) params.append('after', request.after)
     if (request.before) params.append('before', request.before)
