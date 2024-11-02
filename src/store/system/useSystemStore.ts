@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { computed, ref, toRaw } from 'vue'
 import browser from 'webextension-polyfill'
+import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS,
   STORAGE_KEY_DARK,
@@ -23,23 +23,23 @@ import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
 import { compact } from 'lodash'
 import type {
-  AccountStore,
+  AccountCacheStreamsDataStore,
   AccountDataStore,
+  AccountStore,
   AccountStoreType,
   ClipPeriodStore,
   HeaderAppBarViewStore,
   LanguageCategoryStreamStore,
-  NotificationTypeStore,
   NotificationStore,
+  NotificationTypeStore,
   ScreenStore,
-  StreamOrderStore,
   StreamOrderSortStore,
+  StreamOrderStore,
   VideoOrderStore,
-  ViewStore,
   ViewDataStore,
-  AccountCacheStreamsDataStore,
+  ViewStore,
 } from '@/store/system/types/systemStoreType'
-import type { StreamItemLiveOfflineType } from '@/components/listStream/types/streamItemType'
+import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -73,7 +73,7 @@ const useSystemStore = defineStore('System', () => {
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
   // Clip view
-  const clipPeriod = ref<ClipPeriodStore>('24h')
+  const clipPeriod = ref<ClipPeriodStore>('7d')
   // Category stream view
   const languageCategoryStream = ref<LanguageCategoryStreamStore>()
 
@@ -135,7 +135,7 @@ const useSystemStore = defineStore('System', () => {
 
   // Load init values
   async function init(theme: ThemeInstance, i18n: Composer) {
-    const syncStorage = await browser.storage.sync.get([
+    const syncStorage: StorageSyncTypes = (await browser.storage.sync.get([
       STORAGE_KEY_ACCOUNTS,
       STORAGE_KEY_NOTIFICATIONS,
       STORAGE_KEY_NOTIFICATION_TYPE,
@@ -147,7 +147,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_STREAM_ORDER_SORT,
       STORAGE_KEY_SHOW_FAVORITES,
       STORAGE_KEY_SHOW_NOTIFICATIONS,
-    ])
+    ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
     accounts.value = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
@@ -276,7 +276,7 @@ const useSystemStore = defineStore('System', () => {
     showAlwaysOfflines.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: toRaw(showAlwaysOfflines.value) })
   }
-  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveOfflineType[]) {
+  function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveStreamType[]) {
     accountsCacheStreams.value[accountType] = value
     void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: toRaw(accountsCacheStreams.value) })
   }

@@ -34,7 +34,7 @@ export default class TwitchApiBase extends AxiosBase {
 
   protected async fetchAll<T>(handler: (cursor?: string) => Promise<TwitchApiBaseArrayType<T>>): Promise<T[]> {
     const items: T[] = []
-    let cursor: string | undefined = undefined
+    let cursor: string | undefined
     do {
       const response = await handler(cursor)
       items.push(...response.data)

@@ -5,7 +5,6 @@ import type { AccountStore, AccountStoreType } from '@/store/system/types/system
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import type { User } from '@/types/userType'
-import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
 import browser from 'webextension-polyfill'
 
 const system = useSystemStore()
@@ -51,16 +50,16 @@ function openProfile(account?: AccountStore, middle?: boolean): void {
 
 <template>
   <AuthActionsButton
-    :list-item="props.listItem"
-    :text-auth="t('auth.twitchAuth')"
-    icon-auth="mdi-twitch"
+    :account="system.accounts.twitch"
+    :authenticating="authenticating"
     :color-auth="accountTypeColor('twitch')"
     :color-class="accountTypeColor('twitch', true)"
-    :authenticating="authenticating"
-    :account="system.accounts.twitch"
+    icon-auth="mdi-twitch"
+    :list-item="props.listItem"
+    :text-auth="t('auth.twitchAuth')"
     @auth="auth('twitch', $event)"
-    @delete="system.removeAccount('twitch')"
     @click="clickAccount(system.accounts.twitch, $event)"
+    @delete="system.removeAccount('twitch')"
   />
 </template>
 

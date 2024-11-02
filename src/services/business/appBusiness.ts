@@ -19,7 +19,7 @@ async function handlerAccounts<T>(
   type: AccountStoreType,
   handler: { [key in AccountStoreType]?: () => Promise<T> }
 ): Promise<T> {
-  if (type === 'twitch' && handler['twitch']) return handler['twitch']()
+  if (type === 'twitch' && handler.twitch) return handler.twitch()
   else throw new Error('Type is undefined')
 }
 

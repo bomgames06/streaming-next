@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { ViewStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
-import type { Component } from 'vue'
 import StreamsView from '@/components/views/streams/StreamsView.vue'
 import CategoriesView from '@/components/views/categories/CategoriesView.vue'
 import SearchView from '@/components/views/search/SearchView.vue'

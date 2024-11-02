@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { StreamItemLiveType, StreamItemType } from '@/components/listStream/types/streamItemType'
-import { computed, nextTick, reactive, ref } from 'vue'
+import { isOfflineStream, isStream } from '@/components/listStream/types/streamItemType'
 import { useI18n } from 'vue-i18n'
 import useMoment from '@/plugins/moment/useMoment'
 import useSystemStore from '@/store/system/useSystemStore'
@@ -9,6 +9,9 @@ import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
 import { accountTypeColor, onKeyDownEsc } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
+
+const aspectRatio = 16 / 9
+const previewWidth = 90
 
 const system = useSystemStore()
 const { t, locale } = useI18n()
@@ -22,6 +25,7 @@ const props = defineProps<{
   disableCategoryMenu?: boolean
   disableNotificationMenu?: boolean
   dump?: string
+  parent?: StreamItemType
 }>()
 const emit = defineEmits<{
   (e: 'itemClick', value: { item: StreamItemType; middle?: boolean }): void
@@ -49,12 +53,18 @@ const previewImage = computed(() => {
     return item.value.previewImage
   return ''
 })
-const spectatorsText = computed(() => {
+const spectatorsCount = computed<number | undefined>(() => {
   if (
     (item.value.status === 'online' || item.value.status === 'video' || item.value.status === 'clip') &&
-    item.value.viewerCount != undefined
+    item.value.viewerCount != null
   )
-    return `${item.value.viewerCount.toLocaleString(locale.value)} ${t('streamList.spectators', item.value.viewerCount)}`
+    return item.value.viewerCount
+  return undefined
+})
+const spectatorsText = computed(() => {
+  if (spectatorsCount.value)
+    return `${spectatorsCount.value.toLocaleString(locale.value)} ${t('streamList.spectators', spectatorsCount.value)}`
+
   return ''
 })
 const notificationEnabled = computed(() =>
@@ -72,9 +82,6 @@ const dataDiff = computed(() => {
   if (duration) return duration.format('y __ w __ d __ h __ m __ s __', { largest: 1 })
   return ''
 })
-
-const aspectRatio = 16 / 9
-const previewWidth = 90
 
 function equals(a: StreamItemType, b: StreamItemType) {
   return a.type === b.type && a.id === b.id
@@ -141,17 +148,20 @@ async function closeMenu(value?: boolean) {
 function onIntersect(isIntersecting: boolean) {
   itemIntersected.value = isIntersecting
 }
+
+function isVerified(value?: StreamItemType): boolean {
+  if (!value) return false
+
+  if (isStream(value)) return value.verified
+
+  return false
+}
 </script>
 
 <template>
   <div v-intersect="onIntersect" class="content-size">
-    <link v-if="previewImage" rel="prefetch" :href="previewImage" tabindex="-1" />
-    <link
-      v-if="item.status === 'offline' && item.profileImage"
-      rel="prefetch"
-      :href="item.profileImage"
-      tabindex="-1"
-    />
+    <link v-if="previewImage" :href="previewImage" rel="prefetch" tabindex="-1" />
+    <link v-if="isOfflineStream(item) && item.profileImage" :href="item.profileImage" rel="prefetch" tabindex="-1" />
     <v-hover v-slot="{ props: hoverProps, isHovering }">
       <v-tooltip :disabled="!detailItem" location="bottom" :text="t('common.back')">
         <template #activator="{ props: tooltipProps }">
@@ -159,24 +169,24 @@ function onIntersect(isIntersecting: boolean) {
             <v-list-item
               v-bind="tooltipProps"
               :id="id"
-              :disabled="props.disabled"
               class="px-1 list-item"
+              :disabled="props.disabled"
               height="64"
               @click.prevent="emit('itemClick', { item: props.item, middle: false })"
-              @mousedown.middle.prevent="emit('itemClick', { item: props.item, middle: true })"
               @contextmenu.prevent="showMenu"
               @focusin="focusedItem = true"
               @focusout="focusedItem = false"
+              @mousedown.middle.prevent="emit('itemClick', { item: props.item, middle: true })"
             >
               <template v-if="itemIntersected" #prepend>
                 <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
                   <div class="mr-2 position-relative">
                     <v-img
-                      :src="previewImage"
-                      :aspect-ratio="aspectRatio"
-                      :width="previewWidth"
-                      cover
                       :alt="t('streamList.streamerPreview', { name: item.name })"
+                      :aspect-ratio="aspectRatio"
+                      cover
+                      :src="previewImage"
+                      :width="previewWidth"
                     />
                     <v-card
                       v-if="isHovering || focusedItem || item.status === 'video' || item.status === 'clip'"
@@ -194,18 +204,18 @@ function onIntersect(isIntersecting: boolean) {
                         class="bg-background badge-item"
                       >
                         <v-icon
-                          :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                          :aria-label="t('common.notification')"
                           aria-hidden="false"
+                          :aria-label="t('common.notification')"
+                          :color="theme.current.value.dark ? 'yellow' : 'warning'"
                           size="x-small"
                           >mdi-bell</v-icon
                         >
                       </v-card>
                       <v-card v-if="item.status === 'online' && favoriteEnabled" class="bg-background badge-item">
                         <v-icon
-                          :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                          :aria-label="t('common.favorite')"
                           aria-hidden="false"
+                          :aria-label="t('common.favorite')"
+                          :color="theme.current.value.dark ? 'yellow' : 'warning'"
                           size="x-small"
                           >mdi-star</v-icon
                         >
@@ -213,13 +223,13 @@ function onIntersect(isIntersecting: boolean) {
                     </div>
                   </div>
                 </template>
-                <div v-if="item.status === 'offline'" class="mr-2 position-relative">
+                <div v-if="isOfflineStream(item)" class="mr-2 position-relative">
                   <v-img
-                    :src="item.profileImage"
-                    :aspect-ratio="aspectRatio"
-                    :width="previewWidth"
-                    cover
                     :alt="t('streamList.streamerProfile', { name: item.name })"
+                    :aspect-ratio="aspectRatio"
+                    cover
+                    :src="item.profileImage"
+                    :width="previewWidth"
                   />
                   <div class="badge-content">
                     <v-card
@@ -227,18 +237,18 @@ function onIntersect(isIntersecting: boolean) {
                       class="bg-background badge-item"
                     >
                       <v-icon
-                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                        :aria-label="t('common.notification')"
                         aria-hidden="false"
+                        :aria-label="t('common.notification')"
+                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
                         size="x-small"
                         >mdi-bell</v-icon
                       >
                     </v-card>
                     <v-card v-if="favoriteEnabled" class="bg-background badge-item">
                       <v-icon
-                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                        :aria-label="t('common.favorite')"
                         aria-hidden="false"
+                        :aria-label="t('common.favorite')"
+                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
                         size="x-small"
                         >mdi-star</v-icon
                       >
@@ -295,26 +305,30 @@ function onIntersect(isIntersecting: boolean) {
                     />
                   </v-list>
                 </v-menu>
-                <v-list-item-title :title="spectatorsText" class="line-height-normal">
-                  <v-icon v-if="item.type === 'twitch'" :color="accountTypeColor('twitch')" size="x-small" class="mr-1"
-                    >mdi-twitch</v-icon
-                  >
+                <v-list-item-title class="line-height-normal d-flex align-center" :title="item.name">
                   <div
-                    :class="`d-inline text-body-2 line-height-normal font-weight-black ${accountTypeColor(item.type, false, true)}`"
+                    :class="`d-inline-flex text-truncate align-center text-body-2 line-height-normal font-weight-black ${accountTypeColor(item.type, false, true)}`"
                   >
-                    {{ item.name }}
+                    <v-icon v-if="item.type === 'twitch'" class="text-body-1" :color="accountTypeColor('twitch')">
+                      mdi-twitch
+                    </v-icon>
+                    <span class="mx-1 overflow-hidden text-truncate">{{ item.name }}</span>
+                    <v-icon v-if="isVerified(item) || isVerified(props.parent)" class="text-body-2">
+                      mdi-check-decagram
+                    </v-icon>
                   </div>
+                  <v-spacer />
                   <div
-                    v-if="
-                      (item.status === 'online' || item.status === 'video' || item.status === 'clip') && spectatorsText
-                    "
-                    class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold"
+                    v-if="spectatorsCount"
+                    class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
-                    <span aria-hidden="true"> - </span>
-                    <span> {{ spectatorsText }} </span>
+                    <span :aria-label="spectatorsText">
+                      <v-icon class="text-body-2" :color="accountTypeColor('twitch')">mdi-account</v-icon>
+                      {{ spectatorsCount.toLocaleString(locale) }}
+                    </span>
                   </div>
                 </v-list-item-title>
-                <template v-if="item.status === 'offline'">
+                <template v-if="isOfflineStream(item)">
                   <v-list-item-subtitle class="text-caption line-height-normal font-weight-bold">{{
                     t('streamList.offline')
                   }}</v-list-item-subtitle>
@@ -322,22 +336,22 @@ function onIntersect(isIntersecting: boolean) {
                 <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
                   <v-list-item-subtitle
                     v-if="item.status === 'online' && item.type === 'twitch' && item.game"
-                    :title="item.game"
                     class="text-caption line-height-normal font-weight-bold"
+                    :title="item.game"
                     >{{ item.game }}</v-list-item-subtitle
                   >
                   <v-list-item-subtitle
                     v-if="item.title"
-                    :title="item.title"
                     class="text-caption line-height-normal font-weight-bold"
+                    :title="item.title"
                     >{{ item.title }}</v-list-item-subtitle
                   >
                 </template>
                 <template v-if="item.status === 'video' || item.status === 'clip'">
                   <v-list-item-subtitle
                     v-if="dataDiff"
-                    :title="dataDiff"
                     class="text-caption line-height-normal font-weight-bold"
+                    :title="dataDiff"
                     >{{ dataDiff }}</v-list-item-subtitle
                   >
                 </template>

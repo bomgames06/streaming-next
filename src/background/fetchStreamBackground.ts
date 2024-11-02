@@ -22,7 +22,7 @@ async function fetchStreams(alarm?: Alarm): Promise<void> {
   try {
     if (accounts.twitch && !accounts.twitch.invalid)
       onlines.push(
-        ...(await TwitchBusiness.getStreamersOnlineFollowed(accounts.twitch.token, accounts.twitch.accountId))
+        ...(await TwitchBusiness.getStreamersOnlineFollowed(accounts.twitch.token, accounts.twitch.accountId, true))
       )
   } catch (e) {
     if (accounts.twitch && isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {
@@ -40,7 +40,8 @@ void fetchStreams()
 
 browser.alarms.onAlarm.addListener(fetchStreams)
 
-browser.runtime.onMessage.addListener((message: BackgroundMessageType) => {
+browser.runtime.onMessage.addListener((messageValue: unknown) => {
+  const message = messageValue as BackgroundMessageType
   switch (message.type) {
     case 'fetchStream':
       return fetchStreams()

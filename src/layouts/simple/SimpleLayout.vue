@@ -13,17 +13,17 @@ const i18n = useI18n()
 <template>
   <h1 class="d-sr-only">{{ i18n.t('common.projectName') }}</h1>
   <v-layout>
-    <v-app-bar :height="system.appBarHeight" class="app-bar">
+    <v-app-bar class="app-bar" :height="system.appBarHeight">
       <div class="d-flex w-100 position-relative align-center">
-        <v-progress-linear v-if="!!system.loadingCount" absolute indeterminate location="bottom" color="primary" />
+        <v-progress-linear v-if="!!system.loadingCount" absolute color="primary" indeterminate location="bottom" />
         <v-spacer />
         <v-menu :close-on-content-click="false">
           <template #activator="{ props }">
             <v-btn
-              :icon="true"
-              size="36"
               :aria-label="i18n.t('simpleLayout.languageAriaLabelButton')"
               class="rounded-lg"
+              :icon="true"
+              size="36"
               v-bind="props"
             >
               <v-icon>mdi-translate</v-icon>
@@ -31,16 +31,16 @@ const i18n = useI18n()
           </template>
           <template #default="{ isActive }">
             <v-list
-              :selected="[system.language]"
               mandatory
-              @update:selected="system.setLanguage($event[0], i18n)"
+              :selected="[system.language]"
               @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))"
+              @update:selected="system.setLanguage($event[0], i18n)"
             >
               <v-list-item
                 v-for="locale in locales"
                 :key="locale"
-                role="option"
                 :aria-selected="system.language === locale"
+                role="option"
                 :value="locale"
               >
                 <v-list-item-title>
@@ -51,12 +51,12 @@ const i18n = useI18n()
           </template>
         </v-menu>
         <v-btn
-          :icon="true"
-          size="36"
           :aria-label="
             i18n.t(system.dark ? 'simpleLayout.themeAriaLabelButton.dark' : 'simpleLayout.themeAriaLabelButton.light')
           "
           class="rounded-lg"
+          :icon="true"
+          size="36"
           @click="system.setDark(!system.dark, theme)"
         >
           <v-icon>

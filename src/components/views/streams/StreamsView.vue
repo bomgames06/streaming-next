@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import StreamList from '@/components/listStream/StreamList.vue'
 import type {
-  StreamItemLiveOfflineType,
   StreamItemLiveOnlineType,
+  StreamItemLiveStreamType,
   StreamItemLiveType,
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
+import { isOfflineStream, isOnlineStream } from '@/components/listStream/types/streamItemType'
 import { debounce, deburr, orderBy, uniqBy } from 'lodash'
 import emitter from '@/events'
 import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
-import ViewContainer from '@/components/viewContainer/ViewContainer.vue'
 import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
@@ -23,13 +21,17 @@ const { t } = useI18n()
 
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
-const offlines = ref<StreamItemLiveOfflineType[]>([])
+const streams = ref<StreamItemLiveStreamType[]>([])
 const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
 const filterLabelId = uuidV4()
+
+const offlines = computed(() =>
+  streams.value.filter((value) => !onlines.value.some((item) => item.id === value.id && item.type === value.type))
+)
 
 const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
 watch(
@@ -39,6 +41,26 @@ watch(
   }
 )
 
+const orders = computed(() => {
+  const items: ((item: StreamItemLiveType) => string | number)[] = []
+
+  if (!filter.value) items.push(orderStatus)
+  if (system.streamOrder === 'name') items.push(orderName)
+  if (system.streamOrder === 'view') items.push(orderView)
+  if (system.streamOrder === 'game') items.push(orderGame)
+  items.push(orderType)
+
+  return items
+})
+const sorts = computed(() => {
+  const items: ('asc' | 'desc')[] = []
+
+  if (!filter.value) items.push('desc')
+  items.push(system.streamOrderSort ? 'asc' : 'desc')
+  items.push('asc')
+
+  return items
+})
 const itemsFiltered = computed(() =>
   orderBy(
     uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem),
@@ -63,26 +85,6 @@ const renderOfflinesComp = computed(
     !system.showFavoritesComp &&
     !system.showNotificationsComp
 )
-const orders = computed(() => {
-  const items: ((item: StreamItemLiveType) => string | number)[] = []
-
-  if (!filter.value) items.push(orderStatus)
-  if (system.streamOrder === 'name') items.push(orderName)
-  if (system.streamOrder === 'view') items.push(orderView)
-  if (system.streamOrder === 'game') items.push(orderGame)
-  items.push(orderType)
-
-  return items
-})
-const sorts = computed(() => {
-  const items: ('asc' | 'desc')[] = []
-
-  if (!filter.value) items.push('desc')
-  items.push(system.streamOrderSort ? 'asc' : 'desc')
-  items.push('asc')
-
-  return items
-})
 
 emitter.on('refresh', fetchData)
 onUnmounted(() => {
@@ -104,7 +106,7 @@ function toggleOffline() {
 }
 
 function orderStatus(value: StreamItemLiveType) {
-  return value.status
+  return isOnlineStream(value) ? 1 : 0
 }
 function orderName(value: StreamItemLiveType) {
   return deburr(value.name).toLowerCase()
@@ -124,7 +126,7 @@ function orderType(value: StreamItemType) {
 function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
-  if (!showOfflinesComp.value && value.status === 'offline') show = false
+  if (!showOfflinesComp.value && isOfflineStream(value)) show = false
   else if (
     !(
       (!system.showFavoritesComp && !system.showNotificationsComp) ||
@@ -137,7 +139,7 @@ function filterItem(value: StreamItemLiveType): boolean {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
       ['game'].includes(system.streamOrder) &&
-      (value.status === 'offline' || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
+      (isOfflineStream(value) || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
     )
       show = false
   }
@@ -169,12 +171,7 @@ async function fetchData() {
     fetchTimeout.value = undefined
   }
   try {
-    const onlinesFetched: StreamItemLiveOnlineType[] = await fetchOnlineTwitch()
-    dump.value = Date.now().toString()
-    onlines.value = onlinesFetched
-    offlines.value = system.accountsCacheStreams?.twitch || []
-
-    offlines.value = await fetchOfflinesTwitch(onlinesFetched)
+    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
   } finally {
     system.loaded()
     system.refreshed()
@@ -184,10 +181,13 @@ async function fetchData() {
   }
 }
 
-async function fetchOnlineTwitch(): Promise<StreamItemLiveOnlineType[]> {
+async function fetchOnlineTwitch(): Promise<void> {
   system.loading()
   try {
-    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) {
+      onlines.value = []
+      return
+    }
 
     const items: StreamItemLiveOnlineType[] = await TwitchBusiness.getStreamersOnlineFollowed(
       system.accounts.twitch.token,
@@ -200,21 +200,25 @@ async function fetchOnlineTwitch(): Promise<StreamItemLiveOnlineType[]> {
     }
     void browser.runtime.sendMessage(message)
 
-    return items
+    dump.value = Date.now().toString()
+    onlines.value = items
   } finally {
     system.loaded()
   }
 }
 
-async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise<StreamItemLiveOfflineType[]> {
+async function fetchStreamsTwitch(): Promise<void> {
   system.loading()
   try {
-    if (!system.accounts.twitch || system.accounts.twitch.invalid) return []
+    if (!system.accounts.twitch || system.accounts.twitch.invalid) {
+      streams.value = []
+      return
+    }
 
-    return TwitchBusiness.getStreamersOfflineFollowed(
+    streams.value = system.accountsCacheStreams?.twitch || []
+    streams.value = await TwitchBusiness.getStreamersFollowed(
       system.accounts.twitch.token,
-      system.accounts.twitch.accountId,
-      exclude.map((value) => value.id)
+      system.accounts.twitch.accountId
     )
   } finally {
     system.loaded()
@@ -225,28 +229,28 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
 <template>
   <ViewContainer>
     <template #top>
-      <v-sheet color="surface-light" class="px-2 py-1 top-0 filter-content">
-        <v-row role="group" dense :aria-label="t('common.filter')" class="mx-0">
+      <v-sheet class="px-2 py-1 top-0 filter-content" color="surface-light">
+        <v-row :aria-label="t('common.filter')" class="mx-0" dense role="group">
           <v-col :id="filterLabelId" cols="auto">
             <v-icon>mdi-filter</v-icon>
           </v-col>
-          <v-col cols="auto" class="d-flex">
-            <v-divider vertical class="h-75 align-self-center" />
+          <v-col class="d-flex" cols="auto">
+            <v-divider class="h-75 align-self-center" vertical />
           </v-col>
           <v-col cols="auto">
             <v-btn
               v-tooltip="t('common.favorite', 2)"
-              role="checkbox"
+              accesskey="b"
               :aria-checked="system.showFavoritesComp"
               :aria-label="t('common.favorite', 2)"
-              :icon="true"
-              :disabled="!!detailItem"
-              size="24"
-              accesskey="b"
               class="rounded-lg"
+              :disabled="!!detailItem"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleFavorite"
             >
-              <v-icon size="18" :color="system.showFavoritesComp ? 'primary' : ''">{{
+              <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
                 system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
               }}</v-icon>
             </v-btn>
@@ -254,17 +258,17 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
           <v-col v-if="system.notificationType === 'partial'" cols="auto">
             <v-btn
               v-tooltip="t('common.notification', 2)"
-              role="checkbox"
+              accesskey="n"
               :aria-checked="system.showNotificationsComp"
               :aria-label="t('common.notification', 2)"
-              :icon="true"
-              :disabled="!!detailItem"
-              size="24"
-              accesskey="n"
               class="rounded-lg"
+              :disabled="!!detailItem"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleNotification"
             >
-              <v-icon size="18" :color="system.showNotificationsComp ? 'primary' : ''">{{
+              <v-icon :color="system.showNotificationsComp ? 'primary' : ''" size="18">{{
                 system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
               }}</v-icon>
             </v-btn>
@@ -272,24 +276,24 @@ async function fetchOfflinesTwitch(exclude: StreamItemLiveOnlineType[]): Promise
           <v-col cols="auto">
             <v-btn
               v-tooltip="t('common.offlines')"
-              role="checkbox"
+              accesskey="o"
               :aria-checked="showOfflines"
               :aria-label="t('common.offlines')"
-              :icon="true"
-              :disabled="!renderOfflinesComp"
-              size="24"
-              accesskey="o"
               class="rounded-lg"
+              :disabled="!renderOfflinesComp"
+              :icon="true"
+              role="checkbox"
+              size="24"
               @click="toggleOffline"
             >
-              <v-icon size="18" :color="showOfflinesComp ? 'primary' : ''"> mdi-wifi-off </v-icon>
+              <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
             </v-btn>
           </v-col>
         </v-row>
       </v-sheet>
       <v-divider />
     </template>
-    <StreamList v-model:detail-item="detailItem" :items="itemsFiltered" :dump="dump" />
+    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" />
   </ViewContainer>
 </template>
 

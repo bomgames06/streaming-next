@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
-import AuthButtons from '@/components/auth/AuthActions.vue'
 import type { User } from '@/types/userType'
-import { ref } from 'vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -33,8 +31,8 @@ async function authenticated({ token, user }: { token: string; user: User }): Pr
 </script>
 
 <template>
-  <v-row align="center" justify="center" class="h-100">
-    <v-col cols="auto" class="text-center">
+  <v-row align="center" class="h-100" justify="center">
+    <v-col class="text-center" cols="auto">
       <p>{{ t('auth.mandatoryMessage') }}</p>
       <div class="d-flex flex-column">
         <AuthButtons v-model:authenticating="authenticating" @authenticated="authenticated" />

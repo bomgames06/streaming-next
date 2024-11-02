@@ -31,14 +31,14 @@ const items: {
 
 <template>
   <v-select
-    :model-value="system.clipPeriod"
-    :label="t('streamList.appBarView.filter')"
-    :items="items"
-    :item-title="(value) => t(value.textI18n)"
-    variant="outlined"
-    color="primary"
-    single-line
     class="mr-2"
+    color="primary"
+    :item-title="(value) => t(value.textI18n)"
+    :items="items"
+    :label="t('streamList.appBarView.filter')"
+    :model-value="system.clipPeriod"
+    single-line
+    variant="outlined"
     @update:model-value="system.setClipPeriod($event || '24h')"
   />
 </template>

@@ -26,7 +26,14 @@ function isVersionLowerOrEqual(version1: string, version2: string) {
 async function migrateOldSave(details: browser.Runtime.OnInstalledDetailsType) {
   if (!details.previousVersion || !isVersionLowerOrEqual(details.previousVersion, '1.2.5')) return
   const keys = ['accessToken', 'expiredToken', 'filterOrderList', 'filterOrderAsc', 'notification', 'notificationIds']
-  const oldSave = await browser.storage.sync.get(keys)
+  const oldSave = (await browser.storage.sync.get(keys)) as {
+    accessToken: string
+    expiredToken: unknown
+    filterOrderList: unknown
+    filterOrderAsc: unknown
+    notification: unknown
+    notificationIds: string[]
+  }
 
   let user: User | undefined
   try {
