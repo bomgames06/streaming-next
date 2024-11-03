@@ -18,7 +18,7 @@ The application allows:
 
 ## Project requirements
 
-- Node: ^20.0.0
+- Node: ^22.0.0
 - Bun: >=1.1.0
 
 ## Project setup

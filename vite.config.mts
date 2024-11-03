@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import webExtension, { readJsonFile } from 'vite-plugin-web-extension'
 import { fileURLToPath, URL } from 'node:url'
@@ -16,7 +16,6 @@ function generateManifest(command: 'build' | 'serve') {
   }
 }
 
-// https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   return {
     plugins: [
