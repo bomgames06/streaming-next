@@ -322,8 +322,8 @@ function isVerified(value?: StreamItemType): boolean {
                     v-if="spectatorsCount"
                     class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
-                    <span :aria-label="spectatorsText">
-                      <v-icon class="text-body-2" :color="accountTypeColor('twitch')">mdi-account</v-icon>
+                    <span :aria-label="spectatorsText" class="text-red">
+                      <v-icon class="text-body-2">mdi-account</v-icon>
                       {{ spectatorsCount.toLocaleString(locale) }}
                     </span>
                   </div>
