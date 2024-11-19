@@ -187,7 +187,7 @@ const useSystemStore = defineStore('System', () => {
         account.avatarUrl = user.avatarUrl
         account.accountId = user.id
         account.invalid = false
-      } catch (e) {
+      } catch {
         account.invalid = true
       }
     }

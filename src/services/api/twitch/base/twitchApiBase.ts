@@ -20,7 +20,7 @@ export default class TwitchApiBase extends AxiosBase {
               const system = useSystemStore()
               const token = String(error.config?.headers.Authorization || '').substring('Bearer '.length)
               system.invalidAccountByToken(token)
-            } catch (e) {
+            } catch {
               throw error
             }
           }

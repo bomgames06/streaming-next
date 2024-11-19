@@ -28,7 +28,7 @@ export default function useAppInit(noAuth?: boolean) {
 
       if (!noAuth && (!system.hasAccount || system.isEveryAccountInvalid)) return void system.setScreen('auth')
       system.setScreen('home')
-    } catch (e) {
+    } catch {
       error.value = true
     }
   }
