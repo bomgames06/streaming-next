@@ -1,15 +1,23 @@
 import globals from 'globals'
 import pluginVue from 'eslint-plugin-vue'
-import vueTsEslintConfig from '@vue/eslint-config-typescript'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
 import eslintrcAutoImport from './.eslintrc-auto-import.mjs'
 
 export default [
   {
     ignores: ['**/node_modules', '**/dist', '.eslintrc-auto-import.mjs'],
   },
-  ...pluginVue.configs['flat/essential'],
-  ...vueTsEslintConfig({ extends: ['base'] }),
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  ...pluginVue.configs['flat/recommended'],
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parserOptions: { parser: tseslint.parser },
+    },
+  },
   eslintPluginPrettierRecommended,
   {
     languageOptions: {
@@ -23,15 +31,12 @@ export default [
     rules: {
       '@typescript-eslint/consistent-type-imports': ['error'],
       'vue/multi-word-component-names': 'off',
-      'no-use-before-define': 'off',
-
-      '@typescript-eslint/no-use-before-define': [
+      'vue/attributes-order': ['error'],
+      '@typescript-eslint/no-unused-expressions': [
         'error',
         {
-          functions: false,
-          classes: true,
-          variables: true,
-          allowNamedExports: false,
+          allowShortCircuit: true,
+          allowTernary: true,
         },
       ],
     },

@@ -38,7 +38,7 @@ async function migrateOldSave(details: browser.Runtime.OnInstalledDetailsType) {
   let user: User | undefined
   try {
     if (oldSave.accessToken) user = await TwitchBusiness.getSelfUser(oldSave.accessToken)
-  } catch (e) {
+  } catch {
     // do nothing
   }
 

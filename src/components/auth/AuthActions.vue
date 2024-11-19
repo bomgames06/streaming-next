@@ -6,6 +6,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import type { User } from '@/types/userType'
 import browser from 'webextension-polyfill'
+import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()

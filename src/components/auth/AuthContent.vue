@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
 import type { User } from '@/types/userType'
+import AuthActions from '@/components/auth/AuthActions.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -35,7 +36,7 @@ async function authenticated({ token, user }: { token: string; user: User }): Pr
     <v-col class="text-center" cols="auto">
       <p>{{ t('auth.mandatoryMessage') }}</p>
       <div class="d-flex flex-column">
-        <AuthButtons v-model:authenticating="authenticating" @authenticated="authenticated" />
+        <AuthActions @authenticated="authenticated" />
       </div>
       <small class="d-block text-medium-emphasis">{{ t('auth.twitchExpireMessage') }}</small>
     </v-col>
