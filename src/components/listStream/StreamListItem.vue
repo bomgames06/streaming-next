@@ -11,6 +11,7 @@ import { accountTypeColor, onKeyDownEsc } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
 
 const aspectRatio = 16 / 9
+const imageWidth = 290
 const previewWidth = 90
 
 const system = useSystemStore()
@@ -47,18 +48,15 @@ const item = computed(() => props.item)
 const previewImage = computed(() => {
   if ((item.value.status === 'online' || item.value.status === 'video') && item.value.previewImage)
     return typeof item.value.previewImage === 'function'
-      ? item.value.previewImage(290, 290 * (1 / aspectRatio), props.dump)
+      ? item.value.previewImage(imageWidth, imageWidth * (1 / aspectRatio), props.dump)
       : item.value.previewImage
   if (item.value.type === 'twitch' && item.value.status === 'clip' && item.value.previewImage)
     return item.value.previewImage
   return ''
 })
 const spectatorsCount = computed<number | undefined>(() => {
-  if (
-    (item.value.status === 'online' || item.value.status === 'video' || item.value.status === 'clip') &&
-    item.value.viewerCount != null
-  )
-    return item.value.viewerCount
+  if (item.value.status === 'online' || item.value.status === 'video' || item.value.status === 'clip')
+    return item.value.viewerCount ?? 0
   return undefined
 })
 const spectatorsText = computed(() => {
@@ -322,8 +320,8 @@ function isVerified(value?: StreamItemType): boolean {
                     v-if="spectatorsCount"
                     class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
-                    <span :aria-label="spectatorsText">
-                      <v-icon class="text-body-2" :color="accountTypeColor('twitch')">mdi-account</v-icon>
+                    <span :aria-label="spectatorsText" class="text-red">
+                      <v-icon class="text-body-2">mdi-account</v-icon>
                       {{ spectatorsCount.toLocaleString(locale) }}
                     </span>
                   </div>
