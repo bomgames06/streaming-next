@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import browser from 'webextension-polyfill'
-import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
+import { STORAGE_KEY_CATEGORY_NOTIFICATIONS, type StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS,
   STORAGE_KEY_DARK,
@@ -21,12 +21,13 @@ import { locale } from '@/plugins/i18n'
 import type { Composer } from 'vue-i18n'
 import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
-import { compact } from 'lodash'
+import { compact, upperCase } from 'lodash'
 import type {
   AccountCacheStreamsDataStore,
   AccountDataStore,
   AccountStore,
   AccountStoreType,
+  CategoryNotificationStore,
   ClipPeriodStore,
   HeaderAppBarViewStore,
   LanguageCategoryStreamStore,
@@ -40,6 +41,7 @@ import type {
   ViewStore,
 } from '@/store/system/types/systemStoreType'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
+import type { FavoriteStore } from '@/store/system/types/systemStoreType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -56,7 +58,8 @@ const useSystemStore = defineStore('System', () => {
   const accounts = ref<AccountDataStore>({})
   const notifications = ref<NotificationStore[]>([])
   const notificationType = ref<NotificationTypeStore>('none')
-  const favorites = ref<NotificationStore[]>([])
+  const favorites = ref<FavoriteStore[]>([])
+  const categoryNotifications = ref<CategoryNotificationStore[]>([])
   const dark = ref<boolean>(false)
   const language = ref<Locales>(locale)
   const showAlwaysOfflines = ref<boolean>(false)
@@ -147,6 +150,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_STREAM_ORDER_SORT,
       STORAGE_KEY_SHOW_FAVORITES,
       STORAGE_KEY_SHOW_NOTIFICATIONS,
+      STORAGE_KEY_CATEGORY_NOTIFICATIONS,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -162,6 +166,7 @@ const useSystemStore = defineStore('System', () => {
     showFavorites.value = syncStorage[STORAGE_KEY_SHOW_FAVORITES] ?? false
     showNotifications.value = syncStorage[STORAGE_KEY_SHOW_NOTIFICATIONS] ?? false
     accountsCacheStreams.value = localStorage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] ?? {}
+    categoryNotifications.value = syncStorage[STORAGE_KEY_CATEGORY_NOTIFICATIONS] ?? []
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -227,12 +232,6 @@ const useSystemStore = defineStore('System', () => {
     value.invalid = true
     saveAccounts()
   }
-  function updateTokenAccountByToken(token: string, newToken: string) {
-    const value = Object.values(accounts.value).find((value) => value.token === token)
-    if (!value) return
-    value.token = newToken
-    saveAccounts()
-  }
   function addNotification(accountType: AccountStoreType, id: string) {
     notifications.value.push({ type: accountType, id })
     void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
@@ -248,6 +247,46 @@ const useSystemStore = defineStore('System', () => {
   function removeFavorite(accountType: AccountStoreType, id: string) {
     favorites.value = favorites.value.filter((value) => !(value.type === accountType && value.id === id))
     void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
+  }
+  function addCategoryNotification(name: string, imageUrl?: string) {
+    let item: CategoryNotificationStore | undefined = categoryNotifications.value.find(
+      (value) => upperCase(value.name) === upperCase(name)
+    )
+    if (!item) {
+      item = {
+        id: crypto.randomUUID(),
+        name: '',
+        streams: [],
+      }
+      categoryNotifications.value.push(item)
+    }
+    item.name = name
+    item.imageUrl = imageUrl
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+
+    return item.id
+  }
+  function removeCategoryNotification(id: string) {
+    categoryNotifications.value = categoryNotifications.value.filter((value) => value.id !== id)
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+  }
+  function addStreamCategoryNotification(id: string, type: AccountStoreType, streamId: string) {
+    const item = categoryNotifications.value.find((item) => item.id === id)
+    if (!item || item.streams.find((item) => item.type === type && item.id === streamId)) return
+
+    item.streams.push({ type, id: streamId })
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+  }
+  function removeStreamCategoryNotification(id: string, type: AccountStoreType, streamId: string) {
+    const item = categoryNotifications.value.find((item) => item.id === id)
+    if (!item) return
+
+    item.streams = item.streams.filter((item) => item.type !== type || item.id !== streamId)
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
   }
   function cleanNotification() {
     notifications.value = []
@@ -336,6 +375,7 @@ const useSystemStore = defineStore('System', () => {
     notifications,
     notificationType,
     favorites,
+    categoryNotifications,
     dark,
     language,
     showAlwaysOfflines,
@@ -380,11 +420,14 @@ const useSystemStore = defineStore('System', () => {
     addAccount,
     removeAccount,
     invalidAccountByToken,
-    updateTokenAccountByToken,
     addNotification,
     removeNotification,
     addFavorite,
     removeFavorite,
+    addCategoryNotification,
+    removeCategoryNotification,
+    addStreamCategoryNotification,
+    removeStreamCategoryNotification,
     cleanNotification,
     cleanFavorite,
     setNotificationType,

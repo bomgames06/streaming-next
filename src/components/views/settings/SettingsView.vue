@@ -50,7 +50,7 @@ function openTwitter(middle?: boolean) {
               class="mx-n3"
               color="primary"
               inline
-              label="Notificações"
+              :label="i18n.t('settings.notifications')"
               :model-value="system.notificationType"
               @update:model-value="system.setNotificationType($event || system.notificationType)"
             >

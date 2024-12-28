@@ -62,6 +62,11 @@ export type StreamItemClipType = {
   previewImage?: string
 }
 export type StreamItemLiveType = StreamItemLiveOnlineType | StreamItemLiveOfflineType | StreamItemLiveStreamType
+export type CategorySearchItem = {
+  id: string
+  name: string
+  imageUrl: string
+}
 
 export type StreamItemType = StreamItemLiveType | StreamItemVideoType | StreamItemClipType
 

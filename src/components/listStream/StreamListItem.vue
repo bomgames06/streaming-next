@@ -7,7 +7,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
-import { accountTypeColor, onKeyDownEsc } from '@/utils/util'
+import { accountTypeColor } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
 
 const aspectRatio = 16 / 9
@@ -262,7 +262,7 @@ function isVerified(value?: StreamItemType): boolean {
                   @close="closeMenu()"
                   @update:model-value="closeMenu"
                 >
-                  <v-list :id="contextMenuListId" @keydown.prevent="onKeyDownEsc($event, () => (menuShow = undefined))">
+                  <v-list :id="contextMenuListId" @keydown.esc.prevent="menuShow = undefined">
                     <v-list-item
                       v-if="!props.disableNotificationMenu"
                       :prepend-icon="favoriteEnabled ? 'mdi-star' : 'mdi-star-outline'"

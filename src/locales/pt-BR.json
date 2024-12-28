@@ -49,6 +49,13 @@
   "categoriesView": {
     "searchMore": "Buscar mais"
   },
+  "categoryNotificationDialog": {
+    "addStream": "Adicionar stream",
+    "category": "Categoria",
+    "noNotifications": "Sem notificações",
+    "stream": "Stream",
+    "streamCount": "Stream: Todos | Stream: {count} | Streams: {count}"
+  },
   "common": {
     "asc": "Crescente",
     "back": "Voltar",
@@ -68,6 +75,9 @@
     "sort": "Ordenar",
     "systemError": "Erro no sistema",
     "unauthorizedAccount": "Conta não está mais autorizada"
+  },
+  "gameNotificationDialog": {
+    "title": "Notificação de categoria"
   },
   "languages": {
     "en": "Inglês",

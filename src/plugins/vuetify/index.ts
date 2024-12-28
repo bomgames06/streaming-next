@@ -24,6 +24,12 @@ const vuetify = createVuetify({
     VSelect: {
       variant: 'underlined',
     },
+    VCombobox: {
+      variant: 'underlined',
+    },
+    VAutocomplete: {
+      variant: 'underlined',
+    },
     VDialog: {
       scrollStrategy: 'reposition',
     },

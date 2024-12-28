@@ -8,6 +8,7 @@ import type {
 import type { User } from '@/types/userType'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type {
+  CategorySearchItem,
   StreamItemClipType,
   StreamItemLiveOnlineType,
   StreamItemLiveType,
@@ -98,6 +99,16 @@ const AppBusiness = {
   ): Promise<{ items: StreamItemLiveType[]; cursor?: string }> {
     return handlerAccounts(account.type, {
       twitch: async () => TwitchBusiness.searchChannels(account.token, query, cursor, limit),
+    })
+  },
+  async searchCategories(
+    account: AccountStore,
+    query: string,
+    cursor?: string,
+    limit?: number
+  ): Promise<{ items: CategorySearchItem[]; cursor?: string }> {
+    return handlerAccounts(account.type, {
+      twitch: async () => TwitchBusiness.searchCategories(account.token, query, cursor, limit),
     })
   },
 }

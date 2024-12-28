@@ -5,7 +5,6 @@ import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import type { User } from '@/types/userType'
 import Mousetrap from 'mousetrap'
-import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -110,7 +109,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
               </v-btn>
             </template>
             <template #default="{ isActive }">
-              <v-list class="py-0" @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))">
+              <v-list class="py-0" @keydown.esc.prevent="isActive.value = false">
                 <v-list-group class="group-indent" color="primary">
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.accounts')">

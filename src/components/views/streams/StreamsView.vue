@@ -289,6 +289,16 @@ async function fetchStreamsTwitch(): Promise<void> {
               <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
             </v-btn>
           </v-col>
+          <v-spacer />
+          <v-col cols="auto">
+            <CategoryNotificationDialog :streams="streams">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" class="rounded-lg" :icon="true" size="24">
+                  <v-icon size="18"> mdi-controller </v-icon>
+                </v-btn>
+              </template>
+            </CategoryNotificationDialog>
+          </v-col>
         </v-row>
       </v-sheet>
       <v-divider />

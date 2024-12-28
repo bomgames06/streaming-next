@@ -49,6 +49,13 @@
   "categoriesView": {
     "searchMore": "Search more"
   },
+  "categoryNotificationDialog": {
+    "addStream": "Add stream",
+    "category": "Category",
+    "noNotifications": "No notifications",
+    "stream": "Stream",
+    "streamCount": "Stream: All | Stream: {count} | Streams: {count}"
+  },
   "common": {
     "asc": "Ascendent",
     "back": "Back",
@@ -68,6 +75,9 @@
     "sort": "Sort",
     "systemError": "System error",
     "unauthorizedAccount": "AccountStore is no longer authorized"
+  },
+  "gameNotificationDialog": {
+    "title": "Game notification"
   },
   "languages": {
     "en": "English",

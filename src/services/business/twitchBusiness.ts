@@ -25,6 +25,7 @@ import type {
   TwitchApiUserType,
 } from '@/services/api/twitch/types/twitchApiType'
 import useSystemStore from '@/store/system/useSystemStore'
+import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
 
 function isStreamVerified(value?: TwitchApiBroadcasterType): value is 'partner' {
   return value === 'partner'
@@ -299,6 +300,27 @@ const TwitchBusiness = {
                 verified: isStreamVerified(value.user?.broadcaster_type),
               } as StreamItemLiveOfflineType)
         ),
+    }
+  },
+  async searchCategories(
+    token: string,
+    query: string,
+    cursor?: string,
+    limit?: number
+  ): Promise<{ items: CategorySearchItem[]; cursor?: string }> {
+    const response = await TwitchApi.search.categories(token, {
+      query,
+      first: limit?.toString(),
+      after: cursor,
+    })
+
+    return {
+      cursor: response.pagination.cursor,
+      items: response.data.map((item) => ({
+        id: item.id,
+        name: item.name,
+        imageUrl: item.box_art_url,
+      })),
     }
   },
 }

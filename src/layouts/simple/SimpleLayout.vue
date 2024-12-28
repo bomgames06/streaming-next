@@ -3,7 +3,6 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import { useI18n } from 'vue-i18n'
-import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -33,7 +32,7 @@ const i18n = useI18n()
             <v-list
               mandatory
               :selected="[system.language]"
-              @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))"
+              @keydown.esc.prevent="isActive.value = false"
               @update:selected="system.setLanguage($event[0], i18n)"
             >
               <v-list-item
