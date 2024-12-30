@@ -23,6 +23,7 @@ const menu = ref<boolean>(false)
 const categories = ref<CategorySearchItem[]>([])
 const categoryAddStream = ref<CategoryNotificationStore>()
 const stream = ref<StreamItemLiveStreamType>()
+const expandCategory = ref<CategoryNotificationStore>()
 
 const categoryComp = computed({
   get: () => category.value,
@@ -52,6 +53,7 @@ watch(model, () => {
   categories.value = []
   categoryAddStream.value = undefined
   stream.value = undefined
+  expandCategory.value = undefined
 })
 watch(search, debounce(fetchCategories, 500))
 watch([category, categories], processCategory)
@@ -143,6 +145,14 @@ function getStreamListFromCategory(category: CategoryNotificationStore): StreamI
     )
   )
 }
+
+function deleteCategory(categoryItem: CategoryNotificationStore) {
+  system.removeCategoryNotification(categoryItem.id)
+  expandCategory.value = undefined
+}
+function clickCategory(categoryItem: CategoryNotificationStore) {
+  expandCategory.value = !expandCategory.value || expandCategory.value.id !== categoryItem.id ? categoryItem : undefined
+}
 </script>
 
 <template>
@@ -209,54 +219,68 @@ function getStreamListFromCategory(category: CategoryNotificationStore): StreamI
               </div>
             </v-col>
           </v-row>
-          <template v-if="system.categoryNotifications.length">
-            <v-list v-if="props.streamItem" dense class="flex-grow-1 overflow-y-auto mt-2">
-              <CategoryNotificationListItem
-                v-for="categoryNotification in streamCategoryNotications"
-                :key="categoryNotification.id"
-                :category="categoryNotification"
-                :stream-item="props.streamItem"
-                @toggle-stream="
-                  $event
-                    ? system.addStreamCategoryNotification(
-                        categoryNotification.id,
-                        props.streamItem.type,
-                        props.streamItem.id
-                      )
-                    : system.removeStreamCategoryNotification(
-                        categoryNotification.id,
-                        props.streamItem.type,
-                        props.streamItem.id
-                      )
-                "
-              />
-            </v-list>
-            <v-list v-else dense class="flex-grow-1 overflow-y-auto mt-2">
-              <v-list-group
-                v-for="categoryNotification in system.categoryNotifications"
-                :key="categoryNotification.id"
-                fluid
-              >
-                <template #activator="{ props: itemListGroupProps }">
-                  <CategoryNotificationListItem
-                    :category="categoryNotification"
-                    :list-item-props="itemListGroupProps"
-                    @delete="system.removeCategoryNotification(categoryNotification.id)"
-                  />
-                </template>
+          <div class="flex-grow-1 overflow-y-auto mt-2">
+            <template v-if="system.categoryNotifications.length">
+              <v-list v-if="props.streamItem" dense>
+                <CategoryNotificationListItem
+                  v-for="categoryNotification in streamCategoryNotications"
+                  :key="categoryNotification.id"
+                  :category="categoryNotification"
+                  :stream-item="props.streamItem"
+                  @toggle-stream="
+                    $event
+                      ? system.addStreamCategoryNotification(
+                          categoryNotification.id,
+                          props.streamItem.type,
+                          props.streamItem.id
+                        )
+                      : system.removeStreamCategoryNotification(
+                          categoryNotification.id,
+                          props.streamItem.type,
+                          props.streamItem.id
+                        )
+                  "
+                />
+              </v-list>
+              <v-list v-else dense>
+                <v-tooltip
+                  v-for="categoryNotification in system.categoryNotifications"
+                  :key="categoryNotification.id"
+                  :text="t('common.back')"
+                  location="bottom"
+                  :disabled="!expandCategory"
+                >
+                  <template #activator="{ props: tooltipProps }">
+                    <CategoryNotificationListItem
+                      v-show="!expandCategory || expandCategory.id === categoryNotification.id"
+                      :list-item-props="tooltipProps"
+                      :category="categoryNotification"
+                      @delete="deleteCategory(categoryNotification)"
+                      @click="clickCategory(categoryNotification)"
+                    />
+                  </template>
+                </v-tooltip>
+              </v-list>
+            </template>
+            <v-sheet v-else class="flex-grow-1 d-flex align-center justify-center">
+              {{ t('categoryNotificationDialog.noNotifications') }}
+            </v-sheet>
+            <template v-if="expandCategory">
+              <v-divider />
+              <v-list dense>
                 <v-list-item
-                  v-if="categoryAddStream?.id !== categoryNotification.id"
-                  :id="`list-item-add-${categoryNotification.id}`"
+                  v-if="categoryAddStream?.id !== expandCategory.id"
+                  :id="`list-item-add-${expandCategory.id}`"
                   :title="t('categoryNotificationDialog.addStream')"
                   prepend-icon="mdi-plus"
                   class="px-2"
-                  @click="openAddStream(categoryNotification)"
+                  @click="openAddStream(expandCategory)"
                 />
                 <v-list-item v-else>
                   <v-row dense class="flex-nowrap">
                     <v-col>
                       <v-autocomplete
-                        :id="`autocomplete-${categoryNotification.id}`"
+                        :id="`autocomplete-${expandCategory.id}`"
                         v-model="stream"
                         :items="streams"
                         :item-value="(item) => `${item.type}:${item.id}`"
@@ -307,7 +331,7 @@ function getStreamListFromCategory(category: CategoryNotificationStore): StreamI
                   </v-row>
                 </v-list-item>
                 <v-list-item
-                  v-for="categoryNotificationStream in getStreamListFromCategory(categoryNotification)"
+                  v-for="categoryNotificationStream in getStreamListFromCategory(expandCategory)"
                   :key="categoryNotificationStream.id"
                   dense
                   :title="categoryNotificationStream.name"
@@ -323,7 +347,7 @@ function getStreamListFromCategory(category: CategoryNotificationStore): StreamI
                       variant="flat"
                       @click="
                         system.removeStreamCategoryNotification(
-                          categoryNotification.id,
+                          expandCategory.id,
                           categoryNotificationStream.type,
                           categoryNotificationStream.id
                         )
@@ -333,12 +357,9 @@ function getStreamListFromCategory(category: CategoryNotificationStore): StreamI
                     </v-btn>
                   </template>
                 </v-list-item>
-              </v-list-group>
-            </v-list>
-          </template>
-          <v-sheet v-else class="flex-grow-1 d-flex align-center justify-center">
-            {{ t('categoryNotificationDialog.noNotifications') }}
-          </v-sheet>
+              </v-list>
+            </template>
+          </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />

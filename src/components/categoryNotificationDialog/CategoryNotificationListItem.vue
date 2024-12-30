@@ -13,6 +13,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   (e: 'delete'): void
+  (e: 'click'): void
   (e: 'toggleStream', value: boolean): void
 }>()
 
@@ -25,9 +26,8 @@ const selected = computed(
 )
 
 function itemClick() {
-  if (!props.streamItem) return
-
-  emit('toggleStream', !selected.value)
+  if (!props.streamItem) emit('click')
+  else emit('toggleStream', !selected.value)
 }
 </script>
 
