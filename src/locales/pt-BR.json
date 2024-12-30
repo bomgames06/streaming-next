@@ -57,6 +57,7 @@
     "streamCount": "Stream: Todos | Stream: {count} | Streams: {count}"
   },
   "common": {
+    "add": "Adicionar",
     "asc": "Crescente",
     "back": "Voltar",
     "close": "Fechar",
@@ -77,7 +78,7 @@
     "unauthorizedAccount": "Conta não está mais autorizada"
   },
   "gameNotificationDialog": {
-    "title": "Notificação de categoria"
+    "title": "Notificações de categoria"
   },
   "languages": {
     "en": "Inglês",
@@ -140,6 +141,7 @@
     "menu": {
       "addFavorite": "Adicionar favorito",
       "category": "Categoria",
+      "categoryNotification": "Notificar categoria",
       "clips": "Clipes",
       "disableNotification": "Desabilitar notificação",
       "enableNotification": "Ativar notificação",
@@ -164,6 +166,7 @@
     "filter": "Filtro"
   },
   "streamsView": {
+    "category": "Categoria",
     "favorites": "Favoritos",
     "hideOfflines": "Esconder offlines",
     "showOfflines": "Mostrar offlines"

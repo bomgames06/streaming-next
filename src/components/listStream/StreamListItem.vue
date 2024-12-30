@@ -31,6 +31,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'itemClick', value: { item: StreamItemType; middle?: boolean }): void
   (e: 'menuItemClick', value: { type: 'video' | 'clip'; item: StreamItemType }): void
+  (e: 'menuItemCategoryNotificationClick', value: StreamItemLiveType): void
 }>()
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
 const menuShow = defineModel<StreamItemType | undefined>('menuShow')
@@ -131,6 +132,9 @@ function enableClip() {
   if (item.value.type !== 'twitch') return
   enableDetail()
   emit('menuItemClick', { type: 'clip', item: item.value })
+}
+function categoryNotification(item: StreamItemLiveType) {
+  emit('menuItemCategoryNotificationClick', item)
 }
 
 async function closeMenu(value?: boolean) {
@@ -289,6 +293,20 @@ function isVerified(value?: StreamItemType): boolean {
                     />
                     <v-list-item
                       v-if="!props.disableCategoryMenu"
+                      :title="t('streamList.menu.categoryNotification')"
+                      @click="categoryNotification(item)"
+                    >
+                      <template #prepend>
+                        <v-badge color="surface" location="bottom end">
+                          <template #badge>
+                            <v-icon size="large">mdi-controller</v-icon>
+                          </template>
+                          <v-icon>mdi-bell</v-icon>
+                        </v-badge>
+                      </template>
+                    </v-list-item>
+                    <v-list-item
+                      v-if="!props.disableCategoryMenu"
                       prepend-icon="mdi-controller"
                       :title="t('streamList.menu.category')"
                       @click="
@@ -317,7 +335,7 @@ function isVerified(value?: StreamItemType): boolean {
                   </div>
                   <v-spacer />
                   <div
-                    v-if="spectatorsCount"
+                    v-if="spectatorsCount != undefined"
                     class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
                     <span :aria-label="spectatorsText" class="text-red">

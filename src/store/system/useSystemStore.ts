@@ -21,7 +21,7 @@ import { locale } from '@/plugins/i18n'
 import type { Composer } from 'vue-i18n'
 import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
-import { compact, upperCase } from 'lodash'
+import { cloneDeep, compact, upperCase } from 'lodash'
 import type {
   AccountCacheStreamsDataStore,
   AccountDataStore,
@@ -174,7 +174,7 @@ const useSystemStore = defineStore('System', () => {
 
   // utils
   function saveAccounts() {
-    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: toRaw(accounts.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: cloneDeep(accounts.value) })
   }
   function getAccountByType(type: AccountStoreType) {
     const value = accounts.value[type]
@@ -234,19 +234,19 @@ const useSystemStore = defineStore('System', () => {
   }
   function addNotification(accountType: AccountStoreType, id: string) {
     notifications.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: cloneDeep(notifications.value) })
   }
   function removeNotification(accountType: AccountStoreType, id: string) {
     notifications.value = notifications.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: cloneDeep(notifications.value) })
   }
   function addFavorite(accountType: AccountStoreType, id: string) {
     favorites.value.push({ type: accountType, id })
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: cloneDeep(favorites.value) })
   }
   function removeFavorite(accountType: AccountStoreType, id: string) {
     favorites.value = favorites.value.filter((value) => !(value.type === accountType && value.id === id))
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: cloneDeep(favorites.value) })
   }
   function addCategoryNotification(name: string, imageUrl?: string) {
     let item: CategoryNotificationStore | undefined = categoryNotifications.value.find(
@@ -263,14 +263,14 @@ const useSystemStore = defineStore('System', () => {
     item.name = name
     item.imageUrl = imageUrl
 
-    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
 
     return item.id
   }
   function removeCategoryNotification(id: string) {
     categoryNotifications.value = categoryNotifications.value.filter((value) => value.id !== id)
 
-    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
   }
   function addStreamCategoryNotification(id: string, type: AccountStoreType, streamId: string) {
     const item = categoryNotifications.value.find((item) => item.id === id)
@@ -278,7 +278,7 @@ const useSystemStore = defineStore('System', () => {
 
     item.streams.push({ type, id: streamId })
 
-    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
   }
   function removeStreamCategoryNotification(id: string, type: AccountStoreType, streamId: string) {
     const item = categoryNotifications.value.find((item) => item.id === id)
@@ -286,38 +286,38 @@ const useSystemStore = defineStore('System', () => {
 
     item.streams = item.streams.filter((item) => item.type !== type || item.id !== streamId)
 
-    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: toRaw(categoryNotifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
   }
   function cleanNotification() {
     notifications.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: toRaw(notifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: cloneDeep(notifications.value) })
   }
   function cleanFavorite() {
     favorites.value = []
-    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: toRaw(favorites.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: cloneDeep(favorites.value) })
   }
   function setNotificationType(type: NotificationTypeStore) {
     notificationType.value = type
-    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: toRaw(notificationType.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: cloneDeep(notificationType.value) })
   }
   function setDark(value: boolean, theme: ThemeInstance) {
     dark.value = value
     theme.global.name.value = dark.value ? 'dark' : 'light'
-    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: toRaw(dark.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_DARK]: cloneDeep(dark.value) })
   }
   function setLanguage(value: Locales, i18n: Composer) {
     language.value = value
     i18n.locale.value = language.value
     document.documentElement.setAttribute('lang', language.value)
-    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: toRaw(language.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_LANGUAGE]: cloneDeep(language.value) })
   }
   function setShowAlwaysOfflines(value: boolean) {
     showAlwaysOfflines.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: toRaw(showAlwaysOfflines.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_ALWAYS_OFFLINES]: cloneDeep(showAlwaysOfflines.value) })
   }
   function setAccountCacheStreams(accountType: AccountStoreType, value: StreamItemLiveStreamType[]) {
     accountsCacheStreams.value[accountType] = value
-    void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: toRaw(accountsCacheStreams.value) })
+    void browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: cloneDeep(accountsCacheStreams.value) })
   }
 
   // View actions
@@ -331,19 +331,19 @@ const useSystemStore = defineStore('System', () => {
       streamOrder.value = value
       if (!streamOrderSort.value) streamOrderSort.value = true
     }
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: toRaw(streamOrder.value) })
-    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: toRaw(streamOrderSort.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER]: cloneDeep(streamOrder.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_STREAM_ORDER_SORT]: cloneDeep(streamOrderSort.value) })
   }
   function setStreamNameFilter(value: string) {
     streamNameFilter.value = value
   }
   function setShowFavorites(value: boolean) {
     showFavorites.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: toRaw(showFavorites.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: cloneDeep(showFavorites.value) })
   }
   function setShowNotifications(value: boolean) {
     showNotifications.value = value
-    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: toRaw(showNotifications.value) })
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: cloneDeep(showNotifications.value) })
   }
 
   // Video view actions

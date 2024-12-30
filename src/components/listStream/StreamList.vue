@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type {
   StreamItemClipType,
+  StreamItemLiveStreamType,
+  StreamItemLiveType,
   StreamItemType,
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
@@ -23,6 +25,7 @@ const props = defineProps<{
   disableNotificationMenu?: boolean
   dump?: string
   parent?: StreamItemType
+  streams?: StreamItemLiveStreamType[]
 }>()
 
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
@@ -36,6 +39,8 @@ const clips = reactive<{ items: StreamItemClipType[]; cursor?: string }>({
   items: [],
 })
 const keyListItem = uuidV4()
+
+const streamCategoryNotification = ref<StreamItemLiveStreamType>()
 
 const hasMoreItems = computed(() => {
   if (detailType.value === 'video') return !!videos.cursor
@@ -155,6 +160,10 @@ async function fetchClips() {
 function showItem(item: StreamItemType) {
   return !detailItem.value || equals(detailItem.value, item)
 }
+
+function showCategoryNotificationDialog(item: StreamItemLiveType) {
+  streamCategoryNotification.value = props.streams?.find((value) => equals(value, item))
+}
 </script>
 
 <template>
@@ -173,10 +182,18 @@ function showItem(item: StreamItemType) {
         :parent="props.parent"
         @item-click="itemClick"
         @menu-item-click="menuItemClick"
+        @menu-item-category-notification-click="showCategoryNotificationDialog"
       />
       <v-divider v-if="idx !== props.items.length - 1 && !detailItem" />
     </template>
   </v-list>
+  <CategoryNotificationDialog
+    v-if="streamCategoryNotification && !!props.streams?.length"
+    :model-value="!!streamCategoryNotification"
+    :streams="props.streams"
+    :stream-item="streamCategoryNotification"
+    @update:model-value="streamCategoryNotification = $event ? streamCategoryNotification : undefined"
+  />
   <template v-if="detailItem">
     <template v-if="detailType === 'video'">
       <h2 class="mt-2">{{ t('streamList.videos') }}</h2>

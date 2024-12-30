@@ -57,6 +57,7 @@
     "streamCount": "Stream: All | Stream: {count} | Streams: {count}"
   },
   "common": {
+    "add": "Add",
     "asc": "Ascendent",
     "back": "Back",
     "close": "Close",
@@ -77,7 +78,7 @@
     "unauthorizedAccount": "AccountStore is no longer authorized"
   },
   "gameNotificationDialog": {
-    "title": "Game notification"
+    "title": "Game notifications"
   },
   "languages": {
     "en": "English",
@@ -140,6 +141,7 @@
     "menu": {
       "addFavorite": "Add Favorite",
       "category": "Category",
+      "categoryNotification": "Notify category",
       "clips": "Clips",
       "disableNotification": "Disable notification",
       "enableNotification": "Enable notification",
@@ -164,6 +166,7 @@
     "filter": "Filter"
   },
   "streamsView": {
+    "category": "Category",
     "favorites": "Favorites",
     "hideOfflines": "Hide offlines",
     "showOfflines": "Show offlines"

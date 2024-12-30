@@ -14,7 +14,6 @@ import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
-import { v4 as uuidV4 } from 'uuid'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -27,7 +26,6 @@ const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
-const filterLabelId = uuidV4()
 
 const offlines = computed(() =>
   streams.value.filter((value) => !onlines.value.some((item) => item.id === value.id && item.type === value.type))
@@ -230,80 +228,101 @@ async function fetchStreamsTwitch(): Promise<void> {
   <ViewContainer>
     <template #top>
       <v-sheet class="px-2 py-1 top-0 filter-content" color="surface-light">
-        <v-row :aria-label="t('common.filter')" class="mx-0" dense role="group">
-          <v-col :id="filterLabelId" cols="auto">
-            <v-icon>mdi-filter</v-icon>
-          </v-col>
-          <v-col class="d-flex" cols="auto">
-            <v-divider class="h-75 align-self-center" vertical />
-          </v-col>
-          <v-col cols="auto">
-            <v-btn
-              v-tooltip="t('common.favorite', 2)"
-              accesskey="b"
-              :aria-checked="system.showFavoritesComp"
-              :aria-label="t('common.favorite', 2)"
-              class="rounded-lg"
-              :disabled="!!detailItem"
-              :icon="true"
-              role="checkbox"
-              size="24"
-              @click="toggleFavorite"
-            >
-              <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
-                system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
-              }}</v-icon>
-            </v-btn>
-          </v-col>
-          <v-col v-if="system.notificationType === 'partial'" cols="auto">
-            <v-btn
-              v-tooltip="t('common.notification', 2)"
-              accesskey="n"
-              :aria-checked="system.showNotificationsComp"
-              :aria-label="t('common.notification', 2)"
-              class="rounded-lg"
-              :disabled="!!detailItem"
-              :icon="true"
-              role="checkbox"
-              size="24"
-              @click="toggleNotification"
-            >
-              <v-icon :color="system.showNotificationsComp ? 'primary' : ''" size="18">{{
-                system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
-              }}</v-icon>
-            </v-btn>
-          </v-col>
-          <v-col cols="auto">
-            <v-btn
-              v-tooltip="t('common.offlines')"
-              accesskey="o"
-              :aria-checked="showOfflines"
-              :aria-label="t('common.offlines')"
-              class="rounded-lg"
-              :disabled="!renderOfflinesComp"
-              :icon="true"
-              role="checkbox"
-              size="24"
-              @click="toggleOffline"
-            >
-              <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
-            </v-btn>
+        <v-row class="mx-0 flex-nowrap" dense>
+          <v-col :aria-label="t('common.filter')" role="group" cols="auto">
+            <v-row dense class="flex-nowrap">
+              <v-col cols="auto">
+                <v-icon>mdi-filter</v-icon>
+              </v-col>
+              <v-col class="d-flex" cols="auto">
+                <v-divider class="h-75 align-self-center" vertical />
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  v-tooltip="t('common.favorite', 2)"
+                  accesskey="b"
+                  :aria-checked="system.showFavoritesComp"
+                  :aria-label="t('common.favorite', 2)"
+                  class="rounded-lg"
+                  :disabled="!!detailItem"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleFavorite"
+                >
+                  <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
+                    system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
+                  }}</v-icon>
+                </v-btn>
+              </v-col>
+              <v-col v-if="system.notificationType === 'partial'" cols="auto">
+                <v-btn
+                  v-tooltip="t('common.notification', 2)"
+                  accesskey="n"
+                  :aria-checked="system.showNotificationsComp"
+                  :aria-label="t('common.notification', 2)"
+                  class="rounded-lg"
+                  :disabled="!!detailItem"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleNotification"
+                >
+                  <v-icon :color="system.showNotificationsComp ? 'primary' : ''" size="18">{{
+                    system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
+                  }}</v-icon>
+                </v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  v-tooltip="t('common.offlines')"
+                  accesskey="o"
+                  :aria-checked="showOfflines"
+                  :aria-label="t('common.offlines')"
+                  class="rounded-lg"
+                  :disabled="!renderOfflinesComp"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleOffline"
+                >
+                  <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-col>
           <v-spacer />
-          <v-col cols="auto">
-            <CategoryNotificationDialog :streams="streams">
-              <template #activator="{ props }">
-                <v-btn v-bind="props" class="rounded-lg" :icon="true" size="24">
-                  <v-icon size="18"> mdi-controller </v-icon>
-                </v-btn>
-              </template>
-            </CategoryNotificationDialog>
+          <v-col :aria-label="t('common.notification')" role="group" cols="auto">
+            <v-row dense class="flex-nowrap">
+              <v-col cols="auto">
+                <CategoryNotificationDialog :streams="streams">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-tooltip:start="t('streamsView.category')"
+                      v-bind="props"
+                      :aria-label="t('streamsView.category')"
+                      class="rounded-lg"
+                      :icon="true"
+                      size="24"
+                    >
+                      <v-icon size="18"> mdi-controller </v-icon>
+                    </v-btn>
+                  </template>
+                </CategoryNotificationDialog>
+              </v-col>
+              <v-col class="d-flex" cols="auto">
+                <v-divider class="h-75 align-self-center" vertical />
+              </v-col>
+              <v-col cols="auto">
+                <v-icon>mdi-bell</v-icon>
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
       </v-sheet>
       <v-divider />
     </template>
-    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" />
+    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
   </ViewContainer>
 </template>
 
