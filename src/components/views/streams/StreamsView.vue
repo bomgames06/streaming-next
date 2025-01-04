@@ -292,7 +292,12 @@ async function fetchStreamsTwitch(): Promise<void> {
             </v-row>
           </v-col>
           <v-spacer />
-          <v-col :aria-label="t('common.notification')" role="group" cols="auto">
+          <v-col
+            v-if="system.notificationType !== 'none'"
+            :aria-label="t('common.notification')"
+            role="group"
+            cols="auto"
+          >
             <v-row dense class="flex-nowrap">
               <v-col cols="auto">
                 <CategoryNotificationDialog :streams="streams">
