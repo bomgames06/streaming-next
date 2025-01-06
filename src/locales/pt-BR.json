@@ -42,11 +42,15 @@
         "korean": "Coreano",
         "portuguese": "Português",
         "russian": "Russo"
-      }
+      },
+      "languagesSelected": "{count} Idiomas"
     },
     "searchMore": "Buscar mais"
   },
   "categoriesView": {
+    "appBarView": {
+      "filter": "Filtro"
+    },
     "searchMore": "Buscar mais"
   },
   "categoryNotificationDialog": {
@@ -95,6 +99,7 @@
     "searchMore": "Buscar mais"
   },
   "settings": {
+    "cleanCategoryNotifications": "Notificação categoria",
     "cleanFavorites": "Limpar favoritos",
     "cleanNotifications": "Limpar notificações",
     "darkMode": "Modo dark",

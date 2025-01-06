@@ -78,7 +78,7 @@ const AppBusiness = {
   async getStreamsByCategory(
     account: AccountStore,
     categoryId: string,
-    language?: LanguageCategoryStreamStore,
+    language?: LanguageCategoryStreamStore[],
     cursor?: string,
     limit?: number
   ): Promise<{ items: StreamItemLiveOnlineType[]; cursor?: string }> {

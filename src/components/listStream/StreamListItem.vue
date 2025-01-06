@@ -25,6 +25,7 @@ const props = defineProps<{
   disableContextMenu?: boolean
   disableCategoryMenu?: boolean
   disableNotificationMenu?: boolean
+  disableViewCount?: boolean
   dump?: string
   parent?: StreamItemType
 }>()
@@ -292,7 +293,7 @@ function isVerified(value?: StreamItemType): boolean {
                       "
                     />
                     <v-list-item
-                      v-if="!props.disableCategoryMenu"
+                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
                       :title="t('streamList.menu.categoryNotification')"
                       @click="categoryNotification(item)"
                     >
@@ -306,12 +307,10 @@ function isVerified(value?: StreamItemType): boolean {
                       </template>
                     </v-list-item>
                     <v-list-item
-                      v-if="!props.disableCategoryMenu"
+                      v-if="!props.disableCategoryMenu && item.status === 'online' && item.gameId"
                       prepend-icon="mdi-controller"
                       :title="t('streamList.menu.category')"
-                      @click="
-                        system.setView('categories', { categoryId: item.status === 'online' ? item.gameId : undefined })
-                      "
+                      @click="system.setView('categories', { categoryId: item.gameId })"
                     />
                     <v-list-item prepend-icon="mdi-video" :title="t('streamList.menu.videos')" @click="enableVideo()" />
                     <v-list-item
@@ -335,7 +334,7 @@ function isVerified(value?: StreamItemType): boolean {
                   </div>
                   <v-spacer />
                   <div
-                    v-if="spectatorsCount != undefined"
+                    v-if="spectatorsCount != undefined && !props.disableViewCount"
                     class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
                     <span :aria-label="spectatorsText" class="text-red">

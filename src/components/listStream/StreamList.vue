@@ -23,6 +23,7 @@ const props = defineProps<{
   disableContextMenu?: boolean
   disableCategoryMenu?: boolean
   disableNotificationMenu?: boolean
+  disableViewCount?: boolean
   dump?: string
   parent?: StreamItemType
   streams?: StreamItemLiveStreamType[]
@@ -176,6 +177,7 @@ function showCategoryNotificationDialog(item: StreamItemLiveType) {
         :disable-category-menu="props.disableCategoryMenu"
         :disable-context-menu="props.disableContextMenu"
         :disable-notification-menu="props.disableNotificationMenu"
+        :disable-view-count="props.disableViewCount"
         :disabled="!showItem(item)"
         :dump="props.dump"
         :item="item"

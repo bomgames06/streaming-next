@@ -63,6 +63,7 @@ export type StreamItemClipType = {
 }
 export type StreamItemLiveType = StreamItemLiveOnlineType | StreamItemLiveOfflineType | StreamItemLiveStreamType
 export type CategorySearchItem = {
+  type: AccountStoreType
   id: string
   name: string
   imageUrl: string

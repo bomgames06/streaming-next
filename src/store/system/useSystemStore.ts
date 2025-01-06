@@ -70,6 +70,7 @@ const useSystemStore = defineStore('System', () => {
   const streamOrder = ref<StreamOrderStore>('name')
   const streamOrderSort = ref<StreamOrderSortStore>(true)
   const streamNameFilter = ref<string>('')
+  const categoryNameFilter = ref<string>('')
   const showFavorites = ref<boolean>(false)
   const showNotifications = ref<boolean>(false)
 
@@ -78,7 +79,7 @@ const useSystemStore = defineStore('System', () => {
   // Clip view
   const clipPeriod = ref<ClipPeriodStore>('7d')
   // Category stream view
-  const languageCategoryStream = ref<LanguageCategoryStreamStore>()
+  const languageCategoryStream = ref<LanguageCategoryStreamStore[]>([])
 
   // Computed
   const isEveryAccountInvalid = computed(() => {
@@ -104,6 +105,7 @@ const useSystemStore = defineStore('System', () => {
   // Computed value
   const streamFilterComp = computed({ get: () => streamFilter.value, set: setStreamFilter })
   const streamNameFilterComp = computed({ get: () => streamNameFilter.value, set: setStreamNameFilter })
+  const categoryNameFilterComp = computed({ get: () => categoryNameFilter.value, set: setCategoryNameFilter })
   const showFavoritesComp = computed({ get: () => showFavorites.value, set: setShowFavorites })
   const showNotificationsComp = computed({ get: () => showNotifications.value, set: setShowNotifications })
 
@@ -292,6 +294,10 @@ const useSystemStore = defineStore('System', () => {
     notifications.value = []
     void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: cloneDeep(notifications.value) })
   }
+  function cleanCategoryNotification() {
+    categoryNotifications.value = []
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
+  }
   function cleanFavorite() {
     favorites.value = []
     void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: cloneDeep(favorites.value) })
@@ -337,6 +343,9 @@ const useSystemStore = defineStore('System', () => {
   function setStreamNameFilter(value: string) {
     streamNameFilter.value = value
   }
+  function setCategoryNameFilter(value: string) {
+    categoryNameFilter.value = value
+  }
   function setShowFavorites(value: boolean) {
     showFavorites.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: cloneDeep(showFavorites.value) })
@@ -355,7 +364,7 @@ const useSystemStore = defineStore('System', () => {
     clipPeriod.value = value
   }
   // Category stream view actions
-  function setLanguageCategoryStream(value?: LanguageCategoryStreamStore) {
+  function setLanguageCategoryStream(value: LanguageCategoryStreamStore[]) {
     languageCategoryStream.value = value
   }
 
@@ -402,6 +411,7 @@ const useSystemStore = defineStore('System', () => {
     // computed value
     streamFilterComp,
     streamNameFilterComp,
+    categoryNameFilterComp,
     showFavoritesComp,
     showNotificationsComp,
     // utils
@@ -429,6 +439,7 @@ const useSystemStore = defineStore('System', () => {
     addStreamCategoryNotification,
     removeStreamCategoryNotification,
     cleanNotification,
+    cleanCategoryNotification,
     cleanFavorite,
     setNotificationType,
     setDark,

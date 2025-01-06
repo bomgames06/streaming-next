@@ -26,7 +26,6 @@ function sortLabelOption(text: string, selected: boolean) {
     color="primary"
     :label="t('streamView.filter')"
     persistent-clear
-    single-line
     variant="outlined"
   />
   <v-menu :close-on-content-click="false">

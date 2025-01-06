@@ -5,8 +5,10 @@ import momentPlugin from '@/plugins/moment'
 import vuetify from '@/plugins/vuetify'
 import toastrPlugin from '@/plugins/toastr'
 import errorPlugin from '@/plugins/error'
+import apiPlugin from '@/plugins/api'
 
 function registerPlugins(app: App) {
+  app.use(apiPlugin)
   app.use(i18n)
   app.use(momentPlugin)
   app.use(toastrPlugin)

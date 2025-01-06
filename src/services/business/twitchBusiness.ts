@@ -230,7 +230,7 @@ const TwitchBusiness = {
   async getStreamsByCategory(
     token: string,
     categoryId: string,
-    language?: LanguageCategoryStreamStore,
+    language?: LanguageCategoryStreamStore[],
     cursor?: string,
     limit?: number
   ): Promise<{ items: StreamItemLiveOnlineType[]; cursor?: string }> {
@@ -289,6 +289,7 @@ const TwitchBusiness = {
                 startedAt: moment(value.started_at),
                 previewImage: value.thumbnail_url,
                 verified: isStreamVerified(value.user?.broadcaster_type),
+                viewerCount: value.user?.view_count,
               } as StreamItemLiveOnlineType)
             : ({
                 type: 'twitch',
@@ -317,6 +318,7 @@ const TwitchBusiness = {
     return {
       cursor: response.pagination.cursor,
       items: response.data.map((item) => ({
+        type: 'twitch',
         id: item.id,
         name: item.name,
         imageUrl: item.box_art_url,

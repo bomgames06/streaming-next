@@ -43,7 +43,7 @@ export type TwitchApiStreamsRequestType = {
   user_login?: string[]
   game_id?: string[]
   type?: 'all' | 'live'
-  language?: string
+  language?: string[]
 } & TwitchApiBasePaginationRequestType
 export type TwitchApiStreamsFollowedType = {
   id: string

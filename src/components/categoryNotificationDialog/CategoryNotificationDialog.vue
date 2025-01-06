@@ -221,7 +221,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
           </v-row>
           <div class="flex-grow-1 overflow-y-auto mt-2">
             <template v-if="system.categoryNotifications.length">
-              <v-list v-if="props.streamItem" dense>
+              <v-list v-if="props.streamItem" dense class="py-0">
                 <CategoryNotificationListItem
                   v-for="categoryNotification in streamCategoryNotications"
                   :key="categoryNotification.id"
@@ -242,7 +242,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                   "
                 />
               </v-list>
-              <v-list v-else dense>
+              <v-list v-else dense class="py-0">
                 <v-tooltip
                   v-for="categoryNotification in system.categoryNotifications"
                   :key="categoryNotification.id"
@@ -267,7 +267,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
             </v-sheet>
             <template v-if="expandCategory">
               <v-divider />
-              <v-list dense>
+              <v-list dense class="py-0">
                 <v-list-item
                   v-if="categoryAddStream?.id !== expandCategory.id"
                   :id="`list-item-add-${expandCategory.id}`"

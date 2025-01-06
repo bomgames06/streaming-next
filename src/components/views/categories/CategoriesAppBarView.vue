@@ -8,6 +8,17 @@ const { t } = useI18n()
 </script>
 
 <template>
+  <v-text-field
+    v-model.trim="system.categoryNameFilterComp"
+    autofocus
+    class="clearable-appbar"
+    clearable
+    color="primary"
+    hide-details
+    :label="t('categoriesView.appBarView.filter')"
+    persistent-clear
+    variant="outlined"
+  />
   <v-btn
     :aria-label="t('common.refresh')"
     class="rounded-lg"

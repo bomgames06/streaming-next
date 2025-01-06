@@ -14,17 +14,12 @@ const appVersion = import.meta.env.__APP_VERSION__
 const githubUrl = import.meta.env.VITE_GITHUB_URL
 const buyMeACoffeName = import.meta.env.VITE_BUY_ME_A_COFFE_NAME
 const buyMeACoffeUrl = import.meta.env.VITE_BUY_ME_A_COFFE_URL
-const twitterName = import.meta.env.VITE_TWITTER_NAME
-const twitterUrl = import.meta.env.VITE_TWITTER_URL
 
 function openGithub(middle?: boolean) {
   browser.tabs.create({ url: githubUrl, active: !middle })
 }
 function openDonation(middle?: boolean) {
   browser.tabs.create({ url: buyMeACoffeUrl, active: !middle })
-}
-function openTwitter(middle?: boolean) {
-  browser.tabs.create({ url: twitterUrl, active: !middle })
 }
 </script>
 
@@ -82,6 +77,15 @@ function openTwitter(middle?: boolean) {
                   @click="system.cleanNotification()"
                 />
               </v-col>
+              <v-col v-if="system.notificationType === 'partial'" cols="auto">
+                <v-btn
+                  :aria-label="i18n.t('settings.cleanCategoryNotifications')"
+                  :disabled="!system.categoryNotifications.length"
+                  prepend-icon="mdi-broom"
+                  :text="i18n.t('settings.cleanCategoryNotifications')"
+                  @click="system.cleanCategoryNotification()"
+                />
+              </v-col>
             </v-row>
           </v-col>
           <v-col cols="12">
@@ -91,6 +95,8 @@ function openTwitter(middle?: boolean) {
               :label="i18n.t('settings.darkMode')"
               :model-value="system.dark"
               :true-value="true"
+              density="compact"
+              class="px-2"
               @update:model-value="system.setDark(!!$event, theme)"
             />
           </v-col>
@@ -101,6 +107,8 @@ function openTwitter(middle?: boolean) {
               :label="i18n.t('settings.showAlwaysOfflines')"
               :model-value="system.showAlwaysOfflines"
               :true-value="true"
+              density="compact"
+              class="px-2"
               @update:model-value="system.setShowAlwaysOfflines(!!$event)"
             />
           </v-col>
@@ -108,6 +116,10 @@ function openTwitter(middle?: boolean) {
       </div>
       <div class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-subtitle-2">
         <div class="d-flex align-center justify-center text-center">
+          <div class="mt-1">
+            <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
+          </div>
+          <v-divider class="mx-1" vertical />
           <v-hover>
             <template #default="{ isHovering, props }">
               <v-btn
@@ -129,23 +141,6 @@ function openTwitter(middle?: boolean) {
             <template #default="{ isHovering, props }">
               <v-btn
                 v-bind="props"
-                :aria-label="i18n.t('settings.twitterProfile', { name: twitterName })"
-                class="about-button"
-                :color="isHovering ? 'blue-darken-1' : ''"
-                variant="text"
-                @click="openTwitter(false)"
-                @mousedown.middle.prevent="openTwitter(true)"
-              >
-                <v-icon class="mr-1">mdi-twitter</v-icon>
-                <span>{{ i18n.t('settings.twitter') }}</span>
-              </v-btn>
-            </template>
-          </v-hover>
-          <v-divider class="mx-1" vertical />
-          <v-hover>
-            <template #default="{ isHovering, props }">
-              <v-btn
-                v-bind="props"
                 :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
                 class="about-button"
                 :color="isHovering ? 'red' : ''"
@@ -158,9 +153,6 @@ function openTwitter(middle?: boolean) {
               </v-btn>
             </template>
           </v-hover>
-        </div>
-        <div class="mt-1">
-          <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
         </div>
       </div>
     </div>
