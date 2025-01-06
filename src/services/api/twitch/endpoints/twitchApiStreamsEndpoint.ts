@@ -37,7 +37,7 @@ export default class TwitchApiStreamsEndpoint extends TwitchApiBase {
     if (request.user_login) request.user_login.forEach((value) => params.append('user_login', value))
     if (request.game_id) request.game_id.forEach((value) => params.append('game_id', value))
     if (request.type) params.append('type', request.type)
-    if (request.language) params.append('language', request.language)
+    if (request.language) request.language.forEach((value) => params.append('language', value))
     if (request.first) params.append('first', request.first)
     if (request.after) params.append('after', request.after)
     if (request.before) params.append('before', request.before)

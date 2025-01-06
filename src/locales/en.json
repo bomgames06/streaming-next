@@ -42,14 +42,26 @@
         "korean": "Korean",
         "portuguese": "Portuguese",
         "russian": "Russian"
-      }
+      },
+      "languagesSelected": "{count} Languages"
     },
     "searchMore": "Search more"
   },
   "categoriesView": {
+    "appBarView": {
+      "filter": "Filter"
+    },
     "searchMore": "Search more"
   },
+  "categoryNotificationDialog": {
+    "addStream": "Add stream",
+    "category": "Category",
+    "noNotifications": "No notifications",
+    "stream": "Stream",
+    "streamCount": "Stream: All | Stream: {count} | Streams: {count}"
+  },
   "common": {
+    "add": "Add",
     "asc": "Ascendent",
     "back": "Back",
     "close": "Close",
@@ -69,6 +81,9 @@
     "systemError": "System error",
     "unauthorizedAccount": "AccountStore is no longer authorized"
   },
+  "gameNotificationDialog": {
+    "title": "Game notifications"
+  },
   "languages": {
     "en": "English",
     "pt-BR": "Portuguese - Brazil"
@@ -84,6 +99,7 @@
     "searchMore": "Search more"
   },
   "settings": {
+    "cleanCategoryNotifications": "Category notification",
     "cleanFavorites": "Clean favorites",
     "cleanNotifications": "Clean notifications",
     "darkMode": "Dark mode",
@@ -130,6 +146,7 @@
     "menu": {
       "addFavorite": "Add Favorite",
       "category": "Category",
+      "categoryNotification": "Notify category",
       "clips": "Clips",
       "disableNotification": "Disable notification",
       "enableNotification": "Enable notification",
@@ -154,6 +171,7 @@
     "filter": "Filter"
   },
   "streamsView": {
+    "category": "Category",
     "favorites": "Favorites",
     "hideOfflines": "Hide offlines",
     "showOfflines": "Show offlines"

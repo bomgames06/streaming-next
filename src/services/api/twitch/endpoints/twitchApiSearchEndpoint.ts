@@ -1,6 +1,8 @@
 import TwitchApiBase from '@/services/api/twitch/base/twitchApiBase'
 import type {
   TwitchApiBaseArrayType,
+  TwitchApiSearchCategoryRequestType,
+  TwitchApiSearchCategoryType,
   TwitchApiSearchChannelRequestType,
   TwitchApiSearchChannelType,
 } from '@/services/api/twitch/types/twitchApiType'
@@ -21,6 +23,25 @@ export default class TwitchApiSearchEndpoint extends TwitchApiBase {
     if (request.after) params.append('after', request.after)
     if (request.before) params.append('before', request.before)
     const response = await this.axios().get<TwitchApiBaseArrayType<TwitchApiSearchChannelType>>('/channels', {
+      headers: {
+        'Client-ID': import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID,
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    })
+
+    return response.data
+  }
+
+  async categories(
+    token: string,
+    request: TwitchApiSearchCategoryRequestType
+  ): Promise<TwitchApiBaseArrayType<TwitchApiSearchCategoryType>> {
+    const params = new URLSearchParams()
+    params.append('query', request.query.trim())
+    if (request.first) params.append('first', request.first)
+    if (request.after) params.append('after', request.after)
+    const response = await this.axios().get<TwitchApiBaseArrayType<TwitchApiSearchCategoryType>>('/categories', {
       headers: {
         'Client-ID': import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID,
         Authorization: `Bearer ${token}`,

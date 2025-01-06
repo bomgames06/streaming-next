@@ -75,7 +75,3 @@ export function getTimeByClipPeriod(period?: ClipPeriodStore): Moment | undefine
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => void setTimeout(resolve, ms))
 }
-
-export function onKeyDownEsc(event: KeyboardEvent, callback: () => void) {
-  if (event.key === 'Esc') callback()
-}
