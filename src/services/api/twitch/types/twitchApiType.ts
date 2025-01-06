@@ -43,7 +43,7 @@ export type TwitchApiStreamsRequestType = {
   user_login?: string[]
   game_id?: string[]
   type?: 'all' | 'live'
-  language?: string
+  language?: string[]
 } & TwitchApiBasePaginationRequestType
 export type TwitchApiStreamsFollowedType = {
   id: string
@@ -154,7 +154,15 @@ export type TwitchApiSearchChannelType = {
   title: string
   started_at: string
 }
+export type TwitchApiSearchCategoryType = {
+  id: string
+  name: string
+  box_art_url: string
+}
 export type TwitchApiSearchChannelRequestType = {
   query: string
   live_only?: boolean
 } & TwitchApiBasePaginationRequestType
+export type TwitchApiSearchCategoryRequestType = {
+  query: string
+} & Omit<TwitchApiBasePaginationRequestType, 'before'>

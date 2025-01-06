@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
-import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -15,7 +14,7 @@ const { t } = useI18n()
       </v-btn>
     </template>
     <template #default="{ isActive }">
-      <v-list class="pa-0" @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))">
+      <v-list class="pa-0" @keydown.esc.prevent="isActive.value = false">
         <v-list-item
           :active="system.videoOrder === 'time'"
           :aria-label="t('streamList.appBarView.sort.time')"

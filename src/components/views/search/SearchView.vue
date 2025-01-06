@@ -3,7 +3,7 @@ import type { StreamItemLiveType } from '@/components/listStream/types/streamIte
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import AppBusiness from '@/services/business/appBusiness'
-import { debounce } from 'lodash'
+import { debounce, orderBy } from 'lodash'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -39,6 +39,7 @@ async function fetchChannels() {
     if (!account) return
 
     const response = await AppBusiness.searchChannels(account, system.streamNameFilter, channels.cursor, 100)
+    response.items = orderBy(response.items, ['name'])
 
     if (channels.cursor) channels.items.push(...response.items)
     else channels.items = response.items
@@ -62,7 +63,7 @@ watch(
 <template>
   <ViewContainer>
     <template v-if="system.streamNameFilter">
-      <StreamList disable-notification-menu :items="channels.items" />
+      <StreamList disable-notification-menu disable-view-count :items="channels.items" />
       <v-btn
         v-if="channels.cursor"
         block

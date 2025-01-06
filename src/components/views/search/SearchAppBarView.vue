@@ -19,7 +19,6 @@ const mandatoryRule = (value: string) => !!value || t('common.mandatoryField')
     :label="t('searchView.search')"
     persistent-clear
     :rules="[mandatoryRule]"
-    single-line
     variant="outlined"
   />
 </template>

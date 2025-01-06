@@ -1,5 +1,5 @@
 import globals from 'globals'
-import pluginVue from 'eslint-plugin-vue'
+import vue from 'eslint-plugin-vue'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
@@ -11,7 +11,7 @@ export default [
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
-  ...pluginVue.configs['flat/recommended'],
+  ...vue.configs['flat/recommended'],
   {
     files: ['**/*.vue'],
     languageOptions: {

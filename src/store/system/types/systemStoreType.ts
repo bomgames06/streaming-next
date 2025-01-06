@@ -21,6 +21,20 @@ export type NotificationStore = {
   type: AccountStoreType
   id: string
 }
+export type FavoriteStore = {
+  type: AccountStoreType
+  id: string
+}
+export type CategoryNotificationStreamStore = {
+  type: AccountStoreType
+  id: string
+}
+export type CategoryNotificationStore = {
+  id: string
+  name: string
+  imageUrl?: string
+  streams: CategoryNotificationStreamStore[]
+}
 export type ViewDataStore = {
   categoryId?: string
 }

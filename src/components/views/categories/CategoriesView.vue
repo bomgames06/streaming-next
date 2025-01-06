@@ -5,20 +5,23 @@ import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
-import { compact, uniqBy } from 'lodash'
+import { compact, debounce, orderBy, uniqBy } from 'lodash'
+import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
 const props = defineProps<Pick<ViewDataStore, 'categoryId'>>()
 
+system.categoryNameFilterComp = ''
+
 const categories = reactive<{
-  items: CategoryItemType[]
+  items: (CategoryItemType | CategorySearchItem)[]
   cursor?: string
 }>({
   items: [],
 })
-const categorySelected = ref<CategoryItemType>()
+const categorySelected = ref<CategoryItemType | CategorySearchItem>()
 const categoryId = ref<string | undefined>(props.categoryId)
 const categoryById = ref<CategoryItemType>()
 
@@ -28,6 +31,10 @@ watch(
     if (!system.accounts.twitch) system.setView('streams')
   },
   { immediate: true }
+)
+watch(
+  () => system.categoryNameFilterComp,
+  debounce(() => fetchCategories(), 500)
 )
 
 emitter.on('refresh', refresh)
@@ -39,7 +46,9 @@ onMounted(() => {
   else fetchCategories()
 })
 
-const items = computed<CategoryItemType[]>(() => uniqBy(compact([categoryById.value, ...categories.items]), 'id'))
+const items = computed<(CategoryItemType | CategorySearchItem)[]>(() =>
+  uniqBy(compact([categoryById.value, ...categories.items]), 'id')
+)
 
 async function fetchCategory() {
   if (!categoryId.value) return
@@ -64,18 +73,26 @@ function refresh() {
 }
 
 const fetching = ref(false)
-async function fetchCategories(category?: CategoryItemType) {
+async function fetchCategories(category?: CategoryItemType): Promise<void> {
   system.loading()
   system.refreshing()
   fetching.value = true
   try {
     const account = system.accounts.twitch
     if (!account) return
-    const response = await AppBusiness.getTopGamesCategory(account, categories.cursor, 99)
 
-    if (categories.cursor) categories.items.push(...response.items)
-    else categories.items = response.items
-    categories.cursor = response.cursor
+    if (system.categoryNameFilterComp) {
+      const response = await AppBusiness.searchCategories(account, system.categoryNameFilterComp, undefined, 99)
+
+      categories.items = orderBy(response.items, ['name'])
+      categories.cursor = undefined
+    } else {
+      const response = await AppBusiness.getTopGamesCategory(account, categories.cursor, 99)
+
+      if (categories.cursor) categories.items.push(...response.items)
+      else categories.items = response.items
+      categories.cursor = response.cursor
+    }
 
     if (category) categorySelected.value = category
   } finally {

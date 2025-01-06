@@ -7,7 +7,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
-import { accountTypeColor, onKeyDownEsc } from '@/utils/util'
+import { accountTypeColor } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
 
 const aspectRatio = 16 / 9
@@ -25,12 +25,14 @@ const props = defineProps<{
   disableContextMenu?: boolean
   disableCategoryMenu?: boolean
   disableNotificationMenu?: boolean
+  disableViewCount?: boolean
   dump?: string
   parent?: StreamItemType
 }>()
 const emit = defineEmits<{
   (e: 'itemClick', value: { item: StreamItemType; middle?: boolean }): void
   (e: 'menuItemClick', value: { type: 'video' | 'clip'; item: StreamItemType }): void
+  (e: 'menuItemCategoryNotificationClick', value: StreamItemLiveType): void
 }>()
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
 const menuShow = defineModel<StreamItemType | undefined>('menuShow')
@@ -131,6 +133,9 @@ function enableClip() {
   if (item.value.type !== 'twitch') return
   enableDetail()
   emit('menuItemClick', { type: 'clip', item: item.value })
+}
+function categoryNotification(item: StreamItemLiveType) {
+  emit('menuItemCategoryNotificationClick', item)
 }
 
 async function closeMenu(value?: boolean) {
@@ -262,7 +267,7 @@ function isVerified(value?: StreamItemType): boolean {
                   @close="closeMenu()"
                   @update:model-value="closeMenu"
                 >
-                  <v-list :id="contextMenuListId" @keydown.prevent="onKeyDownEsc($event, () => (menuShow = undefined))">
+                  <v-list :id="contextMenuListId" @keydown.esc.prevent="menuShow = undefined">
                     <v-list-item
                       v-if="!props.disableNotificationMenu"
                       :prepend-icon="favoriteEnabled ? 'mdi-star' : 'mdi-star-outline'"
@@ -288,12 +293,24 @@ function isVerified(value?: StreamItemType): boolean {
                       "
                     />
                     <v-list-item
-                      v-if="!props.disableCategoryMenu"
+                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
+                      :title="t('streamList.menu.categoryNotification')"
+                      @click="categoryNotification(item)"
+                    >
+                      <template #prepend>
+                        <v-badge color="surface" location="bottom end">
+                          <template #badge>
+                            <v-icon size="large">mdi-controller</v-icon>
+                          </template>
+                          <v-icon>mdi-bell</v-icon>
+                        </v-badge>
+                      </template>
+                    </v-list-item>
+                    <v-list-item
+                      v-if="!props.disableCategoryMenu && item.status === 'online' && item.gameId"
                       prepend-icon="mdi-controller"
                       :title="t('streamList.menu.category')"
-                      @click="
-                        system.setView('categories', { categoryId: item.status === 'online' ? item.gameId : undefined })
-                      "
+                      @click="system.setView('categories', { categoryId: item.gameId })"
                     />
                     <v-list-item prepend-icon="mdi-video" :title="t('streamList.menu.videos')" @click="enableVideo()" />
                     <v-list-item
@@ -317,7 +334,7 @@ function isVerified(value?: StreamItemType): boolean {
                   </div>
                   <v-spacer />
                   <div
-                    v-if="spectatorsCount"
+                    v-if="spectatorsCount != undefined && !props.disableViewCount"
                     class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
                     <span :aria-label="spectatorsText" class="text-red">

@@ -2,7 +2,6 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
-import { onKeyDownEsc } from '@/utils/util'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -27,7 +26,6 @@ function sortLabelOption(text: string, selected: boolean) {
     color="primary"
     :label="t('streamView.filter')"
     persistent-clear
-    single-line
     variant="outlined"
   />
   <v-menu :close-on-content-click="false">
@@ -37,7 +35,7 @@ function sortLabelOption(text: string, selected: boolean) {
       </v-btn>
     </template>
     <template #default="{ isActive }">
-      <v-list class="pa-0" @keydown.prevent="onKeyDownEsc($event, () => (isActive.value = false))">
+      <v-list class="pa-0" @keydown.esc.prevent="isActive.value = false">
         <v-list-item
           :active="system.streamOrder === 'name'"
           :aria-label="sortLabelOption(t('streamView.appBarView.sort.name'), system.streamOrder === 'name')"

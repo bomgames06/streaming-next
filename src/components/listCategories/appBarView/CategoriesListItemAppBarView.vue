@@ -40,17 +40,25 @@ const items: {
 
 <template>
   <v-select
-    clearable
     color="primary"
     :item-title="(value) => t(value.textI18n)"
     :items="items"
     :label="t('categoriesList.appBarView.language')"
     :model-value="system.languageCategoryStream"
-    persistent-clear
-    single-line
     variant="outlined"
+    multiple
     @update:model-value="system.setLanguageCategoryStream"
-  />
+  >
+    <template #selection="{ item, index }">
+      <span v-if="index === 0">
+        {{
+          system.languageCategoryStream.length === 1
+            ? item.title
+            : t('categoriesList.appBarView.languagesSelected', { count: system.languageCategoryStream.length })
+        }}
+      </span>
+    </template>
+  </v-select>
   <v-btn
     :aria-label="t('common.refresh')"
     class="rounded-lg"

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType'
-import type { StreamItemLiveOnlineType, StreamItemType } from '@/components/listStream/types/streamItemType'
+import type {
+  CategorySearchItem,
+  StreamItemLiveOnlineType,
+  StreamItemType,
+} from '@/components/listStream/types/streamItemType'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import { useI18n } from 'vue-i18n'
@@ -10,13 +14,13 @@ const system = useSystemStore()
 const { t } = useI18n()
 
 const props = defineProps<{
-  items: CategoryItemType[]
+  items: (CategoryItemType | CategorySearchItem)[]
 }>()
 
 const width = 150
 const height = width * (207 / 150)
 
-const categorySelected = defineModel<CategoryItemType>('categorySelected')
+const categorySelected = defineModel<CategoryItemType | CategorySearchItem>('categorySelected')
 
 const detailItem = ref<StreamItemType>()
 const streams = reactive<{
@@ -40,16 +44,18 @@ function refresh() {
 
 const gridTemplateRow = computed(() => (categorySelected.value ? '1fr' : '1fr 1fr 1fr'))
 
-function categoryImg(item: CategoryItemType): string {
-  return item.boxArtUrl.replace('{width}', width.toFixed()).replace('{height}', height.toFixed())
+function categoryImg(item: CategoryItemType | CategorySearchItem): string {
+  if ('boxArtUrl' in item)
+    return item.boxArtUrl.replace('{width}', width.toFixed()).replace('{height}', height.toFixed())
+  return item.imageUrl.replace(/\d+x\d+/, `${width.toFixed()}x${height.toFixed()}`)
 }
 
-function clickCategory(item: CategoryItemType) {
+function clickCategory(item: CategoryItemType | CategorySearchItem) {
   if (categorySelected.value?.id === item.id) {
     categorySelected.value = undefined
     system.setHeaderAppBarView(undefined)
   } else {
-    system.setLanguageCategoryStream(undefined)
+    system.setLanguageCategoryStream([])
     categorySelected.value = item
     streams.items = []
   }
@@ -59,6 +65,7 @@ watch(
   () => system.languageCategoryStream,
   () => {
     streams.cursor = undefined
+    streams.items = []
     fetchStreams()
   }
 )
@@ -102,7 +109,7 @@ watch([categorySelected, detailItem], () => {
     })
 })
 
-function showItem(category: CategoryItemType) {
+function showItem(category: CategoryItemType | CategorySearchItem) {
   return !categorySelected.value || categorySelected.value.id === category.id
 }
 </script>
@@ -117,34 +124,42 @@ function showItem(category: CategoryItemType) {
       :disabled="!showItem(category)"
       @click="clickCategory(category)"
     >
-      <v-tooltip activator="parent" :disabled="!categorySelected" location="bottom" :text="t('common.back')" />
-      <v-card
-        :class="{
-          'category-item-card': true,
-          'd-flex': true,
-          'flex-column': !categorySelected,
-        }"
-        height="100%"
-      >
-        <v-img :max-width="categorySelected && 108" :src="categoryImg(category)" :width="categorySelected && 108" />
-        <p
+      <v-tooltip activator="parent" location="bottom" :text="categorySelected ? t('common.back') : category.name" />
+      <div class="pa-1">
+        <v-card
           :class="{
-            'text-truncate': !categorySelected,
-            'text-caption': !categorySelected,
-            'text-h6': !!categorySelected,
-            'ml-2': !!categorySelected,
-            'line-height-normal': true,
-            'font-weight-black': true,
-            'category-item-title': true,
+            'category-item-card': true,
+            'd-flex': true,
+            'flex-column': !categorySelected,
           }"
+          elevation="1"
+          height="100%"
         >
-          {{ category.name }}
-        </p>
-      </v-card>
+          <v-img :max-width="categorySelected && 108" :src="categoryImg(category)" :width="categorySelected && 108" />
+          <p
+            :class="{
+              'text-truncate': !categorySelected,
+              'text-caption': !categorySelected,
+              'text-h6': !!categorySelected,
+              'ml-2': !!categorySelected,
+              'line-height-normal': true,
+              'font-weight-black': true,
+              'category-item-title': true,
+            }"
+          >
+            {{ category.name }}
+          </p>
+        </v-card>
+      </div>
     </v-list-item>
   </v-list>
   <div v-if="categorySelected" class="mt-3">
-    <StreamList v-model:detail-item="detailItem" disable-category-menu :items="streams.items" />
+    <StreamList
+      v-model:detail-item="detailItem"
+      disable-category-menu
+      disable-notification-menu
+      :items="streams.items"
+    />
     <v-btn
       v-if="streams.cursor && !detailItem"
       block
