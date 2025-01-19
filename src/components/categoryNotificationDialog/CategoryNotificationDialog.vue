@@ -262,7 +262,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                 </v-tooltip>
               </v-list>
             </template>
-            <v-sheet v-else class="flex-grow-1 d-flex align-center justify-center">
+            <v-sheet v-else class="d-flex align-center justify-center h-100">
               {{ t('categoryNotificationDialog.noNotifications') }}
             </v-sheet>
             <template v-if="expandCategory">
