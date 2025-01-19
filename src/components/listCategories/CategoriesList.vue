@@ -9,6 +9,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
+import { isEqual, uniqBy } from 'lodash'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -29,6 +30,8 @@ const streams = reactive<{
 }>({
   items: [],
 })
+
+const streamItems = computed(() => uniqBy(streams.items, 'id'))
 
 emitter.on('refresh', refresh)
 onUnmounted(() => {
@@ -63,7 +66,8 @@ function clickCategory(item: CategoryItemType | CategorySearchItem) {
 
 watch(
   () => system.languageCategoryStream,
-  () => {
+  (value, oldValue) => {
+    if (isEqual(value, oldValue)) return
     streams.cursor = undefined
     streams.items = []
     fetchStreams()
@@ -154,12 +158,7 @@ function showItem(category: CategoryItemType | CategorySearchItem) {
     </v-list-item>
   </v-list>
   <div v-if="categorySelected" class="mt-3">
-    <StreamList
-      v-model:detail-item="detailItem"
-      disable-category-menu
-      disable-notification-menu
-      :items="streams.items"
-    />
+    <StreamList v-model:detail-item="detailItem" disable-category-menu disable-notification-menu :items="streamItems" />
     <v-btn
       v-if="streams.cursor && !detailItem"
       block
