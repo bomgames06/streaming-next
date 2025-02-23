@@ -53,9 +53,12 @@ jobs:
         id: bump_version
         run: |
           if [[ "${{ github.head_ref }}" == "dev" ]]; then
+            git checkout dev
             version=$(npm --no-git-tag-version version minor)
             git add package.json
             git commit -m "Bump version to $version 🚀"
+            git push origin dev
+            git checkout -
           elif [[ "${{ github.head_ref }}" =~ ^fix/ ]]; then
             version=$(npm --no-git-tag-version version patch)
             git add package.json
@@ -70,6 +73,7 @@ jobs:
         run: bun run build
 
       - name: Create Pull Request
+        if: "${{ github.head_ref }}" =~ ^fix/
         id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
@@ -80,18 +84,26 @@ jobs:
           labels: |
             automation
             bump version
+            automerge
 
       - name: Approve Pull Request
+        if: "${{ github.head_ref }}" =~ ^fix/
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
 
       - name: Merge Pull Request
+        if: "${{ github.head_ref }}" =~ ^fix/
         uses: pascalgn/automerge-action@v0.16.4
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PULL_REQUEST: ${{ steps.create_pr.outputs.pull-request-number }}
+          MERGE_ERROR_FAIL: true
+          MERGE_METHOD: squash
 
       - name: Delete the working branch
+        if: "${{ github.head_ref }}" =~ ^fix/
         run: |
           git push origin --delete "bump-version/v${{ env.VERSION }}"
 
