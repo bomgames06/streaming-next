@@ -107,6 +107,7 @@ jobs:
           PULL_REQUEST: ${{ steps.create_pr.outputs.pull-request-number }}
           MERGE_ERROR_FAIL: true
           MERGE_METHOD: squash
+          MERGE_RETRY_SLEEP: 60000
 
       - name: Delete the working branch
         if: startsWith(github.head_ref, 'fix/')
