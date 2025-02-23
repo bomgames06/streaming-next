@@ -12,6 +12,7 @@ const props = defineProps<{
   iconAuth: string
   textAuth: string
   colorClass?: string
+  dataTestid: string
 }>()
 const emit = defineEmits<{
   (e: 'auth', value?: boolean): void
@@ -25,6 +26,7 @@ const emit = defineEmits<{
     <v-list-item
       v-if="props.account"
       :class="props.colorClass"
+      :data-testid="props.dataTestid"
       @click="emit('click', false)"
       @keydown.enter="emit('click', false)"
       @keydown.space="emit('click', false)"
@@ -36,6 +38,7 @@ const emit = defineEmits<{
       <template #append>
         <v-btn
           :aria-label="t('auth.remove')"
+          :data-testid="`${props.dataTestid}-delete`"
           :icon="true"
           size="x-small"
           variant="text"
@@ -51,7 +54,13 @@ const emit = defineEmits<{
         <span>{{ props.account.name }}</span>
       </v-list-item-title>
     </v-list-item>
-    <v-list-item v-else :class="props.colorClass" :title="props.textAuth" @click="emit('auth')">
+    <v-list-item
+      v-else
+      :class="props.colorClass"
+      :title="props.textAuth"
+      :data-testid="props.dataTestid"
+      @click="emit('auth')"
+    >
       <template #prepend>
         <v-icon>{{ props.iconAuth }}</v-icon>
       </template>
@@ -61,6 +70,7 @@ const emit = defineEmits<{
     <template v-if="props.account && props.account.invalid">
       <v-btn
         :aria-label="t('auth.authAccount', { name: props.account.name })"
+        :data-testid="props.dataTestid"
         class="my-1 rounded-e-0 flex-grow-1"
         :color="props.colorAuth"
         :disabled="props.authenticating"
@@ -81,6 +91,7 @@ const emit = defineEmits<{
       </v-btn>
       <v-btn
         :aria-label="t('auth.removeAccount', { name: props.account.name })"
+        :data-testid="`${props.dataTestid}-delete`"
         class="rounded-s-0 rounded-e"
         color="error"
         :disabled="props.authenticating"
@@ -97,6 +108,7 @@ const emit = defineEmits<{
     <template v-else>
       <v-btn
         class="my-1 flex-grow-1"
+        :data-testid="props.dataTestid"
         :color="props.colorAuth"
         :disabled="props.authenticating"
         :loading="props.authenticating"

@@ -18,6 +18,7 @@ function generateManifest(command: 'build' | 'serve') {
 
 export default defineConfig(({ command }) => {
   return {
+    base: './',
     plugins: [
       vue({
         template: { transformAssetUrls },

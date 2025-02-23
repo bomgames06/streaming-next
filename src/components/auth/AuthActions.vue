@@ -58,6 +58,7 @@ function openProfile(account?: AccountStore, middle?: boolean): void {
     icon-auth="mdi-twitch"
     :list-item="props.listItem"
     :text-auth="t('auth.twitchAuth')"
+    data-testid="twitch-auth"
     @auth="auth('twitch', $event)"
     @click="clickAccount(system.accounts.twitch, $event)"
     @delete="system.removeAccount('twitch')"
