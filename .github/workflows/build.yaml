@@ -1,28 +1,36 @@
 name: Build Workflow
 
 on:
+  push:
+    branches:
+      - dev
+      - "fix/*"
+
   pull_request:
     types:
-      - closed
+      - opened
+      - synchronize
+      - reopened
     branches:
       - main
+
+  workflow_run:
+    workflows: ["Build Workflow"]
+    types:
+      - completed
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.event.pull_request.merged == true &&(
-      startsWith(github.event.pull_request.head.ref, 'fix/') ||
-      startsWith(github.event.pull_request.head.ref, 'dev')
-      )
+      pull-requests: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.PUSH_KEY }}
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -52,33 +60,66 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          git fetch
-          if [[ "${{ github.head_ref }}" == "dev" ]]; then
-            echo "This is the 'dev' branch. Checking out 'dev', bumping a minor version, and returning to the original branch."
-            git checkout dev
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
             version=$(npm --no-git-tag-version version minor)
             git add package.json
-            git commit -m "Bump version to $version"
-            git checkout -
-          elif [[ "${{ github.head_ref }}" =~ ^fix/ ]]; then
-            echo "This is a fix branch. Doing a patch version bump."
+            git commit -m "Bump version to $version 🚀"
+          elif [[ "${{ github.ref_name }}" =~ ^fix/ ]]; then
             version=$(npm --no-git-tag-version version patch)
             git add package.json
-            git commit -m "Bump version to $version"
+            git commit -m "Bump version to $version 🛠️"
           else
-            echo "Error: not 'dev' or 'fix' branch."
-            exit 0
+            echo "Error: Unsupported branch."
+            exit 1
           fi
 
       - name: Build
         run: bun run build
 
-      - name: Push
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: "${{ github.ref_name }}"
+          base: main
+          title: "🚀 Automatic PR from ${{ github.ref_name }}"
+          body: "This pull request was created automatically by the build workflow."
+          labels: "automation"
+
+  approve-and-merge:
+    needs: build-release
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Approve Pull Request
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge Pull Request
+        uses: pascalgn/automerge-action@v0.16.4
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  create-tag:
+    needs: approve-and-merge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+
+      - name: Create version tag
         run: |
-          version=$(node -p "require('./package.json').version")
-          git tag "v$version"
-          git push https://$GITHUB_ACTOR@github.com/$GITHUB_REPOSITORY.git main --tags
-          if [[ "${{ github.head_ref }}" == "dev" ]]; then
-            git checkout dev
-            git push https://$GITHUB_ACTOR@github.com/$GITHUB_REPOSITORY.git dev
-          fi
+          git tag "v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
