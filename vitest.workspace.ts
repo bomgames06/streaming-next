@@ -9,7 +9,7 @@ export default defineWorkspace([
       environment: 'jsdom',
       server: {
         deps: {
-          inline: ['vuetify'],
+          inline: ['vuetify', '@webext-core/storage'],
         },
       },
     },

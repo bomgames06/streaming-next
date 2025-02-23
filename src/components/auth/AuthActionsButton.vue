@@ -17,7 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'auth', value?: boolean): void
   (e: 'delete', value?: void): void
-  (e: 'click', value?: boolean): void
+  (e: 'click', value: { account: AccountStore; middle?: boolean }): void
 }>()
 </script>
 
@@ -27,10 +27,10 @@ const emit = defineEmits<{
       v-if="props.account"
       :class="props.colorClass"
       :data-testid="props.dataTestid"
-      @click="emit('click', false)"
-      @keydown.enter="emit('click', false)"
-      @keydown.space="emit('click', false)"
-      @mousedown.middle.prevent="emit('click', true)"
+      @click="emit('click', { account: props.account, middle: false })"
+      @keydown.enter="emit('click', { account: props.account, middle: false })"
+      @keydown.space="emit('click', { account: props.account, middle: false })"
+      @mousedown.middle.prevent="emit('click', { account: props.account, middle: true })"
     >
       <template #prepend>
         <v-avatar :icon="!props.account.avatarUrl ? 'mdi-account' : ''" :image="props.account.avatarUrl" size="small" />

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { DOMWrapper } from '@vue/test-utils'
 import { mount } from '@vue/test-utils'
 import AuthContent from '@/components/auth/AuthContent.vue'
 import type { AccountStoreType } from '@/store/system/types/systemStoreType.ts'
@@ -58,27 +57,30 @@ describe('AuthContent.vue', () => {
     )
   })
   it('Click on authentication buttons', async () => {
-    const wrapper = mount(AuthContent, { global: { plugins: getTestPlugins() } })
-
-    const system = mockedStore(useSystemStore)
-
     const buttonAuthTypes: {
       [key in AccountStoreType]: {
-        element: DOMWrapper<Element>
+        dataTestid: string
       }
     } = {
       twitch: {
-        element: wrapper.find('[data-testid="twitch-auth"]'),
+        dataTestid: '[data-testid="twitch-auth"]',
       },
     }
 
-    for (const [key, { element }] of Object.entries(buttonAuthTypes)) {
+    for (const [key, { dataTestid }] of Object.entries(buttonAuthTypes)) {
       const accountType = key as AccountStoreType
+
+      const wrapper = mount(AuthContent, { global: { plugins: getTestPlugins() } })
+
+      const system = mockedStore(useSystemStore)
+
+      const element = wrapper.find(dataTestid)
 
       system.loading.mockClear()
       system.loaded.mockClear()
       system.addAccount.mockClear()
       system.fetchAccounts.mockClear()
+      authAppBusinessMock.mockClear()
 
       authAppBusinessMock.mockImplementation(() =>
         Promise.resolve({
@@ -96,6 +98,8 @@ describe('AuthContent.vue', () => {
 
       expect(system.loading).toHaveBeenCalledTimes(2)
       expect(system.loaded).toHaveBeenCalledTimes(2)
+      expect(authAppBusinessMock).toHaveBeenCalledOnce()
+      expect(authAppBusinessMock.mock.lastCall).toStrictEqual(['twitch', undefined])
       expect(system.addAccount).toHaveBeenCalledOnce()
       expect(system.addAccount).toHaveBeenCalledWith({
         type: accountType,
