@@ -12,10 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.event.pull_request.merged == true &&(
+      pull-requests: write
+    if: github.event.pull_request.merged == true && (
       startsWith(github.event.pull_request.head.ref, 'fix/') ||
       startsWith(github.event.pull_request.head.ref, 'dev')
-      )
+      ) && contains(github.event.pull_request.labels.*.name, 'bump version') == false
 
     steps:
       - name: Checkout
@@ -40,6 +41,9 @@ jobs:
       - name: Run lint
         run: bun run lint
 
+      - name: Run test
+        run: bun run test:run
+
       - name: Configure git
         run: |
           git config user.name "${{ github.actor }}"
@@ -48,35 +52,75 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          git fetch
           if [[ "${{ github.head_ref }}" == "dev" ]]; then
-            echo "This is the 'dev' branch. Checking out 'dev', bumping a minor version, and returning to the original branch."
             git checkout dev
             version=$(npm --no-git-tag-version version minor)
             git add package.json
-            git commit -m "Bump version to $version"
+            git commit -m "Bump version to $version 🚀"
             git checkout -
           elif [[ "${{ github.head_ref }}" =~ ^fix/ ]]; then
-            echo "This is a fix branch. Doing a patch version bump."
             version=$(npm --no-git-tag-version version patch)
             git add package.json
-            git commit -m "Bump version to $version"
+            git commit -m "Bump version to $version 🛠️"
           else
-            echo "Error: not 'dev' or 'fix' branch."
-            exit 0
+            echo "Error: Unsupported branch."
+            exit 1
           fi
+          echo "VERSION=${version#v}" >> $GITHUB_ENV
 
       - name: Build
         run: bun run build
 
-      - name: Push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push bump version
+        if: github.head_ref == 'dev'
         run: |
-          version=$(node -p "require('./package.json').version")
-          git tag "v$version"
-          git push https://$GITHUB_ACTOR:${{ secrets.ACCESS_TOKEN }}@github.com/$GITHUB_REPOSITORY.git main --tags
-          if [[ "${{ github.head_ref }}" == "dev" ]]; then
-            git checkout dev
-            git push https://$GITHUB_ACTOR:${{ secrets.ACCESS_TOKEN }}@github.com/$GITHUB_REPOSITORY.git dev
-          fi
+          git checkout dev
+          git push origin dev
+          git checkout -
+
+      - name: Create Pull Request
+        if: startsWith(github.head_ref, 'fix/')
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: "bump-version/v${{ env.VERSION }}"
+          base: main
+          title: "🚀 Bump version to v${{ env.VERSION }}"
+          body: "This pull request updates the version to v${{ env.VERSION }} and was created automatically by the build workflow."
+          labels: |
+            automation
+            bump version
+            automerge
+
+      - name: Approve Pull Request
+        if: startsWith(github.head_ref, 'fix/')
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.APPROVE_PAT }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+
+      - name: Merge Pull Request
+        if: startsWith(github.head_ref, 'fix/')
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PULL_REQUEST: ${{ steps.create_pr.outputs.pull-request-number }}
+          MERGE_ERROR_FAIL: true
+          MERGE_METHOD: squash
+          MERGE_RETRY_SLEEP: 60000
+
+      - name: Delete the working branch
+        if: startsWith(github.head_ref, 'fix/')
+        run: |
+          git push origin --delete "bump-version/v${{ env.VERSION }}"
+
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Create version tag
+        run: |
+          git tag "v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"

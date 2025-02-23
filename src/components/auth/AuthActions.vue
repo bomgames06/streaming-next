@@ -37,14 +37,12 @@ async function auth(type: AccountStoreType, forceVerify?: boolean): Promise<void
   }
 }
 
-function clickAccount(account?: AccountStore, middle?: boolean): void {
-  if (!account) return
+function clickAccount({ account, middle }: { account: AccountStore; middle?: boolean }): void {
   if (account.invalid) auth(account.type)
   else openProfile(account, middle)
 }
 
-function openProfile(account?: AccountStore, middle?: boolean): void {
-  if (!account) return
+function openProfile(account: AccountStore, middle?: boolean): void {
   browser.tabs.create({ url: accountProfileUrl(account), active: !middle })
 }
 </script>
@@ -58,8 +56,9 @@ function openProfile(account?: AccountStore, middle?: boolean): void {
     icon-auth="mdi-twitch"
     :list-item="props.listItem"
     :text-auth="t('auth.twitchAuth')"
+    data-testid="twitch-auth"
     @auth="auth('twitch', $event)"
-    @click="clickAccount(system.accounts.twitch, $event)"
+    @click="clickAccount"
     @delete="system.removeAccount('twitch')"
   />
 </template>

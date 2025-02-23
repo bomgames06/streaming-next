@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": [
+      "chrome",
+      "vitest/jsdom",
+      "@vitest/browser/providers/playwright"
+    ],
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@tests/*": [
+        "tests/*"
+      ]
+    },
+  },
+  "include": [
+    "src/auto-imports.d.ts",
+    "src/components.d.ts",
+    "tests/**/*",
+    "vitest.setup.ts"
+  ],
+  "exclude": ["dist", "node_modules"],
+}
