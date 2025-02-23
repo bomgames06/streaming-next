@@ -87,7 +87,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge Pull Request
-        uses: actions-ecosystem/action-merge-pull-requests@v1
+        uses: actions-ecosystem/action-merge-pull-requests@v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           merge_method: "squash"
