@@ -1,23 +1,11 @@
 name: Build Workflow
 
 on:
-  push:
-    branches:
-      - dev
-      - "fix/*"
-
   pull_request:
     types:
-      - opened
-      - synchronize
-      - reopened
+      - closed
     branches:
       - main
-
-  workflow_run:
-    workflows: ["Build Workflow"]
-    types:
-      - completed
 
 jobs:
   build-release:
@@ -25,6 +13,10 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    if: github.event.pull_request.merged == true &&(
+      startsWith(github.event.pull_request.head.ref, 'fix/') ||
+      startsWith(github.event.pull_request.head.ref, 'dev')
+      )
 
     steps:
       - name: Checkout
@@ -86,14 +78,6 @@ jobs:
           body: "This pull request was created automatically by the build workflow."
           labels: "automation"
 
-  approve-and-merge:
-    needs: build-release
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: write
-
-    steps:
       - name: Approve Pull Request
         uses: hmarr/auto-approve-action@v3
         with:
@@ -104,11 +88,6 @@ jobs:
         with:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-  create-tag:
-    needs: approve-and-merge
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run'
-    steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
