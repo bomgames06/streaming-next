@@ -87,9 +87,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge Pull Request
-        uses: pascalgn/automerge-action@v0.16.4
+        uses: actions-ecosystem/action-merge-pull-requests@v1
         with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          merge_method: "squash"
 
       - name: Delete the working branch
         run: |
