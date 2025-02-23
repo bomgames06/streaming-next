@@ -13,10 +13,10 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: github.event.pull_request.merged == true &&(
+    if: github.event.pull_request.merged == true && (
       startsWith(github.event.pull_request.head.ref, 'fix/') ||
       startsWith(github.event.pull_request.head.ref, 'dev')
-      )
+      ) && contains(github.event.pull_request.labels.*.name, 'bump version') == false
 
     steps:
       - name: Checkout
@@ -52,11 +52,11 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+          if [[ "${{ github.head_ref }}" == "dev" ]]; then
             version=$(npm --no-git-tag-version version minor)
             git add package.json
             git commit -m "Bump version to $version 🚀"
-          elif [[ "${{ github.ref_name }}" =~ ^fix/ ]]; then
+          elif [[ "${{ github.head_ref }}" =~ ^fix/ ]]; then
             version=$(npm --no-git-tag-version version patch)
             git add package.json
             git commit -m "Bump version to $version 🛠️"
@@ -76,7 +76,9 @@ jobs:
           base: main
           title: "🚀 Automatic PR from ${{ github.ref_name }}"
           body: "This pull request was created automatically by the build workflow."
-          labels: "automation"
+          labels: |
+            automation
+            bump version
 
       - name: Approve Pull Request
         uses: hmarr/auto-approve-action@v3
