@@ -14,6 +14,7 @@ import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
+import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -93,6 +94,9 @@ onMounted(() => {
   fetchData()
 })
 
+function toggleGroups() {
+  system.showGroupsComp = !system.showGroupsComp
+}
 function toggleFavorite() {
   system.showFavoritesComp = !system.showFavoritesComp
 }
@@ -239,6 +243,23 @@ async function fetchStreamsTwitch(): Promise<void> {
               </v-col>
               <v-col cols="auto">
                 <v-btn
+                  v-tooltip="t('common.group')"
+                  accesskey="g"
+                  :aria-label="t('common.group')"
+                  class="rounded-lg"
+                  :disabled="!!detailItem"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleGroups"
+                >
+                  <v-icon :color="system.showGroupsComp ? 'primary' : ''" size="18">
+                    {{ system.showGroupsComp ? 'mdi-folder' : 'mdi-folder-outline' }}
+                  </v-icon>
+                </v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
                   v-tooltip="t('common.favorite', 2)"
                   accesskey="b"
                   :aria-checked="system.showFavoritesComp"
@@ -250,9 +271,9 @@ async function fetchStreamsTwitch(): Promise<void> {
                   size="24"
                   @click="toggleFavorite"
                 >
-                  <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
-                    system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
-                  }}</v-icon>
+                  <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">
+                    {{ system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline' }}
+                  </v-icon>
                 </v-btn>
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
@@ -327,7 +348,10 @@ async function fetchStreamsTwitch(): Promise<void> {
       </v-sheet>
       <v-divider />
     </template>
-    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
+    <div v-if="system.showGroupsComp">
+      <StreamGroupList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
+    </div>
+    <StreamList v-else v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
   </ViewContainer>
 </template>
 

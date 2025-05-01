@@ -8,7 +8,7 @@ import type { CategoryNotificationStore } from '@/store/system/types/systemStore
 
 const { t } = useI18n()
 
-const model = defineModel<boolean | undefined>({ default: false })
+const model = defineModel<boolean>({ default: false })
 const props = defineProps<{
   streams: StreamItemLiveStreamType[]
   streamItem?: StreamItemLiveStreamType
@@ -33,11 +33,12 @@ const categoryComp = computed({
     else category.value = value
   },
 })
+const categoryNotificationsItems = computed(() => orderBy(system.categoryNotifications, 'name'))
 const categoryItems = computed(() => orderBy(categories.value, 'name'))
 const streams = computed(() => orderBy(props.streams, 'name'))
 const streamCategoryNotications = computed(() => {
   if (!props.streamItem) return []
-  return system.categoryNotifications.filter(
+  return categoryNotificationsItems.value.filter(
     (categoryNotification) =>
       !categoryNotification.streams.length ||
       categoryNotification.streams.some(
@@ -244,7 +245,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
               </v-list>
               <v-list v-else dense class="py-0">
                 <v-tooltip
-                  v-for="categoryNotification in system.categoryNotifications"
+                  v-for="categoryNotification in categoryNotificationsItems"
                   :key="categoryNotification.id"
                   :text="t('common.back')"
                   location="bottom"

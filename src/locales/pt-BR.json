@@ -66,8 +66,10 @@
     "back": "Voltar",
     "close": "Fechar",
     "desc": "Decrescente",
+    "edit": "Editar",
     "favorite": "Favorito | Favoritos",
     "filter": "Filtro",
+    "group": "Grupos de stream",
     "loaded": "Carregado",
     "loading": "Carregando",
     "loadingError": "Erro para carregar aplicação",
@@ -79,10 +81,19 @@
     "refresh": "Atualizar",
     "sort": "Ordenar",
     "systemError": "Erro no sistema",
-    "unauthorizedAccount": "Conta não está mais autorizada"
+    "unauthorizedAccount": "Conta não está mais autorizada",
+    "value": "Valor"
   },
   "gameNotificationDialog": {
     "title": "Notificações de categoria"
+  },
+  "groupStreamDialog": {
+    "addStream": "Adicionar stream",
+    "group": "Grupo",
+    "noGroups": "Sem grupos",
+    "stream": "Stream",
+    "streamCount": "Stream: Nenhuma | Stream: {count} | Streams: {count}",
+    "title": "Grupos de stream"
   },
   "languages": {
     "en": "Inglês",
@@ -127,6 +138,11 @@
       "light": "Tema claro"
     }
   },
+  "streamGroupList": {
+    "manageGroup": "Gerenciar grupos",
+    "noGroup": "Sem grupo",
+    "showNoGroup": "Mostrar sem grupo"
+  },
   "streamList": {
     "appBarView": {
       "clipPeriod": {
@@ -150,9 +166,11 @@
       "clips": "Clipes",
       "disableNotification": "Desabilitar notificação",
       "enableNotification": "Ativar notificação",
+      "groupStream": "Adicionar grupo",
       "removeFavorite": "Remover favorito",
       "videos": "Vídeos"
     },
+    "noItems": "Sem streams",
     "offline": "Offline",
     "searchMore": "Buscar mais",
     "spectators": "Espectador | Espectadores",
