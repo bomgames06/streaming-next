@@ -1,13 +1,13 @@
 import type {
   AccountDataStore,
   CategoryNotificationStore,
+  FavoriteStore,
   GroupStreamStore,
   NotificationStore,
   NotificationTypeStore,
   StreamOrderStore,
 } from '@/store/system/types/systemStoreType'
 import type { Locales } from '@/plugins/i18n'
-import type { FavoriteStore } from '@/store/system/types/systemStoreType'
 
 export const STORAGE_KEY_ACCOUNTS = 'accounts' as const
 export const STORAGE_KEY_NOTIFICATIONS = 'notifications' as const
@@ -24,6 +24,7 @@ export const STORAGE_KEY_SHOW_NOTIFICATIONS = 'showNotifications' as const
 export const STORAGE_KEY_FAVORITES = 'favorites' as const
 export const STORAGE_KEY_CATEGORY_NOTIFICATIONS = 'categoryNotifications' as const
 export const STORAGE_KEY_GROUP_STREAMS = 'groupStreams' as const
+export const STORAGE_KEY_GROUP_EXPANDED = 'groupExpanded' as const
 
 export type StorageSyncTypes = {
   [STORAGE_KEY_ACCOUNTS]: AccountDataStore
@@ -41,4 +42,5 @@ export type StorageSyncTypes = {
   [STORAGE_KEY_SHOW_NOTIFICATIONS]: boolean
   [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: CategoryNotificationStore[]
   [STORAGE_KEY_GROUP_STREAMS]: GroupStreamStore[]
+  [STORAGE_KEY_GROUP_EXPANDED]: string[]
 }

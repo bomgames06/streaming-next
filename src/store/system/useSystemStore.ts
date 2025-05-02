@@ -1,24 +1,23 @@
 import { defineStore } from 'pinia'
 import browser from 'webextension-polyfill'
 import {
-  STORAGE_KEY_CATEGORY_NOTIFICATIONS,
-  STORAGE_KEY_GROUP_STREAMS,
-  STORAGE_KEY_SHOW_GROUPS,
-  STORAGE_KEY_SHOW_NO_GROUP,
-  type StorageSyncTypes,
-} from '@/types/syncStorageKeysTypes'
-import {
   STORAGE_KEY_ACCOUNTS,
+  STORAGE_KEY_CATEGORY_NOTIFICATIONS,
   STORAGE_KEY_DARK,
   STORAGE_KEY_FAVORITES,
+  STORAGE_KEY_GROUP_EXPANDED,
+  STORAGE_KEY_GROUP_STREAMS,
   STORAGE_KEY_LANGUAGE,
   STORAGE_KEY_NOTIFICATION_TYPE,
   STORAGE_KEY_NOTIFICATIONS,
   STORAGE_KEY_SHOW_ALWAYS_OFFLINES,
   STORAGE_KEY_SHOW_FAVORITES,
+  STORAGE_KEY_SHOW_GROUPS,
+  STORAGE_KEY_SHOW_NO_GROUP,
   STORAGE_KEY_SHOW_NOTIFICATIONS,
   STORAGE_KEY_STREAM_ORDER,
   STORAGE_KEY_STREAM_ORDER_SORT,
+  type StorageSyncTypes,
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
@@ -35,6 +34,7 @@ import type {
   AccountStoreType,
   CategoryNotificationStore,
   ClipPeriodStore,
+  FavoriteStore,
   GroupStreamStore,
   HeaderAppBarViewStore,
   LanguageCategoryStreamStore,
@@ -48,7 +48,6 @@ import type {
   ViewStore,
 } from '@/store/system/types/systemStoreType'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
-import type { FavoriteStore } from '@/store/system/types/systemStoreType'
 
 const useSystemStore = defineStore('System', () => {
   // System
@@ -83,6 +82,7 @@ const useSystemStore = defineStore('System', () => {
   const showGroups = ref<boolean>(false)
   const showFavorites = ref<boolean>(false)
   const showNotifications = ref<boolean>(false)
+  const groupExpanded = ref<string[]>([])
 
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
@@ -119,6 +119,7 @@ const useSystemStore = defineStore('System', () => {
   const showGroupsComp = computed({ get: () => showGroups.value, set: setShowGroups })
   const showFavoritesComp = computed({ get: () => showFavorites.value, set: setShowFavorites })
   const showNotificationsComp = computed({ get: () => showNotifications.value, set: setShowNotifications })
+  const groupExpandedComp = computed({ get: () => groupExpanded.value, set: setGroupExpanded })
 
   // System actions
   function setScreen(value: ScreenStore) {
@@ -167,6 +168,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_SHOW_NOTIFICATIONS,
       STORAGE_KEY_CATEGORY_NOTIFICATIONS,
       STORAGE_KEY_GROUP_STREAMS,
+      STORAGE_KEY_GROUP_EXPANDED,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -186,6 +188,7 @@ const useSystemStore = defineStore('System', () => {
     accountsCacheStreams.value = localStorage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] ?? {}
     categoryNotifications.value = syncStorage[STORAGE_KEY_CATEGORY_NOTIFICATIONS] ?? []
     groupStreams.value = syncStorage[STORAGE_KEY_GROUP_STREAMS] ?? []
+    groupExpanded.value = syncStorage[STORAGE_KEY_GROUP_EXPANDED] ?? []
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -420,6 +423,10 @@ const useSystemStore = defineStore('System', () => {
     showNotifications.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_NOTIFICATIONS]: cloneDeep(showNotifications.value) })
   }
+  function setGroupExpanded(value: string[]) {
+    groupExpanded.value = value
+    void browser.storage.sync.set({ [STORAGE_KEY_GROUP_EXPANDED]: cloneDeep(groupExpanded.value) })
+  }
 
   // Video view actions
   function setVideoOrder(value: VideoOrderStore) {
@@ -483,6 +490,7 @@ const useSystemStore = defineStore('System', () => {
     showGroupsComp,
     showFavoritesComp,
     showNotificationsComp,
+    groupExpandedComp,
     // utils
     getAccountByType,
     // actions system

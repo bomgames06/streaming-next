@@ -139,8 +139,11 @@
     }
   },
   "streamGroupList": {
+    "collapseAll": "Retrair todos",
+    "expandAll": "Expandir todos",
     "manageGroup": "Gerenciar grupos",
     "noGroup": "Sem grupo",
+    "noGroupAdded": "Sem grupo adicionado",
     "showNoGroup": "Mostrar sem grupo"
   },
   "streamList": {

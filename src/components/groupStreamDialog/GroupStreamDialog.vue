@@ -120,7 +120,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                 density="compact"
                 autofocus
                 class="mt-2"
-                @keydown.enter="addGroup"
+                @keydown.enter.prevent="addGroup"
               />
             </v-col>
             <v-col cols="auto">

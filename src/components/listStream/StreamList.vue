@@ -27,6 +27,7 @@ const props = defineProps<{
   dump?: string
   parent?: StreamItemType
   streams?: StreamItemLiveStreamType[]
+  loading?: boolean
 }>()
 
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
@@ -196,7 +197,10 @@ function showGroupStreamDialog(item: StreamItemLiveType) {
     </template>
   </v-list>
   <v-row v-else dense align="center" justify="center" class="h-100">
-    <v-col cols="auto" class="text-center">
+    <v-col v-if="props.loading" cols="auto" class="text-center">
+      <v-progress-circular color="primary" indeterminate />
+    </v-col>
+    <v-col v-else cols="auto" class="text-center">
       {{ t('streamList.noItems') }}
     </v-col>
   </v-row>

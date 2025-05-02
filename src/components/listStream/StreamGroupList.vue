@@ -16,15 +16,18 @@ const props = defineProps<{
   dump?: string
   parent?: StreamItemType
   streams?: StreamItemLiveStreamType[]
+  firstLoading?: boolean
 }>()
 
 const system = useSystemStore()
 
+const noGroupId: string = 'noGroup'
+
 const detailItem = defineModel<StreamItemType>('detailItem')
 const groupDetailitem = ref<GroupStreamStore>()
 
-const groupStreamItems = computed(() => orderBy(system.groupStreams, ['name'], ['asc']))
-const streamsWithoutGroup = computed(() =>
+const groupStreamItems = computed<GroupStreamStore[]>(() => orderBy(system.groupStreams, ['name'], ['asc']))
+const streamsWithoutGroup = computed<StreamItemType[]>(() =>
   props.items.filter(
     (item) =>
       !system.groupStreams.some((groupStream) =>
@@ -32,6 +35,14 @@ const streamsWithoutGroup = computed(() =>
       )
   )
 )
+const groupIds = computed<string[]>(() => {
+  const values: string[] = []
+
+  values.push(...groupStreamItems.value.map((groupStream) => groupStream.id))
+  if (system.showNoGroup) values.push(noGroupId)
+
+  return values
+})
 
 function getItemsByGroup(groupStream: GroupStreamStore): StreamItemType[] {
   return props.items.filter((item) =>
@@ -46,8 +57,8 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
 </script>
 
 <template>
-  <div>
-    <v-row v-if="!detailItem" dense class="flex-nowrap">
+  <div class="d-flex flex-column h-100">
+    <v-row v-if="!detailItem" dense class="flex-nowrap flex-grow-0">
       <v-col>
         <GroupStreamDialog :streams="props.streams || []">
           <template #activator="{ props: groupStreamDialogProps }">
@@ -59,6 +70,29 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
       </v-col>
       <v-col cols="auto">
         <v-btn
+          v-tooltip="t('streamGroupList.expandAll')"
+          :aria-label="t('streamGroupList.expandAll')"
+          min-width="0"
+          class="px-2"
+          @click="system.groupExpandedComp = groupIds"
+        >
+          <v-icon icon="mdi-arrow-expand" />
+        </v-btn>
+      </v-col>
+      <v-col cols="auto">
+        <v-btn
+          v-tooltip="t('streamGroupList.collapseAll')"
+          :aria-label="t('streamGroupList.collapseAll')"
+          min-width="0"
+          class="px-2"
+          @click="system.groupExpandedComp = []"
+        >
+          <v-icon icon="mdi-arrow-collapse" />
+        </v-btn>
+      </v-col>
+      <v-col cols="auto">
+        <v-btn
+          v-tooltip="t('streamGroupList.showNoGroup')"
           :aria-label="t('streamGroupList.showNoGroup')"
           min-width="0"
           class="px-2"
@@ -71,11 +105,21 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
         </v-btn>
       </v-col>
     </v-row>
-    <v-expansion-panels variant="accordion" static multiple elevation="0" ripple bg-color="background">
+    <v-expansion-panels
+      v-if="groupStreamItems.length || system.showNoGroup"
+      v-model="system.groupExpandedComp"
+      variant="accordion"
+      static
+      multiple
+      elevation="0"
+      ripple
+      bg-color="background"
+    >
       <v-expansion-panel
         v-for="groupStream in groupStreamItems"
         v-show="!detailItem || groupStream.id === groupDetailitem?.id"
         :key="groupStream.id"
+        :value="groupStream.id"
         :class="{
           'expansion-group-item': true,
           'detail-item': !!detailItem,
@@ -84,19 +128,21 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
         <v-expansion-panel-title v-if="!detailItem">
           {{ groupStream.name }}
         </v-expansion-panel-title>
-        <v-expansion-panel-text color="background">
+        <v-expansion-panel-text>
           <StreamList
             :detail-item="detailItem"
             :dump="props.dump"
             :items="getItemsByGroup(groupStream)"
             :streams="props.streams"
+            :loading="props.firstLoading"
             @update:detail-item="setDetailitem($event, groupStream)"
           />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel
-        v-if="system.showNoGroup && streamsWithoutGroup.length"
+        v-if="system.showNoGroup"
         v-show="!detailItem || !groupDetailitem"
+        :value="noGroupId"
         :class="{
           'expansion-group-item': true,
           'detail-item': !!detailItem,
@@ -105,17 +151,23 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
         <v-expansion-panel-title v-if="!detailItem">
           {{ t('streamGroupList.noGroup') }}
         </v-expansion-panel-title>
-        <v-expansion-panel-text color="background">
+        <v-expansion-panel-text>
           <StreamList
             v-model:detail-item="detailItem"
             :dump="props.dump"
             :items="streamsWithoutGroup"
             :streams="props.streams"
+            :loading="props.firstLoading"
             @update:detail-item="setDetailitem($event)"
           />
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
+    <v-row v-else dense align="center" justify="center">
+      <v-col cols="auto" class="text-center">
+        {{ t('streamGroupList.noGroupAdded') }}
+      </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -125,11 +177,8 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
     padding-left: 0;
     padding-right: 0;
   }
-}
-.expansion-group-item.detail-item {
-  ::v-deep(.v-expansion-panel-text__wrapper) {
-    padding-top: 0;
-    padding-bottom: 0;
+  ::v-deep(.v-expansion-panel-title--active) {
+    color: rgb(var(--v-theme-primary));
   }
 }
 .detail-item::after {

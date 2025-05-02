@@ -19,6 +19,7 @@ import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
 const system = useSystemStore()
 const { t } = useI18n()
 
+const firstLoading = ref<boolean>(true)
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
 const streams = ref<StreamItemLiveStreamType[]>([])
@@ -166,17 +167,19 @@ async function fetchData() {
   }
   fetching += 1
 
-  system.loading()
-  system.refreshing()
-  if (fetchTimeout.value) {
-    clearTimeout(fetchTimeout.value)
-    fetchTimeout.value = undefined
-  }
   try {
+    system.loading()
+    system.refreshing()
+    if (fetchTimeout.value) {
+      clearTimeout(fetchTimeout.value)
+      fetchTimeout.value = undefined
+    }
+
     await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
   } finally {
     system.loaded()
     system.refreshed()
+    firstLoading.value = false
     fetchTimeout.value = setTimeout(fetchData, 60000 * 5)
     fetching -= 1
     if (fetching) void fetchData()
@@ -348,10 +351,22 @@ async function fetchStreamsTwitch(): Promise<void> {
       </v-sheet>
       <v-divider />
     </template>
-    <div v-if="system.showGroupsComp">
-      <StreamGroupList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
-    </div>
-    <StreamList v-else v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
+    <StreamGroupList
+      v-if="system.showGroupsComp"
+      v-model:detail-item="detailItem"
+      :dump="dump"
+      :items="itemsFiltered"
+      :streams="streams"
+      :first-loading="firstLoading"
+    />
+    <StreamList
+      v-else
+      v-model:detail-item="detailItem"
+      :dump="dump"
+      :items="itemsFiltered"
+      :streams="streams"
+      :loading="firstLoading"
+    />
   </ViewContainer>
 </template>
 
