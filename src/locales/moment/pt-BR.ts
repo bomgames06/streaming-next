@@ -1,4 +1,4 @@
-import 'moment/dist/locale/pt-br.js'
+import 'moment/dist/locale/pt-br'
 import moment from 'moment'
 
 moment.updateLocale('pt-br', {

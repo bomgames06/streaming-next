@@ -27,6 +27,7 @@ const props = defineProps<{
   dump?: string
   parent?: StreamItemType
   streams?: StreamItemLiveStreamType[]
+  loading?: boolean
 }>()
 
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
@@ -42,6 +43,7 @@ const clips = reactive<{ items: StreamItemClipType[]; cursor?: string }>({
 const keyListItem = uuidV4()
 
 const streamCategoryNotification = ref<StreamItemLiveStreamType>()
+const streamGroupStream = ref<StreamItemLiveStreamType>()
 
 const hasMoreItems = computed(() => {
   if (detailType.value === 'video') return !!videos.cursor
@@ -165,10 +167,14 @@ function showItem(item: StreamItemType) {
 function showCategoryNotificationDialog(item: StreamItemLiveType) {
   streamCategoryNotification.value = props.streams?.find((value) => equals(value, item))
 }
+
+function showGroupStreamDialog(item: StreamItemLiveType) {
+  streamGroupStream.value = props.streams?.find((value) => equals(value, item))
+}
 </script>
 
 <template>
-  <v-list :accesskey="detailItem ? undefined : 'l'" class="bg-transparent py-0">
+  <v-list v-if="props.items.length" :accesskey="detailItem ? undefined : 'l'" class="bg-transparent py-0">
     <template v-for="(item, idx) in props.items" :key="`${keyListItem}:${item.type}:${item.id}`">
       <StreamListItem
         v-show="showItem(item)"
@@ -185,16 +191,32 @@ function showCategoryNotificationDialog(item: StreamItemLiveType) {
         @item-click="itemClick"
         @menu-item-click="menuItemClick"
         @menu-item-category-notification-click="showCategoryNotificationDialog"
+        @menu-item-group-stream-click="showGroupStreamDialog"
       />
       <v-divider v-if="idx !== props.items.length - 1 && !detailItem" />
     </template>
   </v-list>
+  <v-row v-else dense align="center" justify="center" class="h-100">
+    <v-col v-if="props.loading" cols="auto" class="text-center">
+      <v-progress-circular color="primary" indeterminate />
+    </v-col>
+    <v-col v-else cols="auto" class="text-center">
+      {{ t('streamList.noItems') }}
+    </v-col>
+  </v-row>
   <CategoryNotificationDialog
     v-if="streamCategoryNotification && !!props.streams?.length"
     :model-value="!!streamCategoryNotification"
     :streams="props.streams"
     :stream-item="streamCategoryNotification"
     @update:model-value="streamCategoryNotification = $event ? streamCategoryNotification : undefined"
+  />
+  <GroupStreamDialog
+    v-if="streamGroupStream && !!props.streams?.length"
+    :model-value="!!streamGroupStream"
+    :streams="props.streams"
+    :stream-item="streamGroupStream"
+    @update:model-value="streamGroupStream = $event ? streamGroupStream : undefined"
   />
   <template v-if="detailItem">
     <template v-if="detailType === 'video'">

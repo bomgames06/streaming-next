@@ -33,6 +33,7 @@ const emit = defineEmits<{
   (e: 'itemClick', value: { item: StreamItemType; middle?: boolean }): void
   (e: 'menuItemClick', value: { type: 'video' | 'clip'; item: StreamItemType }): void
   (e: 'menuItemCategoryNotificationClick', value: StreamItemLiveType): void
+  (e: 'menuItemGroupStreamClick', value: StreamItemLiveType): void
 }>()
 const detailItem = defineModel<StreamItemType | undefined>('detailItem')
 const menuShow = defineModel<StreamItemType | undefined>('menuShow')
@@ -136,6 +137,9 @@ function enableClip() {
 }
 function categoryNotification(item: StreamItemLiveType) {
   emit('menuItemCategoryNotificationClick', item)
+}
+function groupStream(item: StreamItemLiveType) {
+  emit('menuItemGroupStreamClick', item)
 }
 
 async function closeMenu(value?: boolean) {
@@ -303,6 +307,20 @@ function isVerified(value?: StreamItemType): boolean {
                             <v-icon size="large">mdi-controller</v-icon>
                           </template>
                           <v-icon>mdi-bell</v-icon>
+                        </v-badge>
+                      </template>
+                    </v-list-item>
+                    <v-list-item
+                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
+                      :title="t('streamList.menu.groupStream')"
+                      @click="groupStream(item)"
+                    >
+                      <template #prepend>
+                        <v-badge color="surface" location="bottom end">
+                          <template #badge>
+                            <v-icon size="large">mdi-plus</v-icon>
+                          </template>
+                          <v-icon>mdi-format-list-group</v-icon>
                         </v-badge>
                       </template>
                     </v-list-item>

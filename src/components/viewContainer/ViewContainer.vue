@@ -3,7 +3,7 @@
 <template>
   <div class="d-flex flex-column h-100">
     <slot name="top" />
-    <v-container class="pa-3 flex-grow-1 overflow-y-auto">
+    <v-container class="pa-3 flex-grow-1 overflow-y-scroll">
       <slot />
     </v-container>
   </div>

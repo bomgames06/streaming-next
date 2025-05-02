@@ -3,6 +3,7 @@ import type { User } from '@/types/userType'
 import type { AuthBackgroundMessageType, RevokeBackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 import type {
+  CategorySearchItem,
   StreamItemClipType,
   StreamItemLiveOfflineType,
   StreamItemLiveOnlineType,
@@ -25,7 +26,6 @@ import type {
   TwitchApiUserType,
 } from '@/services/api/twitch/types/twitchApiType'
 import useSystemStore from '@/store/system/useSystemStore'
-import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
 
 function isStreamVerified(value?: TwitchApiBroadcasterType): value is 'partner' {
   return value === 'partner'

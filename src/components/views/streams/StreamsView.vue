@@ -14,10 +14,12 @@ import { includeUtil } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
+import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
+const firstLoading = ref<boolean>(true)
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
 const streams = ref<StreamItemLiveStreamType[]>([])
@@ -93,6 +95,9 @@ onMounted(() => {
   fetchData()
 })
 
+function toggleGroups() {
+  system.showGroupsComp = !system.showGroupsComp
+}
 function toggleFavorite() {
   system.showFavoritesComp = !system.showFavoritesComp
 }
@@ -162,17 +167,19 @@ async function fetchData() {
   }
   fetching += 1
 
-  system.loading()
-  system.refreshing()
-  if (fetchTimeout.value) {
-    clearTimeout(fetchTimeout.value)
-    fetchTimeout.value = undefined
-  }
   try {
+    system.loading()
+    system.refreshing()
+    if (fetchTimeout.value) {
+      clearTimeout(fetchTimeout.value)
+      fetchTimeout.value = undefined
+    }
+
     await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
   } finally {
     system.loaded()
     system.refreshed()
+    firstLoading.value = false
     fetchTimeout.value = setTimeout(fetchData, 60000 * 5)
     fetching -= 1
     if (fetching) void fetchData()
@@ -239,6 +246,23 @@ async function fetchStreamsTwitch(): Promise<void> {
               </v-col>
               <v-col cols="auto">
                 <v-btn
+                  v-tooltip="t('common.group')"
+                  accesskey="g"
+                  :aria-label="t('common.group')"
+                  class="rounded-lg"
+                  :disabled="!!detailItem"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleGroups"
+                >
+                  <v-icon :color="system.showGroupsComp ? 'primary' : ''" size="18">
+                    {{ system.showGroupsComp ? 'mdi-folder' : 'mdi-folder-outline' }}
+                  </v-icon>
+                </v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
                   v-tooltip="t('common.favorite', 2)"
                   accesskey="b"
                   :aria-checked="system.showFavoritesComp"
@@ -250,9 +274,9 @@ async function fetchStreamsTwitch(): Promise<void> {
                   size="24"
                   @click="toggleFavorite"
                 >
-                  <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">{{
-                    system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline'
-                  }}</v-icon>
+                  <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">
+                    {{ system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline' }}
+                  </v-icon>
                 </v-btn>
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
@@ -327,7 +351,22 @@ async function fetchStreamsTwitch(): Promise<void> {
       </v-sheet>
       <v-divider />
     </template>
-    <StreamList v-model:detail-item="detailItem" :dump="dump" :items="itemsFiltered" :streams="streams" />
+    <StreamGroupList
+      v-if="system.showGroupsComp"
+      v-model:detail-item="detailItem"
+      :dump="dump"
+      :items="itemsFiltered"
+      :streams="streams"
+      :first-loading="firstLoading"
+    />
+    <StreamList
+      v-else
+      v-model:detail-item="detailItem"
+      :dump="dump"
+      :items="itemsFiltered"
+      :streams="streams"
+      :loading="firstLoading"
+    />
   </ViewContainer>
 </template>
 
