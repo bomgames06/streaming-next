@@ -66,8 +66,10 @@
     "back": "Back",
     "close": "Close",
     "desc": "Descendent",
+    "edit": "Edit",
     "favorite": "Favorite | Favorites",
     "filter": "Filter",
+    "group": "Stream groups",
     "loaded": "Loaded",
     "loading": "Loading",
     "loadingError": "Error loading application",
@@ -79,10 +81,19 @@
     "refresh": "Refresh",
     "sort": "Sort",
     "systemError": "System error",
-    "unauthorizedAccount": "AccountStore is no longer authorized"
+    "unauthorizedAccount": "AccountStore is no longer authorized",
+    "value": "Value"
   },
   "gameNotificationDialog": {
     "title": "Game notifications"
+  },
+  "groupStreamDialog": {
+    "addStream": "Add stream",
+    "group": "Group",
+    "noGroups": "No groups",
+    "stream": "Stream",
+    "streamCount": "Stream: None | Stream: {count} | Streams: {count}",
+    "title": "Stream groups"
   },
   "languages": {
     "en": "English",
@@ -127,6 +138,14 @@
       "light": "Light theme"
     }
   },
+  "streamGroupList": {
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "manageGroup": "Manage groups",
+    "noGroup": "No group",
+    "noGroupAdded": "No group added",
+    "showNoGroup": "Show no group"
+  },
   "streamList": {
     "appBarView": {
       "clipPeriod": {
@@ -150,9 +169,11 @@
       "clips": "Clips",
       "disableNotification": "Disable notification",
       "enableNotification": "Enable notification",
+      "groupStream": "Add group",
       "removeFavorite": "Remove favorite",
       "videos": "Videos"
     },
+    "noItems": "No streams",
     "offline": "Offline",
     "searchMore": "Search more",
     "spectators": "Viewer | Viewers",

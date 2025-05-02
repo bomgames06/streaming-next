@@ -47,3 +47,12 @@ export type HeaderAppBarViewStore = 'video' | 'clip' | 'categoryStreams'
 export type VideoOrderStore = 'time' | 'trending' | 'views'
 export type ClipPeriodStore = '24h' | '7d' | '30d' | 'all'
 export type LanguageCategoryStreamStore = 'pt' | 'en' | 'ko' | 'ja' | 'ru' | 'zh'
+
+export type GroupStreamStore = {
+  id: string
+  name: string
+  streams: {
+    type: AccountStoreType
+    id: string
+  }[]
+}

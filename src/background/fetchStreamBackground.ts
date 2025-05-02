@@ -2,12 +2,12 @@ import browser, { Alarms } from 'webextension-polyfill'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
 import type { AccountDataStore } from '@/store/system/types/systemStoreType'
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
-import Alarm = Alarms.Alarm
 import countHandler from '@/background/handlers/countHandler'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import notificationHandler from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
+import Alarm = Alarms.Alarm
 
 let isFetching = false
 
