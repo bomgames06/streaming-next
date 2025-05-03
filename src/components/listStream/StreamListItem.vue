@@ -320,7 +320,7 @@ function isVerified(value?: StreamItemType): boolean {
                           <template #badge>
                             <v-icon size="large">mdi-plus</v-icon>
                           </template>
-                          <v-icon>mdi-format-list-group</v-icon>
+                          <v-icon>mdi-folder</v-icon>
                         </v-badge>
                       </template>
                     </v-list-item>
