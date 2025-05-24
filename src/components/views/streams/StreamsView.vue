@@ -15,6 +15,17 @@ import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
+import {
+  mdiBell,
+  mdiBellOutline,
+  mdiController,
+  mdiFilter,
+  mdiFolder,
+  mdiFolderOutline,
+  mdiStar,
+  mdiStarOutline,
+  mdiWifiOff,
+} from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -239,7 +250,7 @@ async function fetchStreamsTwitch(): Promise<void> {
           <v-col :aria-label="t('common.filter')" role="group" cols="auto">
             <v-row dense class="flex-nowrap">
               <v-col cols="auto">
-                <v-icon>mdi-filter</v-icon>
+                <v-icon :icon="mdiFilter" />
               </v-col>
               <v-col class="d-flex" cols="auto">
                 <v-divider class="h-75 align-self-center" vertical />
@@ -257,7 +268,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                   @click="toggleGroups"
                 >
                   <v-icon :color="system.showGroupsComp ? 'primary' : ''" size="18">
-                    {{ system.showGroupsComp ? 'mdi-folder' : 'mdi-folder-outline' }}
+                    {{ system.showGroupsComp ? mdiFolder : mdiFolderOutline }}
                   </v-icon>
                 </v-btn>
               </v-col>
@@ -275,7 +286,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                   @click="toggleFavorite"
                 >
                   <v-icon :color="system.showFavoritesComp ? 'primary' : ''" size="18">
-                    {{ system.showFavoritesComp ? 'mdi-star' : 'mdi-star-outline' }}
+                    {{ system.showFavoritesComp ? mdiStar : mdiStarOutline }}
                   </v-icon>
                 </v-btn>
               </v-col>
@@ -293,7 +304,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                   @click="toggleNotification"
                 >
                   <v-icon :color="system.showNotificationsComp ? 'primary' : ''" size="18">{{
-                    system.showNotificationsComp ? 'mdi-bell' : 'mdi-bell-outline'
+                    system.showNotificationsComp ? mdiBell : mdiBellOutline
                   }}</v-icon>
                 </v-btn>
               </v-col>
@@ -310,7 +321,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                   size="24"
                   @click="toggleOffline"
                 >
-                  <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18"> mdi-wifi-off </v-icon>
+                  <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18" :icon="mdiWifiOff" />
                 </v-btn>
               </v-col>
             </v-row>
@@ -334,7 +345,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                       :icon="true"
                       size="24"
                     >
-                      <v-icon size="18"> mdi-controller </v-icon>
+                      <v-icon size="18" :icon="mdiController" />
                     </v-btn>
                   </template>
                 </CategoryNotificationDialog>
@@ -343,7 +354,7 @@ async function fetchStreamsTwitch(): Promise<void> {
                 <v-divider class="h-75 align-self-center" vertical />
               </v-col>
               <v-col cols="auto">
-                <v-icon>mdi-bell</v-icon>
+                <v-icon :icon="mdiBell" />
               </v-col>
             </v-row>
           </v-col>

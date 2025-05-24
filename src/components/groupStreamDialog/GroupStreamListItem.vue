@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import type { GroupStreamStore } from '@/store/system/types/systemStoreType.ts'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType.ts'
 import { type VListItem } from 'vuetify/components'
+import { mdiCheckboxBlankOutline, mdiCheckboxMarked, mdiDelete, mdiPencil } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -52,16 +53,16 @@ function itemClick() {
   >
     <template #prepend>
       <v-btn v-if="!props.hideEdit" icon size="x-small" variant="flat" class="mr-2" @click.stop="emit('edit')">
-        <v-icon size="large">mdi-pencil</v-icon>
+        <v-icon size="large" :icon="mdiPencil" />
         <slot name="edit" />
       </v-btn>
     </template>
     <template #append>
       <v-icon v-if="props.streamItem">
-        {{ selected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+        {{ selected ? mdiCheckboxMarked : mdiCheckboxBlankOutline }}
       </v-icon>
       <v-btn v-else icon size="x-small" variant="flat" @click.stop="emit('delete')">
-        <v-icon size="large" color="error">mdi-delete</v-icon>
+        <v-icon size="large" color="error" :icon="mdiDelete" />
       </v-btn>
     </template>
   </v-list-item>

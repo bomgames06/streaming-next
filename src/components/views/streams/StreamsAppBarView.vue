@@ -2,6 +2,15 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
+import {
+  mdiAccountEye,
+  mdiArrowDownThick,
+  mdiArrowUpThick,
+  mdiController,
+  mdiOrderAlphabeticalAscending,
+  mdiRefresh,
+  mdiSort,
+} from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -31,7 +40,7 @@ function sortLabelOption(text: string, selected: boolean) {
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">
       <v-btn v-bind="props" :aria-label="t('common.sort')" class="rounded-lg" :icon="true" :size="system.appBarHeight">
-        <v-icon>mdi-sort</v-icon>
+        <v-icon :icon="mdiSort" />
       </v-btn>
     </template>
     <template #default="{ isActive }">
@@ -47,10 +56,13 @@ function sortLabelOption(text: string, selected: boolean) {
           @click="system.setStreamOrder('name')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-order-alphabetical-ascending</v-icon>
-            <v-icon v-if="system.streamOrder === 'name'" class="stream-order-item-asc rounded-circle" size="12">
-              {{ system.streamOrderSort ? 'mdi-arrow-up-thick' : 'mdi-arrow-down-thick' }}
-            </v-icon>
+            <v-icon size="x-large" :icon="mdiOrderAlphabeticalAscending" />
+            <v-icon
+              v-if="system.streamOrder === 'name'"
+              class="stream-order-item-asc rounded-circle"
+              size="12"
+              :icon="system.streamOrderSort ? mdiArrowUpThick : mdiArrowDownThick"
+            />
           </div>
         </v-list-item>
         <v-list-item
@@ -64,10 +76,13 @@ function sortLabelOption(text: string, selected: boolean) {
           @click="system.setStreamOrder('view')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-account-eye</v-icon>
-            <v-icon v-if="system.streamOrder === 'view'" class="stream-order-item-asc rounded-circle" size="12">
-              {{ system.streamOrderSort ? 'mdi-arrow-up-thick' : 'mdi-arrow-down-thick' }}
-            </v-icon>
+            <v-icon size="x-large" :icon="mdiAccountEye" />
+            <v-icon
+              v-if="system.streamOrder === 'view'"
+              class="stream-order-item-asc rounded-circle"
+              size="12"
+              :icon="system.streamOrderSort ? mdiArrowUpThick : mdiArrowDownThick"
+            />
           </div>
         </v-list-item>
         <v-list-item
@@ -81,10 +96,13 @@ function sortLabelOption(text: string, selected: boolean) {
           @click="system.setStreamOrder('game')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-controller</v-icon>
-            <v-icon v-if="system.streamOrder === 'game'" class="stream-order-item-asc rounded-circle" size="12">
-              {{ system.streamOrderSort ? 'mdi-arrow-up-thick' : 'mdi-arrow-down-thick' }}
-            </v-icon>
+            <v-icon size="x-large" :icon="mdiController" />
+            <v-icon
+              v-if="system.streamOrder === 'game'"
+              class="stream-order-item-asc rounded-circle"
+              size="12"
+              :icon="system.streamOrderSort ? mdiArrowUpThick : mdiArrowDownThick"
+            />
           </div>
         </v-list-item>
       </v-list>
@@ -99,7 +117,7 @@ function sortLabelOption(text: string, selected: boolean) {
     :size="system.appBarHeight"
     @click="emitter.emit('refresh')"
   >
-    <v-icon>mdi-refresh</v-icon>
+    <v-icon :icon="mdiRefresh" />
   </v-btn>
 </template>
 

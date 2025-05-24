@@ -3,6 +3,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import { useI18n } from 'vue-i18n'
+import { mdiTranslate, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -25,7 +26,7 @@ const i18n = useI18n()
               size="36"
               v-bind="props"
             >
-              <v-icon>mdi-translate</v-icon>
+              <v-icon :icon="mdiTranslate" />
             </v-btn>
           </template>
           <template #default="{ isActive }">
@@ -58,9 +59,7 @@ const i18n = useI18n()
           size="36"
           @click="system.setDark(!system.dark, theme)"
         >
-          <v-icon>
-            {{ system.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}
-          </v-icon>
+          <v-icon :icon="system.dark ? mdiWeatherNight : mdiWeatherSunny" />
         </v-btn>
       </div>
     </v-app-bar>

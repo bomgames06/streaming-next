@@ -20,7 +20,7 @@ export function getTestPlugins(config?: { pinia?: TestingOptions }): Plugin[] {
       createSpy: vi.fn,
       ...(config?.pinia || {}),
     }),
-    vuetify,
+    vuetify(),
     errorPlugin,
   ]
 }

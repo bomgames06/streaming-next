@@ -4,6 +4,7 @@ import useSystemStore from '@/store/system/useSystemStore.ts'
 import type { GroupStreamStore } from '@/store/system/types/systemStoreType.ts'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType.ts'
 import { compact, orderBy } from 'lodash'
+import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -133,7 +134,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                   class="px-2"
                   @click="addGroup"
                 >
-                  <v-icon>mdi-plus</v-icon>
+                  <v-icon :icon="mdiPlus" />
                 </v-btn>
               </div>
             </v-col>
@@ -215,7 +216,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                   v-if="groupAddStream?.id !== expandGroup.id"
                   :id="`list-item-add-${expandGroup.id}`"
                   :title="t('groupStreamDialog.addStream')"
-                  prepend-icon="mdi-plus"
+                  :prepend-icon="mdiPlus"
                   class="px-2"
                   @click="openAddStream(expandGroup)"
                 />
@@ -254,7 +255,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                           class="px-2"
                           @click="addStream(groupAddStream, stream)"
                         >
-                          <v-icon>mdi-plus</v-icon>
+                          <v-icon :icon="mdiPlus" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -267,7 +268,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                           class="px-2"
                           @click="closeAddStream"
                         >
-                          <v-icon>mdi-close</v-icon>
+                          <v-icon :icon="mdiClose" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -292,7 +293,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                         system.removeStreamFromGroupStream(expandGroup.id, groupStreamStream.type, groupStreamStream.id)
                       "
                     >
-                      <v-icon size="large" color="error">mdi-delete</v-icon>
+                      <v-icon size="large" color="error" :icon="mdiDelete" />
                     </v-btn>
                   </template>
                 </v-list-item>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AccountStore } from '@/store/system/types/systemStoreType'
 import { useI18n } from 'vue-i18n'
+import { mdiAccount, mdiCloseCircle, mdiDelete, mdiLogout } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -33,7 +34,7 @@ const emit = defineEmits<{
       @mousedown.middle.prevent="emit('click', { account: props.account, middle: true })"
     >
       <template #prepend>
-        <v-avatar :icon="!props.account.avatarUrl ? 'mdi-account' : ''" :image="props.account.avatarUrl" size="small" />
+        <v-avatar :icon="!props.account.avatarUrl ? mdiAccount : ''" :image="props.account.avatarUrl" size="small" />
       </template>
       <template #append>
         <v-btn
@@ -46,11 +47,11 @@ const emit = defineEmits<{
           @keydown.enter.stop="emit('delete')"
           @keydown.space.stop="emit('delete')"
         >
-          <v-icon size="large">{{ props.account.invalid ? 'mdi-delete' : 'mdi-logout' }}</v-icon>
+          <v-icon size="large">{{ props.account.invalid ? mdiDelete : mdiLogout }}</v-icon>
         </v-btn>
       </template>
       <v-list-item-title class="pr-2">
-        <v-icon v-if="props.account.invalid" class="mr-1">mdi-close-circle</v-icon>
+        <v-icon v-if="props.account.invalid" class="mr-1" :icon="mdiCloseCircle" />
         <span>{{ props.account.name }}</span>
       </v-list-item-title>
     </v-list-item>
@@ -62,7 +63,7 @@ const emit = defineEmits<{
       @click="emit('auth')"
     >
       <template #prepend>
-        <v-icon>{{ props.iconAuth }}</v-icon>
+        <v-icon :icon="props.iconAuth" />
       </template>
     </v-list-item>
   </template>
@@ -79,11 +80,11 @@ const emit = defineEmits<{
         size="small"
         @click="emit('auth')"
       >
-        <v-icon class="mr-1" size="x-large">{{ props.iconAuth }}</v-icon>
-        <v-icon class="mr-4" color="red-lighten-4" size="x-large">mdi-close-circle</v-icon>
+        <v-icon class="mr-1" size="x-large" :icon="props.iconAuth" />
+        <v-icon class="mr-4" color="red-lighten-4" size="x-large" :icon="mdiCloseCircle" />
         <v-avatar
           class="mr-1"
-          :icon="!props.account.avatarUrl ? 'mdi-account' : ''"
+          :icon="!props.account.avatarUrl ? mdiAccount : ''"
           :image="props.account.avatarUrl"
           size="22"
         />
@@ -102,7 +103,7 @@ const emit = defineEmits<{
         variant="tonal"
         @click="emit('delete')"
       >
-        <v-icon size="x-large"> mdi-delete </v-icon>
+        <v-icon size="x-large" :icon="mdiDelete" />
       </v-btn>
     </template>
     <template v-else>
@@ -115,7 +116,7 @@ const emit = defineEmits<{
         size="small"
         @click="emit('auth')"
       >
-        <v-icon class="mr-2" size="x-large">{{ props.iconAuth }}</v-icon>
+        <v-icon class="mr-2" size="x-large" :icon="props.iconAuth" />
         <span>{{ props.textAuth }}</span>
       </v-btn>
     </template>

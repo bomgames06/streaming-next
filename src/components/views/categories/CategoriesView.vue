@@ -7,6 +7,7 @@ import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, debounce, orderBy, uniqBy } from 'lodash'
 import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
+import { mdiMagnify } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -122,7 +123,7 @@ watch(categorySelected, () => {
       :loading="fetching"
       @click="fetchCategories()"
     >
-      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
       <span>{{ t('categoriesView.searchMore') }}</span>
     </v-btn>
   </ViewContainer>

@@ -3,6 +3,7 @@ import type { LanguageCategoryStreamStore } from '@/store/system/types/systemSto
 import useSystemStore from '@/store/system/useSystemStore'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
+import { mdiRefresh } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -68,7 +69,7 @@ const items: {
     :size="system.appBarHeight"
     @click="emitter.emit('refresh')"
   >
-    <v-icon>mdi-refresh</v-icon>
+    <v-icon :icon="mdiRefresh" />
   </v-btn>
 </template>
 

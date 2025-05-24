@@ -5,6 +5,7 @@ import type { NotificationTypeStore } from '@/store/system/types/systemStoreType
 import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import browser from 'webextension-polyfill'
+import { mdiBroom, mdiGithub, mdiHeart } from '@mdi/js'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -63,7 +64,7 @@ function openDonation(middle?: boolean) {
                 <v-btn
                   :aria-label="i18n.t('settings.cleanFavorites')"
                   :disabled="!system.favorites.length"
-                  prepend-icon="mdi-broom"
+                  :prepend-icon="mdiBroom"
                   :text="i18n.t('settings.favorites')"
                   @click="system.cleanFavorite()"
                 />
@@ -72,7 +73,7 @@ function openDonation(middle?: boolean) {
                 <v-btn
                   :aria-label="i18n.t('settings.cleanNotifications')"
                   :disabled="!system.notifications.length"
-                  prepend-icon="mdi-broom"
+                  :prepend-icon="mdiBroom"
                   :text="i18n.t('settings.notifications')"
                   @click="system.cleanNotification()"
                 />
@@ -81,7 +82,7 @@ function openDonation(middle?: boolean) {
                 <v-btn
                   :aria-label="i18n.t('settings.cleanCategoryNotifications')"
                   :disabled="!system.categoryNotifications.length"
-                  prepend-icon="mdi-broom"
+                  :prepend-icon="mdiBroom"
                   :text="i18n.t('settings.cleanCategoryNotifications')"
                   @click="system.cleanCategoryNotification()"
                 />
@@ -131,7 +132,7 @@ function openDonation(middle?: boolean) {
                 @click="openGithub(false)"
                 @mousedown.middle.prevent="openGithub(true)"
               >
-                <v-icon class="mr-1">mdi-github</v-icon>
+                <v-icon class="mr-1" :icon="mdiGithub" />
                 <span>{{ i18n.t('settings.github') }}</span>
               </v-btn>
             </template>
@@ -148,7 +149,7 @@ function openDonation(middle?: boolean) {
                 @click="openDonation(false)"
                 @mousedown.middle.prevent="openDonation(true)"
               >
-                <v-icon class="mr-1">mdi-heart</v-icon>
+                <v-icon class="mr-1" :icon="mdiHeart" />
                 <span>{{ i18n.t('settings.sponsor') }}</span>
               </v-btn>
             </template>

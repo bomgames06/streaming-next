@@ -14,6 +14,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import { VList } from 'vuetify/components/VList'
 import { v4 as uuidV4 } from 'uuid'
+import { mdiMagnify } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -238,7 +239,7 @@ function showGroupStreamDialog(item: StreamItemLiveType) {
       :loading="fetching"
       @click="fetchMore()"
     >
-      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
       <span>{{ t('streamList.searchMore') }}</span>
     </v-btn>
   </template>

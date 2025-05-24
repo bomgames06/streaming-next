@@ -10,6 +10,7 @@ import { cloneDeep } from 'lodash'
 import AppBusiness from '@/services/business/appBusiness'
 import type { Mock } from '@vitest/spy'
 import browser from 'webextension-polyfill'
+import { mdiAccount, mdiCloseCircle, mdiDelete, mdiLogout, mdiTwitch } from '@mdi/js'
 
 vi.mock('@/services/business/appBusiness', () => ({
   default: {
@@ -47,7 +48,7 @@ describe('AuthActions.vue', () => {
           } = {
             twitch: {
               text: dictionary.twitchButtonText,
-              iconClass: 'mdi-twitch',
+              iconClass: mdiTwitch,
               element: wrapper.find('button[data-testid="twitch-auth"]'),
             },
           }
@@ -55,7 +56,7 @@ describe('AuthActions.vue', () => {
           Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
             expect(element.exists()).toBe(true)
             expect(element.text()).toBe(text)
-            expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
+            expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${iconClass}"]`).exists()).toBe(true)
           })
         },
         {
@@ -112,7 +113,7 @@ describe('AuthActions.vue', () => {
       } = {
         twitch: {
           text: 'twitchAccountName',
-          iconClass: 'mdi-twitch',
+          iconClass: mdiTwitch,
           avatarUrl: 'https://some-domain/avatar.png',
           element: wrapper.find('button[data-testid="twitch-auth"]'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
@@ -124,16 +125,16 @@ describe('AuthActions.vue', () => {
 
         expect(element.exists()).toBe(true)
         expect(element.text()).toBe(text)
-        expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
-        expect(element.find(`i.mdi-close-circle.mdi.v-icon`).exists()).toBe(true)
+        expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${iconClass}"]`).exists()).toBe(true)
+        expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiCloseCircle}"]`).exists()).toBe(true)
         expect(deleteElement.exists()).toBe(true)
         expect(deleteElement.text()).toBe('')
-        expect(deleteElement.find(`i.mdi-delete.mdi.v-icon`).exists()).toBe(true)
+        expect(deleteElement.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiDelete}"]`).exists()).toBe(true)
 
         const imgElement = element.find('img')
         expect(imgElement.exists()).toBe(true)
         expect(imgElement.attributes().src).toBe(avatarUrl)
-        const accountIconNotFound = element.find('i.mdi-account.mdi.v-icon')
+        const accountIconNotFound = element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiAccount}"]`)
         expect(accountIconNotFound.exists()).toBe(false)
 
         system.$patch({
@@ -148,7 +149,7 @@ describe('AuthActions.vue', () => {
 
         const imgElementNotFound = element.find('img')
         expect(imgElementNotFound.exists()).toBe(false)
-        const accountIcon = element.find('i.mdi-account.mdi.v-icon')
+        const accountIcon = element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiAccount}"]`)
         expect(accountIcon.exists()).toBe(true)
 
         system.$patch({
@@ -178,7 +179,7 @@ describe('AuthActions.vue', () => {
           } = {
             twitch: {
               text: dictionary.twitchButtonText,
-              iconClass: 'mdi-twitch',
+              iconClass: mdiTwitch,
               element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
             },
           }
@@ -186,7 +187,7 @@ describe('AuthActions.vue', () => {
           Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
             expect(element.exists()).toBe(true)
             expect(element.text()).toBe(text)
-            expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
+            expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${iconClass}"]`).exists()).toBe(true)
           })
         },
         {
@@ -243,7 +244,7 @@ describe('AuthActions.vue', () => {
       } = {
         twitch: {
           text: 'twitchAccountName',
-          iconClass: 'mdi-twitch',
+          iconClass: mdiTwitch,
           avatarUrl: 'https://some-domain/avatar.png',
           element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
@@ -266,15 +267,17 @@ describe('AuthActions.vue', () => {
 
           expect(element.exists()).toBe(true)
           expect(element.text()).toBe(text)
-          expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(false)
-          expect(element.find(`i.mdi-close-circle.mdi.v-icon`).exists()).toBe(status)
+          expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${iconClass}"]`).exists()).toBe(false)
+          expect(element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiCloseCircle}"]`).exists()).toBe(status)
           expect(deleteElement.text()).toBe('')
-          expect(deleteElement.find(`i.mdi-${status ? 'delete' : 'logout'}.mdi.v-icon`).exists()).toBe(true)
+          expect(
+            deleteElement.find(`i.v-icon > svg.v-icon__svg > path[d="${status ? mdiDelete : mdiLogout}"]`).exists()
+          ).toBe(true)
 
           const imgElement = element.find('img')
           expect(imgElement.exists()).toBe(true)
           expect(imgElement.attributes().src).toBe(avatarUrl)
-          const accountIconNotFound = element.find('i.mdi-account.mdi.v-icon')
+          const accountIconNotFound = element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiAccount}"]`)
           expect(accountIconNotFound.exists()).toBe(false)
 
           system.$patch({
@@ -289,7 +292,7 @@ describe('AuthActions.vue', () => {
 
           const imgElementNotFound = element.find('img')
           expect(imgElementNotFound.exists()).toBe(false)
-          const accountIcon = element.find('i.mdi-account.mdi.v-icon')
+          const accountIcon = element.find(`i.v-icon > svg.v-icon__svg > path[d="${mdiAccount}"]`)
           expect(accountIcon.exists()).toBe(true)
 
           system.$patch({

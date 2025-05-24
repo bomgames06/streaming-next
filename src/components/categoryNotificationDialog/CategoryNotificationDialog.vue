@@ -5,6 +5,7 @@ import AppBusiness from '@/services/business/appBusiness'
 import type { CategorySearchItem, StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 import { compact, debounce, orderBy, trim, uniqBy, upperCase } from 'lodash'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
+import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -215,7 +216,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                   class="px-2"
                   @click="addCategory()"
                 >
-                  <v-icon>mdi-plus</v-icon>
+                  <v-icon :icon="mdiPlus" />
                 </v-btn>
               </div>
             </v-col>
@@ -273,7 +274,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                   v-if="categoryAddStream?.id !== expandCategory.id"
                   :id="`list-item-add-${expandCategory.id}`"
                   :title="t('categoryNotificationDialog.addStream')"
-                  prepend-icon="mdi-plus"
+                  :prepend-icon="mdiPlus"
                   class="px-2"
                   @click="openAddStream(expandCategory)"
                 />
@@ -312,7 +313,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                           class="px-2"
                           @click="addStream(categoryAddStream, stream)"
                         >
-                          <v-icon>mdi-plus</v-icon>
+                          <v-icon :icon="mdiPlus" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -325,7 +326,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                           class="px-2"
                           @click="closeAddStream"
                         >
-                          <v-icon>mdi-close</v-icon>
+                          <v-icon :icon="mdiClose" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -354,7 +355,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                         )
                       "
                     >
-                      <v-icon size="large" color="error">mdi-delete</v-icon>
+                      <v-icon size="large" color="error" :icon="mdiDelete" />
                     </v-btn>
                   </template>
                 </v-list-item>

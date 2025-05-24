@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
 import type { VListItem } from 'vuetify/components'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
+import { mdiCameraOff, mdiCheckboxBlankOutline, mdiCheckboxMarked, mdiDelete } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -54,16 +55,16 @@ function itemClick() {
       <div class="mr-2 h-100">
         <v-img v-if="props.category.imageUrl" :src="props.category.imageUrl" :aspect-ratio="imageRatio" width="30" />
         <v-sheet v-else color="surface-light" style="width: 30px" class="d-flex align-center justify-center h-100">
-          <v-icon>mdi-camera-off</v-icon>
+          <v-icon :icon="mdiCameraOff" />
         </v-sheet>
       </div>
     </template>
     <template #append>
       <v-icon v-if="props.streamItem">
-        {{ selected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+        {{ selected ? mdiCheckboxMarked : mdiCheckboxBlankOutline }}
       </v-icon>
       <v-btn v-else icon size="x-small" variant="flat" @click="emit('delete')">
-        <v-icon size="large" color="error">mdi-delete</v-icon>
+        <v-icon size="large" color="error" :icon="mdiDelete" />
       </v-btn>
     </template>
   </v-list-item>

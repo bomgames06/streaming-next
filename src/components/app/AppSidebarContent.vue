@@ -2,6 +2,7 @@
 import type { ViewStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
+import { mdiCog, mdiController, mdiFormatListText, mdiMagnify } from '@mdi/js'
 
 const sidebar = defineModel<boolean>('sidebar')
 
@@ -26,7 +27,7 @@ function openView(view: ViewStore) {
       @click="openView('streams')"
     >
       <v-tooltip activator="parent" location="end" :text="t('views.streams')" />
-      <v-icon>mdi-format-list-text</v-icon>
+      <v-icon :icon="mdiFormatListText" />
     </v-list-item>
     <v-list-item
       v-if="system.accounts.twitch && !system.accounts.twitch.invalid"
@@ -38,7 +39,7 @@ function openView(view: ViewStore) {
       @click="openView('categories')"
     >
       <v-tooltip activator="parent" location="end" :text="t('views.categories')" />
-      <v-icon>mdi-controller</v-icon>
+      <v-icon :icon="mdiController" />
     </v-list-item>
     <v-list-item
       v-if="system.accounts.twitch && !system.accounts.twitch.invalid"
@@ -50,7 +51,7 @@ function openView(view: ViewStore) {
       @click="openView('search')"
     >
       <v-tooltip activator="parent" location="end" :text="t('views.search')" />
-      <v-icon>mdi-magnify</v-icon>
+      <v-icon :icon="mdiMagnify" />
     </v-list-item>
     <v-spacer />
     <v-list-item
@@ -62,7 +63,7 @@ function openView(view: ViewStore) {
       @click="openView('settings')"
     >
       <v-tooltip activator="parent" location="end" :text="t('views.settings')" />
-      <v-icon>mdi-cog</v-icon>
+      <v-icon :icon="mdiCog" />
     </v-list-item>
   </v-list>
 </template>

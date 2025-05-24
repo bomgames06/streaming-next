@@ -4,6 +4,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import AppBusiness from '@/services/business/appBusiness'
 import { debounce, orderBy } from 'lodash'
+import { mdiMagnify } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -73,7 +74,7 @@ watch(
         :loading="fetching"
         @click="fetchChannels()"
       >
-        <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
+        <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
         <span>{{ t('searchView.searchMore') }}</span>
       </v-btn>
     </template>

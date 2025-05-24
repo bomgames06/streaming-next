@@ -20,4 +20,8 @@ const system = useSystemStore()
   </v-app>
 </template>
 
-<style></style>
+<style scoped lang="scss">
+::v-deep(.v-application__wrap) {
+  min-height: 0;
+}
+</style>

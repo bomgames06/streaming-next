@@ -6,6 +6,7 @@ import manifestConfig from './manifest.config'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import type { PluginOption } from 'vite'
 
 const pkg = readJsonFile('package.json')
 
@@ -16,7 +17,7 @@ function generateManifest(command: 'build' | 'serve') {
   }
 }
 
-export default defineConfig(({ command }) => {
+export default defineConfig((env) => {
   return {
     base: './',
     plugins: [
@@ -31,10 +32,24 @@ export default defineConfig(({ command }) => {
       }),
       webExtension({
         browser: process.env.TARGET || 'chrome',
-        manifest: () => generateManifest(command),
+        manifest: () => generateManifest(env.command),
         watchFilePaths: ['package.json', 'manifest.config.ts'],
         disableAutoLaunch: true,
-      }),
+        additionalInputs: ['src/quick-popup.ts'],
+        scriptViteConfig: {
+          build: {
+            lib: {
+              entry: 'src/quick-popup.ts',
+              formats: [],
+            },
+            rollupOptions: {
+              output: {
+                assetFileNames: 'quick-popup.css',
+              },
+            },
+          },
+        },
+      }) as PluginOption,
       AutoImport({
         imports: ['vue'],
         dts: 'src/auto-imports.d.ts',

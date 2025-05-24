@@ -7,13 +7,13 @@ import toastrPlugin from '@/plugins/toastr'
 import errorPlugin from '@/plugins/error'
 import apiPlugin from '@/plugins/api'
 
-function registerPlugins(app: App) {
+function registerPlugins(app: App, quickPopup?: boolean) {
   app.use(apiPlugin)
   app.use(i18n)
   app.use(momentPlugin)
   app.use(toastrPlugin)
   app.use(pinia)
-  app.use(vuetify)
+  app.use(vuetify(quickPopup))
   app.use(errorPlugin)
 }
 

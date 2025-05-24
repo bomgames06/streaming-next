@@ -7,6 +7,7 @@ import AppBusiness from '@/services/business/appBusiness'
 import type { User } from '@/types/userType'
 import browser from 'webextension-polyfill'
 import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
+import { mdiTwitch } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -53,7 +54,7 @@ function openProfile(account: AccountStore, middle?: boolean): void {
     :authenticating="authenticating"
     :color-auth="accountTypeColor('twitch')"
     :color-class="accountTypeColor('twitch', true)"
-    icon-auth="mdi-twitch"
+    :icon-auth="mdiTwitch"
     :list-item="props.listItem"
     :text-auth="t('auth.twitchAuth')"
     data-testid="twitch-auth"

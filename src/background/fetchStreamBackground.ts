@@ -1,4 +1,4 @@
-import browser, { Alarms } from 'webextension-polyfill'
+import browser from 'webextension-polyfill'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
 import type { AccountDataStore } from '@/store/system/types/systemStoreType'
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
@@ -7,13 +7,13 @@ import type { BackgroundMessageType } from '@/background/types/backgroundMessage
 import notificationHandler from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
-import Alarm = Alarms.Alarm
+import type { Alarms } from 'webextension-polyfill/namespaces/alarms'
 
 let isFetching = false
 
 browser.alarms.create('fetchStream', { periodInMinutes: 0.5 })
 
-async function fetchStreams(alarm?: Alarm): Promise<void> {
+async function fetchStreams(alarm?: Alarms.Alarm): Promise<void> {
   if (alarm && alarm.name !== 'fetchStream') return
   if (isFetching) return
 
