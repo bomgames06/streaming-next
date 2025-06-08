@@ -23,18 +23,24 @@ export function generateState(size?: number): string {
 
 export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, text?: boolean): string {
   if (accountType === 'twitch') return `${bg ? 'bg-' : text ? 'text-' : ''}twitch`
+  if (accountType === 'youtube') return `${bg ? 'bg-' : text ? 'text-' : ''}red`
   else throw new Error('accountType is undefined')
 }
 
 export function twitchUrl(name: string): string {
   return `https://twitch.tv/${name}`
 }
+export function youtubeUrl(name: string, isChannelId?: boolean): string {
+  return `https://www.youtube.com${isChannelId ? '/channel' : ''}/${name}`
+}
 export function accountProfileUrl(account: AccountStore): string {
   if (account.type === 'twitch') return twitchUrl(account.login)
+  if (account.type === 'youtube') return youtubeUrl(account.login)
   else throw new Error('accountType is undefined')
 }
 export function streamItemProfileUrl(item: StreamItemType): string {
   if (item.type === 'twitch') return twitchUrl(item.login)
+  if (item.type === 'youtube') return youtubeUrl(item.login, true)
   else throw new Error('accountType is undefined')
 }
 

@@ -50,6 +50,11 @@ describe('AuthActions.vue', () => {
               iconClass: 'mdi-twitch',
               element: wrapper.find('button[data-testid="twitch-auth"]'),
             },
+            youtube: {
+              text: dictionary.youtubeButtonText,
+              iconClass: 'mdi-youtube',
+              element: wrapper.find('button[data-testid="youtube-auth"]'),
+            },
           }
 
           Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
@@ -61,9 +66,11 @@ describe('AuthActions.vue', () => {
         {
           en: {
             twitchButtonText: 'Authenticate on Twitch',
+            youtubeButtonText: 'Authenticate on Youtube',
           },
           'pt-BR': {
             twitchButtonText: 'Autenticar na Twitch',
+            youtubeButtonText: 'Autenticar no Youtube',
           },
         }
       )
@@ -77,6 +84,16 @@ describe('AuthActions.vue', () => {
           name: 'twitchAccountName',
           login: 'login',
           avatarUrl: 'https://some-domain/avatar.png',
+          token: 'token',
+          invalid: true,
+        },
+        youtube: {
+          id: 'id',
+          type: 'youtube',
+          accountId: 'accountId',
+          name: 'youtubeAccountName',
+          login: 'login',
+          avatarUrl: 'https://some-domain/avatar2.png',
           token: 'token',
           invalid: true,
         },
@@ -116,6 +133,13 @@ describe('AuthActions.vue', () => {
           avatarUrl: 'https://some-domain/avatar.png',
           element: wrapper.find('button[data-testid="twitch-auth"]'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
+        },
+        youtube: {
+          text: 'youtubeAccountName',
+          iconClass: 'mdi-youtube',
+          avatarUrl: 'https://some-domain/avatar2.png',
+          element: wrapper.find('button[data-testid="youtube-auth"]'),
+          deleteElement: wrapper.find('button[data-testid="youtube-auth-delete"]'),
         },
       }
 
@@ -181,6 +205,11 @@ describe('AuthActions.vue', () => {
               iconClass: 'mdi-twitch',
               element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
             },
+            youtube: {
+              text: dictionary.youtubeButtonText,
+              iconClass: 'mdi-youtube',
+              element: wrapper.find('div[data-testid="youtube-auth"].v-list-item'),
+            },
           }
 
           Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
@@ -192,9 +221,11 @@ describe('AuthActions.vue', () => {
         {
           en: {
             twitchButtonText: 'Authenticate on Twitch',
+            youtubeButtonText: 'Authenticate on Youtube',
           },
           'pt-BR': {
             twitchButtonText: 'Autenticar na Twitch',
+            youtubeButtonText: 'Autenticar no Youtube',
           },
         }
       )
@@ -208,6 +239,16 @@ describe('AuthActions.vue', () => {
           name: 'twitchAccountName',
           login: 'login',
           avatarUrl: 'https://some-domain/avatar.png',
+          token: 'token',
+          invalid: true,
+        },
+        youtube: {
+          id: 'id',
+          type: 'youtube',
+          accountId: 'accountId',
+          name: 'youtubeAccountName',
+          login: 'login',
+          avatarUrl: 'https://some-domain/avatar2.png',
           token: 'token',
           invalid: true,
         },
@@ -248,7 +289,16 @@ describe('AuthActions.vue', () => {
           element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
         },
+        youtube: {
+          text: 'youtubeAccountName',
+          iconClass: 'mdi-youtube',
+          avatarUrl: 'https://some-domain/avatar2.png',
+          element: wrapper.find('div[data-testid="youtube-auth"].v-list-item'),
+          deleteElement: wrapper.find('button[data-testid="youtube-auth-delete"]'),
+        },
       }
+
+      console.log(wrapper.html())
 
       for (const [key, { text, iconClass, avatarUrl, element, deleteElement }] of Object.entries(buttonAuthTypes)) {
         const accountType = key as AccountStoreType
@@ -266,7 +316,7 @@ describe('AuthActions.vue', () => {
 
           expect(element.exists()).toBe(true)
           expect(element.text()).toBe(text)
-          expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(false)
+          expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
           expect(element.find(`i.mdi-close-circle.mdi.v-icon`).exists()).toBe(status)
           expect(deleteElement.text()).toBe('')
           expect(deleteElement.find(`i.mdi-${status ? 'delete' : 'logout'}.mdi.v-icon`).exists()).toBe(true)
@@ -309,6 +359,9 @@ describe('AuthActions.vue', () => {
       twitch: {
         dataTestid: '[data-testid="twitch-auth"]',
       },
+      youtube: {
+        dataTestid: '[data-testid="youtube-auth"]',
+      },
     }
 
     for (const [key, { dataTestid }] of Object.entries(buttonAuthTypes)) {
@@ -349,7 +402,7 @@ describe('AuthActions.vue', () => {
         expect(system.loaded).toHaveBeenCalledTimes(1)
 
         expect(authAppBusinessMock).toHaveBeenCalledOnce()
-        expect(authAppBusinessMock.mock.lastCall).toStrictEqual(['twitch', undefined])
+        expect(authAppBusinessMock.mock.lastCall).toStrictEqual([key, undefined])
 
         const authenticatedButtonEmitted = wrapper.emitted('authenticated')
         expect(authenticatedButtonEmitted).toHaveLength(1)
@@ -377,6 +430,16 @@ describe('AuthActions.vue', () => {
         name: 'name',
         login: 'login',
         avatarUrl: 'https://some-domain/avatar.png',
+        token: 'token',
+        invalid: true,
+      },
+      youtube: {
+        id: 'id',
+        type: 'youtube',
+        accountId: 'accountId',
+        name: 'name',
+        login: 'login',
+        avatarUrl: 'https://some-domain/avatar2.png',
         token: 'token',
         invalid: true,
       },
@@ -485,6 +548,16 @@ describe('AuthActions.vue', () => {
         token: 'token',
         invalid: false,
       },
+      youtube: {
+        id: 'id',
+        type: 'youtube',
+        accountId: 'accountId',
+        name: 'youtubeAccountName',
+        login: 'login',
+        avatarUrl: 'https://some-domain/avatar2.png',
+        token: 'token',
+        invalid: false,
+      },
     }
 
     const wrapper = mount(AuthActions, {
@@ -514,6 +587,10 @@ describe('AuthActions.vue', () => {
         url: 'https://twitch.tv/login',
         dataTestid: '[data-testid="twitch-auth"]',
       },
+      youtube: {
+        url: 'https://www.youtube.com/login',
+        dataTestid: '[data-testid="youtube-auth"]',
+      },
     }
 
     const createTabsSpy = vi.spyOn(browser.tabs, 'create')
@@ -542,6 +619,16 @@ describe('AuthActions.vue', () => {
         token: 'token',
         invalid: true,
       },
+      youtube: {
+        id: 'id',
+        type: 'youtube',
+        accountId: 'accountId',
+        name: 'youtubeAccountName',
+        login: 'login',
+        avatarUrl: 'https://some-domain/avatar2.png',
+        token: 'token',
+        invalid: true,
+      },
     }
 
     const buttonAuthTypes: {
@@ -551,6 +638,9 @@ describe('AuthActions.vue', () => {
     } = {
       twitch: {
         dataTestid: '[data-testid="twitch-auth"]',
+      },
+      youtube: {
+        dataTestid: '[data-testid="youtube-auth"]',
       },
     }
 
@@ -601,7 +691,7 @@ describe('AuthActions.vue', () => {
       expect(system.loaded).toHaveBeenCalledTimes(1)
 
       expect(authAppBusinessMock).toHaveBeenCalledOnce()
-      expect(authAppBusinessMock.mock.lastCall).toStrictEqual(['twitch', undefined])
+      expect(authAppBusinessMock.mock.lastCall).toStrictEqual([accountType, undefined])
 
       const authenticatedButtonEmitted = wrapper.emitted('authenticated')
       expect(authenticatedButtonEmitted).toHaveLength(1)

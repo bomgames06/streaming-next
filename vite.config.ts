@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import webExtension, { readJsonFile } from 'vite-plugin-web-extension'
@@ -9,10 +10,10 @@ import AutoImport from 'unplugin-auto-import/vite'
 
 const pkg = readJsonFile('package.json')
 
-function generateManifest(command: 'build' | 'serve') {
+function generateManifest(command: 'build' | 'serve', oAuth2ClientId: string) {
   return {
     version: pkg.version,
-    ...manifestConfig(command),
+    ...manifestConfig(command, oAuth2ClientId),
   }
 }
 
@@ -31,7 +32,7 @@ export default defineConfig(({ command }) => {
       }),
       webExtension({
         browser: process.env.TARGET || 'chrome',
-        manifest: () => generateManifest(command),
+        manifest: () => generateManifest(command, process.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID || ''),
         watchFilePaths: ['package.json', 'manifest.config.ts'],
         disableAutoLaunch: true,
       }),

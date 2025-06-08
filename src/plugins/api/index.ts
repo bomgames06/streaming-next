@@ -1,5 +1,5 @@
 import type { Plugin } from 'vue'
-import { onResponseError } from '@/services/api/twitch/events/twitchApiEvent'
+import { onResponseError } from '@/services/events/tokenApiEvent.ts'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import useSystemStore from '@/store/system/useSystemStore'
 

@@ -61,6 +61,19 @@ function openProfile(account: AccountStore, middle?: boolean): void {
     @click="clickAccount"
     @delete="system.removeAccount('twitch')"
   />
+  <AuthActionsButton
+    :account="system.accounts.youtube"
+    :authenticating="authenticating"
+    :color-auth="accountTypeColor('youtube')"
+    :color-class="accountTypeColor('youtube', true)"
+    icon-auth="mdi-youtube"
+    :list-item="props.listItem"
+    :text-auth="t('auth.youtubeAuth')"
+    data-testid="youtube-auth"
+    @auth="auth('youtube', $event)"
+    @click="clickAccount"
+    @delete="system.removeAccount('youtube')"
+  />
 </template>
 
 <style scoped></style>

@@ -51,6 +51,7 @@ const emit = defineEmits<{
       </template>
       <v-list-item-title class="pr-2">
         <v-icon v-if="props.account.invalid" class="mr-1">mdi-close-circle</v-icon>
+        <v-icon class="mr-1">{{ props.iconAuth }}</v-icon>
         <span>{{ props.account.name }}</span>
       </v-list-item-title>
     </v-list-item>

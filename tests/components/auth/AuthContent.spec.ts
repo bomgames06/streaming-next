@@ -65,6 +65,9 @@ describe('AuthContent.vue', () => {
       twitch: {
         dataTestid: '[data-testid="twitch-auth"]',
       },
+      youtube: {
+        dataTestid: '[data-testid="youtube-auth"]',
+      },
     }
 
     for (const [key, { dataTestid }] of Object.entries(buttonAuthTypes)) {
@@ -99,7 +102,7 @@ describe('AuthContent.vue', () => {
       expect(system.loading).toHaveBeenCalledTimes(2)
       expect(system.loaded).toHaveBeenCalledTimes(2)
       expect(authAppBusinessMock).toHaveBeenCalledOnce()
-      expect(authAppBusinessMock.mock.lastCall).toStrictEqual(['twitch', undefined])
+      expect(authAppBusinessMock.mock.lastCall).toStrictEqual([accountType, undefined])
       expect(system.addAccount).toHaveBeenCalledOnce()
       expect(system.addAccount).toHaveBeenCalledWith({
         type: accountType,

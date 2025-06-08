@@ -15,23 +15,32 @@ import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import browser from 'webextension-polyfill'
 import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
+import YoutubeBusiness from '@/services/business/youtubeBusiness.ts'
 
 const system = useSystemStore()
 const { t } = useI18n()
 
 const firstLoading = ref<boolean>(true)
 const showOfflines = ref<boolean>(false)
-const onlines = ref<StreamItemLiveOnlineType[]>([])
-const streams = ref<StreamItemLiveStreamType[]>([])
+const onlinesTwitch = ref<StreamItemLiveOnlineType[]>([])
+const streamsTwitch = ref<StreamItemLiveStreamType[]>([])
+const streamsYoutube = ref<StreamItemLiveStreamType[]>([])
 const fetchTimeout = ref<ReturnType<typeof setInterval>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
 
-const offlines = computed(() =>
-  streams.value.filter((value) => !onlines.value.some((item) => item.id === value.id && item.type === value.type))
+const onlines = computed(() => onlinesTwitch.value)
+const streams = computed(() => [...streamsTwitch.value, ...streamsYoutube.value])
+
+const offlinesTwitch = computed(() =>
+  streamsTwitch.value.filter(
+    (value) => !onlinesTwitch.value.some((item) => item.id === value.id && item.type === value.type)
+  )
 )
+const offlinesYoutube = computed(() => streamsYoutube.value)
+const offlines = computed(() => [...offlinesTwitch.value, ...offlinesYoutube.value])
 
 const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
 watch(
@@ -127,9 +136,7 @@ function orderType(value: StreamItemType) {
 }
 
 function filterItem(value: StreamItemLiveType): boolean {
-  let show = true
-
-  if (!showOfflinesComp.value && isOfflineStream(value)) show = false
+  if (!showOfflinesComp.value && isOfflineStream(value)) return false
   else if (
     !(
       (!system.showFavoritesComp && !system.showNotificationsComp) ||
@@ -137,17 +144,17 @@ function filterItem(value: StreamItemLiveType): boolean {
       (system.showNotificationsComp && notificationItemEnabled(value))
     )
   )
-    show = false
+    return false
   else if (filter.value) {
-    if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
+    if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) return false
     if (
       ['game'].includes(system.streamOrder) &&
       (isOfflineStream(value) || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
     )
-      show = false
+      return false
   }
 
-  return show
+  return true
 }
 
 function favoriteItemEnabled(item: StreamItemType) {
@@ -175,7 +182,7 @@ async function fetchData() {
       fetchTimeout.value = undefined
     }
 
-    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
+    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch(), fetchStreamsYoutube()])
   } finally {
     system.loaded()
     system.refreshed()
@@ -190,7 +197,7 @@ async function fetchOnlineTwitch(): Promise<void> {
   system.loading()
   try {
     if (!system.accounts.twitch || system.accounts.twitch.invalid) {
-      onlines.value = []
+      onlinesTwitch.value = []
       return
     }
 
@@ -206,7 +213,7 @@ async function fetchOnlineTwitch(): Promise<void> {
     void browser.runtime.sendMessage(message)
 
     dump.value = Date.now().toString()
-    onlines.value = items
+    onlinesTwitch.value = items
   } finally {
     system.loaded()
   }
@@ -216,15 +223,30 @@ async function fetchStreamsTwitch(): Promise<void> {
   system.loading()
   try {
     if (!system.accounts.twitch || system.accounts.twitch.invalid) {
-      streams.value = []
+      streamsTwitch.value = []
       return
     }
 
-    streams.value = system.accountsCacheStreams?.twitch || []
-    streams.value = await TwitchBusiness.getStreamersFollowed(
+    streamsTwitch.value = system.accountsCacheStreams?.twitch || []
+    streamsTwitch.value = await TwitchBusiness.getStreamersFollowed(
       system.accounts.twitch.token,
       system.accounts.twitch.accountId
     )
+  } finally {
+    system.loaded()
+  }
+}
+
+async function fetchStreamsYoutube(): Promise<void> {
+  system.loading()
+  try {
+    if (!system.accounts.youtube || system.accounts.youtube.invalid) {
+      streamsYoutube.value = []
+      return
+    }
+
+    streamsYoutube.value = system.accountsCacheStreams?.youtube || []
+    streamsYoutube.value = await YoutubeBusiness.getStreamersFollowed()
   } finally {
     system.loaded()
   }
@@ -244,7 +266,7 @@ async function fetchStreamsTwitch(): Promise<void> {
               <v-col class="d-flex" cols="auto">
                 <v-divider class="h-75 align-self-center" vertical />
               </v-col>
-              <v-col cols="auto">
+              <v-col v-if="system.accounts.twitch && !system.accounts.twitch.invalid" cols="auto">
                 <v-btn
                   v-tooltip="t('common.group')"
                   accesskey="g"
@@ -279,7 +301,12 @@ async function fetchStreamsTwitch(): Promise<void> {
                   </v-icon>
                 </v-btn>
               </v-col>
-              <v-col v-if="system.notificationType === 'partial'" cols="auto">
+              <v-col
+                v-if="
+                  system.notificationType === 'partial' && system.accounts.twitch && !system.accounts.twitch.invalid
+                "
+                cols="auto"
+              >
                 <v-btn
                   v-tooltip="t('common.notification', 2)"
                   accesskey="n"
@@ -317,7 +344,7 @@ async function fetchStreamsTwitch(): Promise<void> {
           </v-col>
           <v-spacer />
           <v-col
-            v-if="system.notificationType !== 'none'"
+            v-if="system.notificationType !== 'none' && system.accounts.twitch && !system.accounts.twitch.invalid"
             :aria-label="t('common.notification')"
             role="group"
             cols="auto"

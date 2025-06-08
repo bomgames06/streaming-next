@@ -21,12 +21,16 @@ export type SetCountBadgeBackgroundMessageType = {
 export type FetchStreamBackgroundMessageType = {
   type: 'fetchStream'
 }
+export type GetAccessTokenChromeBackgroundMessageType = {
+  type: 'getAccessTokenChrome'
+}
 export type BackgroundMessageType =
   | AuthBackgroundMessageType
   | RevokeBackgroundMessageType
   | InvalidateBadgeBackgroundMessageType
   | SetCountBadgeBackgroundMessageType
   | FetchStreamBackgroundMessageType
+  | GetAccessTokenChromeBackgroundMessageType
 
 export type FetchAccountsApplicationMessageType = {
   type: 'fetchAccounts'

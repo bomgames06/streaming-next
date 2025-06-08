@@ -254,6 +254,12 @@ const useSystemStore = defineStore('System', () => {
     value.invalid = true
     saveAccounts()
   }
+  function invalidAccountByAccountType(accountType: AccountStoreType) {
+    const value = Object.values(accounts.value).find((value) => value.type === accountType)
+    if (!value) return
+    value.invalid = true
+    saveAccounts()
+  }
   function addNotification(accountType: AccountStoreType, id: string) {
     notifications.value.push({ type: accountType, id })
     void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATIONS]: cloneDeep(notifications.value) })
@@ -507,6 +513,7 @@ const useSystemStore = defineStore('System', () => {
     addAccount,
     removeAccount,
     invalidAccountByToken,
+    invalidAccountByAccountType,
     addNotification,
     removeNotification,
     addFavorite,

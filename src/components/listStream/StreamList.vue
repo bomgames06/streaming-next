@@ -62,6 +62,9 @@ function itemClick(value: { item: StreamItemType; middle?: boolean }): void {
       return void browser.tabs.create({ url: streamItemProfileUrl(value.item), active: !value.middle })
     if (isContentStream(value.item)) return void browser.tabs.create({ url: value.item.url, active: !value.middle })
   }
+  if (value.item.type === 'youtube') {
+    return void browser.tabs.create({ url: streamItemProfileUrl(value.item), active: !value.middle })
+  }
 }
 
 watch(props.items, (items) => {

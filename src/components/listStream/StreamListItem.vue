@@ -98,7 +98,7 @@ function formatStreamDuration(value: StreamItemType) {
 }
 
 async function showMenu(event: PointerEvent) {
-  if (detailItem.value || props.disableContextMenu || item.value.type !== 'twitch') return
+  if (detailItem.value || props.disableContextMenu) return
   menu.x = event.clientX
   menu.y = event.clientY
   menuShow.value = item.value
@@ -265,7 +265,7 @@ function isVerified(value?: StreamItemType): boolean {
               </template>
               <template v-if="itemIntersected" #default>
                 <v-menu
-                  v-if="isLiveType(item) && item.type === 'twitch'"
+                  v-if="isLiveType(item)"
                   :model-value="!!menuShow && equals(menuShow, item)"
                   :target="[menu.x, menu.y]"
                   @close="closeMenu()"
@@ -283,7 +283,11 @@ function isVerified(value?: StreamItemType): boolean {
                       "
                     />
                     <v-list-item
-                      v-if="system.notificationType === 'partial' && !props.disableNotificationMenu"
+                      v-if="
+                        system.notificationType === 'partial' &&
+                        !props.disableNotificationMenu &&
+                        item.type === 'twitch'
+                      "
                       :prepend-icon="notificationEnabled ? 'mdi-bell' : 'mdi-bell-outline'"
                       :title="
                         notificationEnabled
@@ -297,7 +301,9 @@ function isVerified(value?: StreamItemType): boolean {
                       "
                     />
                     <v-list-item
-                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
+                      v-if="
+                        system.notificationType !== 'none' && !props.disableNotificationMenu && item.type === 'twitch'
+                      "
                       :title="t('streamList.menu.categoryNotification')"
                       @click="categoryNotification(item)"
                     >
@@ -311,7 +317,9 @@ function isVerified(value?: StreamItemType): boolean {
                       </template>
                     </v-list-item>
                     <v-list-item
-                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
+                      v-if="
+                        system.notificationType !== 'none' && !props.disableNotificationMenu && item.type === 'twitch'
+                      "
                       :title="t('streamList.menu.groupStream')"
                       @click="groupStream(item)"
                     >
@@ -325,13 +333,21 @@ function isVerified(value?: StreamItemType): boolean {
                       </template>
                     </v-list-item>
                     <v-list-item
-                      v-if="!props.disableCategoryMenu && item.status === 'online' && item.gameId"
+                      v-if="
+                        !props.disableCategoryMenu && item.status === 'online' && item.gameId && item.type === 'twitch'
+                      "
                       prepend-icon="mdi-controller"
                       :title="t('streamList.menu.category')"
                       @click="system.setView('categories', { categoryId: item.gameId })"
                     />
-                    <v-list-item prepend-icon="mdi-video" :title="t('streamList.menu.videos')" @click="enableVideo()" />
                     <v-list-item
+                      v-if="item.type === 'twitch'"
+                      prepend-icon="mdi-video"
+                      :title="t('streamList.menu.videos')"
+                      @click="enableVideo()"
+                    />
+                    <v-list-item
+                      v-if="item.type === 'twitch'"
                       prepend-icon="mdi-movie-open-star"
                       :title="t('streamList.menu.clips')"
                       @click="enableClip()"
@@ -344,6 +360,9 @@ function isVerified(value?: StreamItemType): boolean {
                   >
                     <v-icon v-if="item.type === 'twitch'" class="text-body-1" :color="accountTypeColor('twitch')">
                       mdi-twitch
+                    </v-icon>
+                    <v-icon v-if="item.type === 'youtube'" class="text-body-1" :color="accountTypeColor('youtube')">
+                      mdi-youtube
                     </v-icon>
                     <span class="mx-1 overflow-hidden text-truncate">{{ item.name }}</span>
                     <v-icon v-if="isVerified(item) || isVerified(props.parent)" class="text-body-2">

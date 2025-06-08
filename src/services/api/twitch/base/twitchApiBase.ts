@@ -1,7 +1,7 @@
 import AxiosBase from '@/services/base/axiosBase'
 import type { TwitchApiBaseArrayType } from '../types/twitchApiType'
 import { type AxiosRequestConfig } from 'axios'
-import { emitResponseError } from '@/services/api/twitch/events/twitchApiEvent'
+import { emitResponseError } from '@/services/events/tokenApiEvent.ts'
 
 export default class TwitchApiBase extends AxiosBase {
   constructor(path: string) {

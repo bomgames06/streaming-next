@@ -16,14 +16,19 @@ type ManifestBrowserPrefix<K> = ManifestBrowserPrefixBase<K> &
   ManifestBrowserPrefixChrome<K> &
   ManifestBrowserPrefixFirefox<K>
 
-type ManifestBrowser = ManifestBrowserPrefix<Manifest.WebExtensionManifest>
+type ManifestBrowser = ManifestBrowserPrefix<Manifest.WebExtensionManifest> & {
+  oauth2: {
+    client_id: string
+    scopes: string[]
+  }
+}
 
-function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
+function manifestConfig(command: 'build' | 'serve', oAuth2ClientId: string): ManifestBrowser {
   let extensionPages = ''
   extensionPages += "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   extensionPages += `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
-  extensionPages += `connect-src 'self' https://api.twitch.tv https://id.twitch.tv https://static-cdn.jtvnw.net${command === 'serve' ? ' ws://localhost:*' : ''};`
-  extensionPages += `img-src 'self' https://vod-secure.twitch.tv https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv data:${command === 'serve' ? ' http://localhost:*' : ''};`
+  extensionPages += `connect-src 'self' https://api.twitch.tv https://id.twitch.tv https://www.googleapis.com https://static-cdn.jtvnw.net${command === 'serve' ? ' ws://localhost:*' : ''};`
+  extensionPages += `img-src 'self' https://vod-secure.twitch.tv https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://yt3.ggpht.com data:${command === 'serve' ? ' http://localhost:*' : ''};`
   extensionPages += `font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
   extensionPages += "frame-src 'self' https://player.twitch.tv;"
 
@@ -55,6 +60,10 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
     permissions: ['identity', 'storage', 'notifications', 'alarms'],
     content_security_policy: {
       extension_pages: extensionPages,
+    },
+    oauth2: {
+      client_id: oAuth2ClientId,
+      scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
     },
   }
 }

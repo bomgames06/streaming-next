@@ -21,6 +21,7 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "vite.config.ts", "vitest.workspace.ts", "manifest.config.ts"
+    "vite.config.ts",
+    "vitest.config.ts", "manifest.config.ts"
   ]
 }

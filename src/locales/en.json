@@ -30,7 +30,8 @@
     "remove": "Remove",
     "removeAccount": "Remove {name}",
     "twitchAuth": "Authenticate on Twitch",
-    "twitchExpireMessage": "* Twitch authentication by default lasts 60 days"
+    "twitchExpireMessage": "* Twitch authentication by default lasts 60 days",
+    "youtubeAuth": "Authenticate on Youtube"
   },
   "categoriesList": {
     "appBarView": {
