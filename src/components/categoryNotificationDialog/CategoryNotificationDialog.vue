@@ -5,17 +5,20 @@ import AppBusiness from '@/services/business/appBusiness'
 import type { CategorySearchItem, StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 import { compact, debounce, orderBy, trim, uniqBy, upperCase } from 'lodash'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
+import TwitchBusiness from '@/services/business/twitchBusiness.ts'
+import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
 
 const { t } = useI18n()
 
 const model = defineModel<boolean>({ default: false })
 const props = defineProps<{
-  streams: StreamItemLiveStreamType[]
+  streams?: StreamItemLiveStreamType[]
   streamItem?: StreamItemLiveStreamType
 }>()
 
 const system = useSystemStore()
 
+const streamsFetched = ref<StreamItemLiveStreamType[]>([])
 const category = ref<string | CategorySearchItem>('')
 const search = ref<string>('')
 const fetching = ref<boolean>(false)
@@ -25,6 +28,7 @@ const categoryAddStream = ref<CategoryNotificationStore>()
 const stream = ref<StreamItemLiveStreamType>()
 const expandCategory = ref<CategoryNotificationStore>()
 
+const streamsItemsComp = computed<StreamItemLiveStreamType[]>(() => props.streams || streamsFetched.value)
 const categoryComp = computed({
   get: () => category.value,
   set: (value) => {
@@ -35,7 +39,7 @@ const categoryComp = computed({
 })
 const categoryNotificationsItems = computed(() => orderBy(system.categoryNotifications, 'name'))
 const categoryItems = computed(() => orderBy(categories.value, 'name'))
-const streams = computed(() => orderBy(props.streams, 'name'))
+const streamsItems = computed(() => orderBy(streamsItemsComp.value, 'name'))
 const streamCategoryNotications = computed(() => {
   if (!props.streamItem) return []
   return categoryNotificationsItems.value.filter(
@@ -49,15 +53,29 @@ const streamCategoryNotications = computed(() => {
   )
 })
 
-watch(model, () => {
+watch(model, async () => {
   category.value = ''
   categories.value = []
   categoryAddStream.value = undefined
   stream.value = undefined
   expandCategory.value = undefined
+  if (model.value && !props.streams) await fetchStreams()
 })
 watch(search, debounce(fetchCategories, 500))
 watch([category, categories], processCategory)
+
+async function fetchStreams(): Promise<void> {
+  if (!system.accounts.twitch || system.accounts.twitch.invalid) {
+    streamsFetched.value = []
+    return
+  }
+
+  streamsFetched.value = system.accountsCacheStreams?.twitch || []
+  streamsFetched.value = await TwitchBusiness.getStreamersFollowed(
+    system.accounts.twitch.token,
+    system.accounts.twitch.accountId
+  )
+}
 
 function processCategory() {
   const rawCategory = toRaw(category.value)
@@ -140,7 +158,7 @@ async function closeAddStream() {
 function getStreamListFromCategory(category: CategoryNotificationStore): StreamItemLiveStreamType[] {
   return compact(
     category.streams.map((itemStreamCategory) =>
-      props.streams.find(
+      streamsItemsComp.value.find(
         (itemStream) => itemStream.type === itemStreamCategory.type && itemStream.id === itemStreamCategory.id
       )
     )
@@ -164,13 +182,13 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
     <template #default="{ isActive }">
       <v-card :title="t('gameNotificationDialog.title')">
         <v-card-text class="d-flex flex-column overflow-y-auto pb-1">
-          <v-row v-if="props.streamItem" dense class="flex-nowrap flex-grow-0">
+          <v-row v-if="props.streamItem" density="compact" class="flex-nowrap flex-grow-0">
             <v-col cols="12">
               <v-avatar :image="props.streamItem.profileImage" class="mr-2" />
               <span>{{ props.streamItem.name }}</span>
             </v-col>
           </v-row>
-          <v-row dense class="flex-nowrap flex-grow-0">
+          <v-row density="compact" class="flex-nowrap flex-grow-0">
             <v-col>
               <v-combobox
                 v-model="categoryComp"
@@ -196,7 +214,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                 @keydown.esc.prevent="menu ? (menu = false) : (isActive.value = false)"
                 @keydown.enter="addCategory()"
               >
-                <template #item="{ item, props: itemComboboxProps }">
+                <template #item="{ internalItem: item, props: itemComboboxProps }">
                   <v-list-item v-bind="itemComboboxProps" @keydown.esc.prevent="menu = false">
                     <template #prepend>
                       <v-img :src="item.props.imageUrl" width="32" class="mr-2" />
@@ -215,14 +233,14 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                   class="px-2"
                   @click="addCategory()"
                 >
-                  <v-icon>mdi-plus</v-icon>
+                  <v-icon :icon="mdiPlus" />
                 </v-btn>
               </div>
             </v-col>
           </v-row>
           <div class="flex-grow-1 overflow-y-auto mt-2">
             <template v-if="system.categoryNotifications.length">
-              <v-list v-if="props.streamItem" dense class="py-0">
+              <v-list v-if="props.streamItem" density="compact" class="py-0">
                 <CategoryNotificationListItem
                   v-for="categoryNotification in streamCategoryNotications"
                   :key="categoryNotification.id"
@@ -243,7 +261,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                   "
                 />
               </v-list>
-              <v-list v-else dense class="py-0">
+              <v-list v-else density="compact" class="py-0">
                 <v-tooltip
                   v-for="categoryNotification in categoryNotificationsItems"
                   :key="categoryNotification.id"
@@ -268,22 +286,22 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
             </v-sheet>
             <template v-if="expandCategory">
               <v-divider />
-              <v-list dense class="py-0">
+              <v-list density="compact" class="py-0">
                 <v-list-item
                   v-if="categoryAddStream?.id !== expandCategory.id"
                   :id="`list-item-add-${expandCategory.id}`"
                   :title="t('categoryNotificationDialog.addStream')"
-                  prepend-icon="mdi-plus"
+                  :prepend-icon="mdiPlus"
                   class="px-2"
                   @click="openAddStream(expandCategory)"
                 />
                 <v-list-item v-else>
-                  <v-row dense class="flex-nowrap">
+                  <v-row density="compact" class="flex-nowrap">
                     <v-col>
                       <v-autocomplete
                         :id="`autocomplete-${expandCategory.id}`"
                         v-model="stream"
-                        :items="streams"
+                        :items="streamsItems"
                         :item-value="(item) => `${item.type}:${item.id}`"
                         item-title="name"
                         :label="t('categoryNotificationDialog.stream')"
@@ -296,7 +314,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                         <template #item="{ item, props: itemAutocompleteProps }">
                           <v-list-item v-bind="itemAutocompleteProps">
                             <template #prepend>
-                              <v-avatar size="small" :image="item.raw.profileImage" />
+                              <v-avatar size="small" :image="item.profileImage" />
                             </template>
                           </v-list-item>
                         </template>
@@ -312,7 +330,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                           class="px-2"
                           @click="addStream(categoryAddStream, stream)"
                         >
-                          <v-icon>mdi-plus</v-icon>
+                          <v-icon :icon="mdiPlus" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -325,7 +343,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                           class="px-2"
                           @click="closeAddStream"
                         >
-                          <v-icon>mdi-close</v-icon>
+                          <v-icon :icon="mdiClose" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -334,7 +352,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                 <v-list-item
                   v-for="categoryNotificationStream in getStreamListFromCategory(expandCategory)"
                   :key="categoryNotificationStream.id"
-                  dense
+                  density="compact"
                   :title="categoryNotificationStream.name"
                   class="stream-category-content"
                 >
@@ -354,7 +372,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                         )
                       "
                     >
-                      <v-icon size="large" color="error">mdi-delete</v-icon>
+                      <v-icon size="large" color="error" :icon="mdiDelete" />
                     </v-btn>
                   </template>
                 </v-list-item>

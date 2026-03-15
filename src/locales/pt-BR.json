@@ -45,6 +45,11 @@
       },
       "languagesSelected": "{count} Idiomas"
     },
+    "menu": {
+      "addFavorite": "Adicionar favorito",
+      "removeFavorite": "Remover favorito"
+    },
+    "noItems": "Sem categorias",
     "searchMore": "Buscar mais"
   },
   "categoriesView": {

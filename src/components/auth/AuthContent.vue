@@ -32,7 +32,7 @@ async function authenticated({ token, user }: { token: string; user: User }): Pr
 </script>
 
 <template>
-  <v-row align="center" class="h-100" justify="center">
+  <v-row class="h-100 align-center justify-center">
     <v-col class="text-center" cols="auto">
       <p>{{ t('auth.mandatoryMessage') }}</p>
       <div class="d-flex flex-column">

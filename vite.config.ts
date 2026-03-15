@@ -1,3 +1,4 @@
+import type { ConfigEnv } from 'vitest/config'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import webExtension, { readJsonFile } from 'vite-plugin-web-extension'
@@ -6,6 +7,7 @@ import manifestConfig from './manifest.config'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import type { UserConfig } from 'vite'
 
 const pkg = readJsonFile('package.json')
 
@@ -16,7 +18,7 @@ function generateManifest(command: 'build' | 'serve') {
   }
 }
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command }: ConfigEnv): UserConfig => {
   return {
     base: './',
     plugins: [
@@ -54,13 +56,6 @@ export default defineConfig(({ command }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
       extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
-    },
-    css: {
-      preprocessorOptions: {
-        scss: {
-          api: 'modern-compiler',
-        },
-      },
     },
   }
 })

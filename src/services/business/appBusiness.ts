@@ -111,6 +111,11 @@ const AppBusiness = {
       twitch: async () => TwitchBusiness.searchCategories(account.token, query, cursor, limit),
     })
   },
+  async fetchCategoriesByIds(account: AccountStore, ids: string[]): Promise<CategoryItemType[]> {
+    return handlerAccounts(account.type, {
+      twitch: async () => TwitchBusiness.fetchCategoriesByIds(account.token, ids),
+    })
+  },
 }
 
 export default AppBusiness

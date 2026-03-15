@@ -1,6 +1,7 @@
 import type {
   AccountDataStore,
   CategoryNotificationStore,
+  FavoriteGroup,
   FavoriteStore,
   GroupStreamStore,
   NotificationStore,
@@ -20,11 +21,13 @@ export const STORAGE_KEY_STREAM_ORDER = 'streamOrder' as const
 export const STORAGE_KEY_STREAM_ORDER_SORT = 'streamOrderSort' as const
 export const STORAGE_KEY_SHOW_GROUPS = 'showGroups' as const
 export const STORAGE_KEY_SHOW_FAVORITES = 'showFavorites' as const
+export const STORAGE_KEY_SHOW_FAVORITE_CATEGORIES = 'showFavoriteCategories' as const
 export const STORAGE_KEY_SHOW_NOTIFICATIONS = 'showNotifications' as const
 export const STORAGE_KEY_FAVORITES = 'favorites' as const
 export const STORAGE_KEY_CATEGORY_NOTIFICATIONS = 'categoryNotifications' as const
 export const STORAGE_KEY_GROUP_STREAMS = 'groupStreams' as const
 export const STORAGE_KEY_GROUP_EXPANDED = 'groupExpanded' as const
+export const STORAGE_KEY_FAVORITE_CATEGORIES = 'favoriteCategories' as const
 
 export type StorageSyncTypes = {
   [STORAGE_KEY_ACCOUNTS]: AccountDataStore
@@ -39,8 +42,10 @@ export type StorageSyncTypes = {
   [STORAGE_KEY_STREAM_ORDER_SORT]: boolean
   [STORAGE_KEY_SHOW_GROUPS]: boolean
   [STORAGE_KEY_SHOW_FAVORITES]: boolean
+  [STORAGE_KEY_SHOW_FAVORITE_CATEGORIES]: boolean
   [STORAGE_KEY_SHOW_NOTIFICATIONS]: boolean
   [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: CategoryNotificationStore[]
   [STORAGE_KEY_GROUP_STREAMS]: GroupStreamStore[]
   [STORAGE_KEY_GROUP_EXPANDED]: string[]
+  [STORAGE_KEY_FAVORITE_CATEGORIES]: FavoriteGroup[]
 }

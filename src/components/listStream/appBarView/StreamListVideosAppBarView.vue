@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
+import { mdiAccountEye, mdiCalendar, mdiSort, mdiStar } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -10,7 +11,7 @@ const { t } = useI18n()
   <v-menu :close-on-content-click="false">
     <template #activator="{ props }">
       <v-btn v-bind="props" :aria-label="t('common.sort')" class="rounded-lg" :icon="true" :size="system.appBarHeight">
-        <v-icon>mdi-sort</v-icon>
+        <v-icon :icon="mdiSort" />
       </v-btn>
     </template>
     <template #default="{ isActive }">
@@ -26,7 +27,7 @@ const { t } = useI18n()
           @click="system.setVideoOrder('time')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-calendar</v-icon>
+            <v-icon size="x-large" :icon="mdiCalendar" />
           </div>
         </v-list-item>
         <v-list-item
@@ -40,7 +41,7 @@ const { t } = useI18n()
           @click="system.setVideoOrder('trending')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-star</v-icon>
+            <v-icon size="x-large" :icon="mdiStar" />
           </div>
         </v-list-item>
         <v-list-item
@@ -54,7 +55,7 @@ const { t } = useI18n()
           @click="system.setVideoOrder('views')"
         >
           <div class="h-100 d-flex align-center justify-center position-relative">
-            <v-icon size="x-large">mdi-account-eye</v-icon>
+            <v-icon size="x-large" :icon="mdiAccountEye" />
           </div>
         </v-list-item>
       </v-list>

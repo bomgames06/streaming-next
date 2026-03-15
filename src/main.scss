@@ -20,3 +20,9 @@ body {
     padding-right: 4px;
   }
 }
+
+.v-tooltip {
+  >.v-overlay__content {
+    pointer-events: none;
+  }
+}

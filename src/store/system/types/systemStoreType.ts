@@ -56,3 +56,8 @@ export type GroupStreamStore = {
     id: string
   }[]
 }
+
+export type FavoriteGroup = {
+  type: AccountStoreType
+  id: string
+}

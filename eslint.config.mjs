@@ -1,5 +1,7 @@
 import globals from 'globals'
 import vue from 'eslint-plugin-vue'
+import vuetify from 'eslint-plugin-vuetify'
+import vueParser from 'vue-eslint-parser'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
@@ -12,6 +14,7 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
+  ...vuetify.configs['flat/recommended'],
   {
     files: ['tests/__utils__/**/*'],
     rules: {
@@ -21,7 +24,10 @@ export default [
   {
     files: ['**/*.vue'],
     languageOptions: {
-      parserOptions: { parser: tseslint.parser },
+      parser: vueParser,
+      parserOptions: {
+        parser: tseslint.parser,
+      },
     },
   },
   eslintPluginPrettierRecommended,

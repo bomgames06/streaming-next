@@ -5,6 +5,7 @@ import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import type { User } from '@/types/userType'
 import Mousetrap from 'mousetrap'
+import { mdiAccount, mdiAccountMultiple, mdiCog, mdiTranslate, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -95,13 +96,13 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
-                class="text-none text-body-2 px-2 profile-button flex-grow-1 flex-shrink-1"
+                class="text-none text-body-medium px-2 profile-button flex-grow-1 flex-shrink-1"
                 :height="system.appBarHeight"
                 variant="text"
               >
                 <v-avatar
                   class="mr-1"
-                  :icon="!system.mainAccount?.avatarUrl ? 'mdi-account' : ''"
+                  :icon="!system.mainAccount?.avatarUrl ? mdiAccount : ''"
                   :image="system.mainAccount?.avatarUrl"
                   :size="system.appBarHeight * (26 / 36)"
                 />
@@ -114,7 +115,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.accounts')">
                       <template #prepend>
-                        <v-icon>mdi-account-multiple</v-icon>
+                        <v-icon :icon="mdiAccountMultiple" />
                       </template>
                     </v-list-item>
                   </template>
@@ -124,7 +125,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.language')">
                       <template #prepend>
-                        <v-icon>mdi-translate</v-icon>
+                        <v-icon :icon="mdiTranslate" />
                       </template>
                     </v-list-item>
                   </template>
@@ -143,7 +144,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   @click="system.setDark(!system.dark, theme)"
                 >
                   <template #prepend>
-                    <v-icon>{{ system.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+                    <v-icon>{{ system.dark ? mdiWeatherNight : mdiWeatherSunny }}</v-icon>
                   </template>
                 </v-list-item>
                 <v-list-item
@@ -152,7 +153,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                   @click="openSettings(isActive)"
                 >
                   <template #prepend>
-                    <v-icon>mdi-cog</v-icon>
+                    <v-icon :icon="mdiCog" />
                   </template>
                 </v-list-item>
               </v-list>

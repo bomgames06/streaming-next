@@ -45,6 +45,11 @@
       },
       "languagesSelected": "{count} Languages"
     },
+    "menu": {
+      "addFavorite": "Add favorite",
+      "removeFavorite": "Remove favorite"
+    },
+    "noItems": "No categories",
     "searchMore": "Search more"
   },
   "categoriesView": {
@@ -163,7 +168,7 @@
     },
     "clips": "Clips",
     "menu": {
-      "addFavorite": "Add Favorite",
+      "addFavorite": "Add favorite",
       "category": "Category",
       "categoryNotification": "Notify category",
       "clips": "Clips",

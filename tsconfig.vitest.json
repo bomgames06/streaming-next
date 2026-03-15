@@ -4,6 +4,8 @@
     "types": [
       "chrome",
       "vitest/jsdom",
+      "vitest/importMeta",
+      "vitest/globals",
       "@vitest/browser/providers/playwright"
     ],
     "paths": {

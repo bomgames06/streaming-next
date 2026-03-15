@@ -5,8 +5,9 @@ import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
-import { compact, debounce, orderBy, uniqBy } from 'lodash'
+import { compact, debounce, orderBy, sortBy, uniqBy } from 'lodash'
 import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
+import { mdiBell, mdiController, mdiFilter, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -21,9 +22,11 @@ const categories = reactive<{
 }>({
   items: [],
 })
+const favoriteItems = ref<CategoryItemType[]>([])
 const categorySelected = ref<CategoryItemType | CategorySearchItem>()
 const categoryId = ref<string | undefined>(props.categoryId)
 const categoryById = ref<CategoryItemType>()
+const firstLoading = ref<boolean>(true)
 
 watch(
   () => system.accounts.twitch,
@@ -78,28 +81,49 @@ async function fetchCategories(category?: CategoryItemType): Promise<void> {
   system.refreshing()
   fetching.value = true
   try {
-    const account = system.accounts.twitch
-    if (!account) return
-
-    if (system.categoryNameFilterComp) {
-      const response = await AppBusiness.searchCategories(account, system.categoryNameFilterComp, undefined, 99)
-
-      categories.items = orderBy(response.items, ['name'])
-      categories.cursor = undefined
-    } else {
-      const response = await AppBusiness.getTopGamesCategory(account, categories.cursor, 99)
-
-      if (categories.cursor) categories.items.push(...response.items)
-      else categories.items = response.items
-      categories.cursor = response.cursor
-    }
-
-    if (category) categorySelected.value = category
+    await Promise.all([fetchItemsCategories(category), fetchFavoriteCategories()])
   } finally {
     system.loaded()
     system.refreshed()
     fetching.value = false
+    firstLoading.value = false
   }
+}
+async function fetchItemsCategories(category?: CategoryItemType): Promise<void> {
+  const account = system.accounts.twitch
+  if (!account) return
+
+  if (system.categoryNameFilterComp) {
+    const response = await AppBusiness.searchCategories(account, system.categoryNameFilterComp, undefined, 99)
+
+    categories.items = orderBy(response.items, ['name'])
+    categories.cursor = undefined
+  } else {
+    const response = await AppBusiness.getTopGamesCategory(account, categories.cursor, 99)
+
+    if (categories.cursor) categories.items.push(...response.items)
+    else categories.items = response.items
+    categories.cursor = response.cursor
+  }
+
+  if (category) categorySelected.value = category
+}
+async function fetchFavoriteCategories(): Promise<void> {
+  if (!system.favoriteCategories.length) {
+    favoriteItems.value = []
+    return
+  }
+
+  const account = system.accounts.twitch
+  if (!account) return
+
+  favoriteItems.value = sortBy(
+    await AppBusiness.fetchCategoriesByIds(
+      account,
+      system.favoriteCategories.map((value) => value.id)
+    ),
+    'name'
+  )
 }
 
 watch(categorySelected, () => {
@@ -108,13 +132,95 @@ watch(categorySelected, () => {
     categoryById.value = undefined
   }
 })
+watch(
+  () => system.favoriteCategories,
+  () => {
+    fetchFavoriteCategories()
+  }
+)
+
+function toggleFavoriteCategory() {
+  system.showFavoriteCategoriesComp = !system.showFavoriteCategoriesComp
+}
 </script>
 
 <template>
   <ViewContainer>
-    <CategoriesList v-model:category-selected="categorySelected" :items="items" />
+    <template #top>
+      <v-sheet class="px-2 py-1 top-0 filter-content" color="surface-light">
+        <v-row class="mx-0 flex-nowrap" density="compact">
+          <v-col class="role" :aria-label="t('common.filter')" cols="auto">
+            <v-row density="compact" class="flex-nowrap">
+              <v-col cols="auto">
+                <v-icon :icon="mdiFilter" />
+              </v-col>
+              <v-col class="d-flex" cols="auto">
+                <v-divider class="h-75 align-self-center" vertical />
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  v-tooltip="t('common.favorite', 2)"
+                  accesskey="b"
+                  :aria-checked="system.showFavoriteCategoriesComp"
+                  :aria-label="t('common.favorite', 2)"
+                  class="rounded-lg"
+                  :disabled="!!categorySelected || !!system.categoryNameFilterComp"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleFavoriteCategory"
+                >
+                  <v-icon :color="system.showFavoriteCategoriesComp ? 'primary' : ''" size="18">
+                    {{ system.showFavoriteCategoriesComp ? mdiStar : mdiStarOutline }}
+                  </v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-spacer />
+          <v-col
+            v-if="system.notificationType !== 'none'"
+            class="role"
+            :aria-label="t('common.notification')"
+            cols="auto"
+          >
+            <v-row density="compact" class="flex-nowrap">
+              <v-col cols="auto">
+                <CategoryNotificationDialog>
+                  <template #activator="{ props: categoryNotificationDialogProps }">
+                    <v-btn
+                      v-tooltip:start="t('streamsView.category')"
+                      v-bind="categoryNotificationDialogProps"
+                      :aria-label="t('streamsView.category')"
+                      class="rounded-lg"
+                      :icon="true"
+                      size="24"
+                    >
+                      <v-icon size="18" :icon="mdiController" />
+                    </v-btn>
+                  </template>
+                </CategoryNotificationDialog>
+              </v-col>
+              <v-col class="d-flex" cols="auto">
+                <v-divider class="h-75 align-self-center" vertical />
+              </v-col>
+              <v-col cols="auto">
+                <v-icon :icon="mdiBell" />
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+      </v-sheet>
+    </template>
+    <CategoriesList
+      v-model:category-selected="categorySelected"
+      :items="
+        system.showFavoriteCategoriesComp && !categorySelected && !system.categoryNameFilterComp ? favoriteItems : items
+      "
+      :loading="firstLoading"
+    />
     <v-btn
-      v-if="categories.cursor && !categorySelected"
+      v-if="categories.cursor && !categorySelected && !system.showFavoriteCategoriesComp"
       block
       class="mt-2"
       :disabled="fetching"
@@ -122,10 +228,14 @@ watch(categorySelected, () => {
       :loading="fetching"
       @click="fetchCategories()"
     >
-      <v-icon class="mr-2" size="x-large">mdi-magnify</v-icon>
+      <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
       <span>{{ t('categoriesView.searchMore') }}</span>
     </v-btn>
   </ViewContainer>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.filter-content {
+  z-index: 10;
+}
+</style>

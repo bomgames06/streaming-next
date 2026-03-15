@@ -9,6 +9,20 @@ import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
 import { accountTypeColor } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
+import {
+  mdiAccount,
+  mdiBell,
+  mdiBellOutline,
+  mdiCheckDecagram,
+  mdiController,
+  mdiFolder,
+  mdiMovieOpenStar,
+  mdiPlus,
+  mdiStar,
+  mdiStarOutline,
+  mdiTwitch,
+  mdiVideo,
+} from '@mdi/js'
 
 const aspectRatio = 16 / 9
 const imageWidth = 290
@@ -197,7 +211,7 @@ function isVerified(value?: StreamItemType): boolean {
                     />
                     <v-card
                       v-if="isHovering || focusedItem || item.status === 'video' || item.status === 'clip'"
-                      class="start-at-content text-caption bg-background"
+                      class="start-at-content text-body-small bg-background"
                     >
                       {{
                         isHovering || focusedItem || item.status === 'video' || item.status === 'clip'
@@ -215,8 +229,8 @@ function isVerified(value?: StreamItemType): boolean {
                           :aria-label="t('common.notification')"
                           :color="theme.current.value.dark ? 'yellow' : 'warning'"
                           size="x-small"
-                          >mdi-bell</v-icon
-                        >
+                          :icon="mdiBell"
+                        />
                       </v-card>
                       <v-card v-if="item.status === 'online' && favoriteEnabled" class="bg-background badge-item">
                         <v-icon
@@ -224,8 +238,8 @@ function isVerified(value?: StreamItemType): boolean {
                           :aria-label="t('common.favorite')"
                           :color="theme.current.value.dark ? 'yellow' : 'warning'"
                           size="x-small"
-                          >mdi-star</v-icon
-                        >
+                          :icon="mdiStar"
+                        />
                       </v-card>
                     </div>
                   </div>
@@ -248,8 +262,8 @@ function isVerified(value?: StreamItemType): boolean {
                         :aria-label="t('common.notification')"
                         :color="theme.current.value.dark ? 'yellow' : 'warning'"
                         size="x-small"
-                        >mdi-bell</v-icon
-                      >
+                        :icon="mdiBell"
+                      />
                     </v-card>
                     <v-card v-if="favoriteEnabled" class="bg-background badge-item">
                       <v-icon
@@ -257,8 +271,8 @@ function isVerified(value?: StreamItemType): boolean {
                         :aria-label="t('common.favorite')"
                         :color="theme.current.value.dark ? 'yellow' : 'warning'"
                         size="x-small"
-                        >mdi-star</v-icon
-                      >
+                        :icon="mdiStar"
+                      />
                     </v-card>
                   </div>
                 </div>
@@ -274,7 +288,7 @@ function isVerified(value?: StreamItemType): boolean {
                   <v-list :id="contextMenuListId" @keydown.esc.prevent="menuShow = undefined">
                     <v-list-item
                       v-if="!props.disableNotificationMenu"
-                      :prepend-icon="favoriteEnabled ? 'mdi-star' : 'mdi-star-outline'"
+                      :prepend-icon="favoriteEnabled ? mdiStar : mdiStarOutline"
                       :title="favoriteEnabled ? t('streamList.menu.removeFavorite') : t('streamList.menu.addFavorite')"
                       @click="
                         favoriteEnabled
@@ -284,7 +298,7 @@ function isVerified(value?: StreamItemType): boolean {
                     />
                     <v-list-item
                       v-if="system.notificationType === 'partial' && !props.disableNotificationMenu"
-                      :prepend-icon="notificationEnabled ? 'mdi-bell' : 'mdi-bell-outline'"
+                      :prepend-icon="notificationEnabled ? mdiBell : mdiBellOutline"
                       :title="
                         notificationEnabled
                           ? t('streamList.menu.disableNotification')
@@ -304,9 +318,9 @@ function isVerified(value?: StreamItemType): boolean {
                       <template #prepend>
                         <v-badge color="surface" location="bottom end">
                           <template #badge>
-                            <v-icon size="large">mdi-controller</v-icon>
+                            <v-icon size="large" :icon="mdiController" />
                           </template>
-                          <v-icon>mdi-bell</v-icon>
+                          <v-icon :icon="mdiBell" />
                         </v-badge>
                       </template>
                     </v-list-item>
@@ -318,21 +332,21 @@ function isVerified(value?: StreamItemType): boolean {
                       <template #prepend>
                         <v-badge color="surface" location="bottom end">
                           <template #badge>
-                            <v-icon size="large">mdi-plus</v-icon>
+                            <v-icon size="large" :icon="mdiPlus" />
                           </template>
-                          <v-icon>mdi-folder</v-icon>
+                          <v-icon :icon="mdiFolder" />
                         </v-badge>
                       </template>
                     </v-list-item>
                     <v-list-item
                       v-if="!props.disableCategoryMenu && item.status === 'online' && item.gameId"
-                      prepend-icon="mdi-controller"
+                      :prepend-icon="mdiController"
                       :title="t('streamList.menu.category')"
                       @click="system.setView('categories', { categoryId: item.gameId })"
                     />
-                    <v-list-item prepend-icon="mdi-video" :title="t('streamList.menu.videos')" @click="enableVideo()" />
+                    <v-list-item :prepend-icon="mdiVideo" :title="t('streamList.menu.videos')" @click="enableVideo()" />
                     <v-list-item
-                      prepend-icon="mdi-movie-open-star"
+                      :prepend-icon="mdiMovieOpenStar"
                       :title="t('streamList.menu.clips')"
                       @click="enableClip()"
                     />
@@ -342,40 +356,49 @@ function isVerified(value?: StreamItemType): boolean {
                   <div
                     :class="`d-inline-flex text-truncate align-center text-body-2 line-height-normal font-weight-black ${accountTypeColor(item.type, false, true)}`"
                   >
-                    <v-icon v-if="item.type === 'twitch'" class="text-body-1" :color="accountTypeColor('twitch')">
-                      mdi-twitch
-                    </v-icon>
-                    <span class="mx-1 overflow-hidden text-truncate">{{ item.name }}</span>
-                    <v-icon v-if="isVerified(item) || isVerified(props.parent)" class="text-body-2">
-                      mdi-check-decagram
-                    </v-icon>
+                    <v-icon
+                      v-if="item.type === 'twitch'"
+                      class="text-body-large"
+                      :color="accountTypeColor('twitch')"
+                      :icon="mdiTwitch"
+                    />
+                    <span
+                      class="mx-1 overflow-hidden text-body-medium font-weight-black line-height-normal text-truncate"
+                    >
+                      {{ item.name }}
+                    </span>
+                    <v-icon
+                      v-if="isVerified(item) || isVerified(props.parent)"
+                      class="text-body-medium"
+                      :icon="mdiCheckDecagram"
+                    />
                   </div>
                   <v-spacer />
                   <div
                     v-if="spectatorsCount != undefined && !props.disableViewCount"
-                    class="d-inline text-caption line-height-normal text-medium-emphasis font-weight-bold ml-1"
+                    class="d-inline text-body-small line-height-normal text-medium-emphasis font-weight-bold ml-1"
                   >
                     <span :aria-label="spectatorsText" class="text-red">
-                      <v-icon class="text-body-2">mdi-account</v-icon>
+                      <v-icon class="text-body-medium" :icon="mdiAccount" />
                       {{ spectatorsCount.toLocaleString(locale) }}
                     </span>
                   </div>
                 </v-list-item-title>
                 <template v-if="isOfflineStream(item)">
-                  <v-list-item-subtitle class="text-caption line-height-normal font-weight-bold">{{
+                  <v-list-item-subtitle class="text-body-small line-height-normal font-weight-bold">{{
                     t('streamList.offline')
                   }}</v-list-item-subtitle>
                 </template>
                 <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
                   <v-list-item-subtitle
                     v-if="item.status === 'online' && item.type === 'twitch' && item.game"
-                    class="text-caption line-height-normal font-weight-bold"
+                    class="text-body-small line-height-normal font-weight-bold"
                     :title="item.game"
                     >{{ item.game }}</v-list-item-subtitle
                   >
                   <v-list-item-subtitle
                     v-if="item.title"
-                    class="text-caption line-height-normal font-weight-bold"
+                    class="text-body-small line-height-normal font-weight-bold"
                     :title="item.title"
                     >{{ item.title }}</v-list-item-subtitle
                   >
@@ -383,7 +406,7 @@ function isVerified(value?: StreamItemType): boolean {
                 <template v-if="item.status === 'video' || item.status === 'clip'">
                   <v-list-item-subtitle
                     v-if="dataDiff"
-                    class="text-caption line-height-normal font-weight-bold"
+                    class="text-body-small line-height-normal font-weight-bold"
                     :title="dataDiff"
                     >{{ dataDiff }}</v-list-item-subtitle
                   >

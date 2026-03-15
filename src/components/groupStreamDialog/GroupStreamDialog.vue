@@ -4,6 +4,7 @@ import useSystemStore from '@/store/system/useSystemStore.ts'
 import type { GroupStreamStore } from '@/store/system/types/systemStoreType.ts'
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType.ts'
 import { compact, orderBy } from 'lodash'
+import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -105,13 +106,13 @@ function clickGroup(groupItem: GroupStreamStore) {
     <template #default="{ isActive }">
       <v-card :title="t('groupStreamDialog.title')">
         <v-card-text class="d-flex flex-column overflow-y-auto pb-1">
-          <v-row v-if="props.streamItem" dense class="flex-nowrap flex-grow-0">
+          <v-row v-if="props.streamItem" density="compact" class="flex-nowrap flex-grow-0">
             <v-col cols="12">
               <v-avatar :image="props.streamItem.profileImage" class="mr-2" />
               <span>{{ props.streamItem.name }}</span>
             </v-col>
           </v-row>
-          <v-row dense class="flex-nowrap flex-grow-0">
+          <v-row density="compact" class="flex-nowrap flex-grow-0">
             <v-col>
               <v-text-field
                 v-model.trim="group"
@@ -133,14 +134,14 @@ function clickGroup(groupItem: GroupStreamStore) {
                   class="px-2"
                   @click="addGroup"
                 >
-                  <v-icon>mdi-plus</v-icon>
+                  <v-icon :icon="mdiPlus" />
                 </v-btn>
               </div>
             </v-col>
           </v-row>
           <div class="flex-grow-1 overflow-y-auto mt-2">
             <template v-if="system.groupStreams.length">
-              <v-list v-if="props.streamItem" dense class="py-0">
+              <v-list v-if="props.streamItem" density="compact" class="py-0">
                 <GroupStreamListItem
                   v-for="groupStream in streamGroupStreams"
                   :key="groupStream.id"
@@ -154,7 +155,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                   "
                 />
               </v-list>
-              <v-list v-else dense class="py-0">
+              <v-list v-else density="compact" class="py-0">
                 <v-tooltip
                   v-for="groupStream in groupStreamsItems"
                   :key="groupStream.id"
@@ -210,17 +211,17 @@ function clickGroup(groupItem: GroupStreamStore) {
             </v-sheet>
             <template v-if="expandGroup">
               <v-divider />
-              <v-list dense class="py-0">
+              <v-list density="compact" class="py-0">
                 <v-list-item
                   v-if="groupAddStream?.id !== expandGroup.id"
                   :id="`list-item-add-${expandGroup.id}`"
                   :title="t('groupStreamDialog.addStream')"
-                  prepend-icon="mdi-plus"
+                  :prepend-icon="mdiPlus"
                   class="px-2"
                   @click="openAddStream(expandGroup)"
                 />
                 <v-list-item v-else>
-                  <v-row dense class="flex-nowrap">
+                  <v-row density="compact" class="flex-nowrap">
                     <v-col>
                       <v-autocomplete
                         :id="`autocomplete-${expandGroup.id}`"
@@ -238,7 +239,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                         <template #item="{ item, props: itemAutocompleteProps }">
                           <v-list-item v-bind="itemAutocompleteProps">
                             <template #prepend>
-                              <v-avatar size="small" :image="item.raw.profileImage" />
+                              <v-avatar size="small" :image="item.profileImage" />
                             </template>
                           </v-list-item>
                         </template>
@@ -254,7 +255,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                           class="px-2"
                           @click="addStream(groupAddStream, stream)"
                         >
-                          <v-icon>mdi-plus</v-icon>
+                          <v-icon :icon="mdiPlus" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -267,7 +268,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                           class="px-2"
                           @click="closeAddStream"
                         >
-                          <v-icon>mdi-close</v-icon>
+                          <v-icon :icon="mdiClose" />
                         </v-btn>
                       </div>
                     </v-col>
@@ -276,7 +277,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                 <v-list-item
                   v-for="groupStreamStream in getStreamListFromGroup(expandGroup)"
                   :key="groupStreamStream.id"
-                  dense
+                  density="compact"
                   :title="groupStreamStream.name"
                   class="stream-group-content"
                 >
@@ -292,7 +293,7 @@ function clickGroup(groupItem: GroupStreamStore) {
                         system.removeStreamFromGroupStream(expandGroup.id, groupStreamStream.type, groupStreamStream.id)
                       "
                     >
-                      <v-icon size="large" color="error">mdi-delete</v-icon>
+                      <v-icon size="large" color="error" :icon="mdiDelete" />
                     </v-btn>
                   </template>
                 </v-list-item>
