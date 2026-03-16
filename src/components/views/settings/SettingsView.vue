@@ -62,28 +62,37 @@ function openDonation(middle?: boolean) {
             <v-row>
               <v-col cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanFavorites')"
+                  :aria-label="i18n.t('settings.clearFavorites')"
                   :disabled="!system.favorites.length"
                   :prepend-icon="mdiBroom"
-                  :text="i18n.t('settings.favorites')"
+                  :text="i18n.t('settings.clearFavorites')"
                   @click="system.cleanFavorite()"
+                />
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  :aria-label="i18n.t('settings.clearCategoryFavorites')"
+                  :disabled="!system.categoryFavorites.length"
+                  :prepend-icon="mdiBroom"
+                  :text="i18n.t('settings.clearCategoryFavorites')"
+                  @click="system.cleanCategoryFavorite()"
                 />
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanNotifications')"
+                  :aria-label="i18n.t('settings.clearNotifications')"
                   :disabled="!system.notifications.length"
                   :prepend-icon="mdiBroom"
-                  :text="i18n.t('settings.notifications')"
+                  :text="i18n.t('settings.clearNotifications')"
                   @click="system.cleanNotification()"
                 />
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanCategoryNotifications')"
+                  :aria-label="i18n.t('settings.clearCategoryNotifications')"
                   :disabled="!system.categoryNotifications.length"
                   :prepend-icon="mdiBroom"
-                  :text="i18n.t('settings.cleanCategoryNotifications')"
+                  :text="i18n.t('settings.clearCategoryNotifications')"
                   @click="system.cleanCategoryNotification()"
                 />
               </v-col>
@@ -142,7 +151,7 @@ function openDonation(middle?: boolean) {
             <template #default="{ isHovering, props }">
               <v-btn
                 v-bind="props"
-                :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
+                :aria-label="i18n.t('settings.supportProfile', { name: buyMeACoffeName })"
                 class="about-button"
                 :color="isHovering ? 'red' : ''"
                 variant="text"
@@ -150,7 +159,7 @@ function openDonation(middle?: boolean) {
                 @mousedown.middle.prevent="openDonation(true)"
               >
                 <v-icon class="mr-1" :icon="mdiHeart" />
-                <span>{{ i18n.t('settings.sponsor') }}</span>
+                <span>{{ i18n.t('settings.support') }}</span>
               </v-btn>
             </template>
           </v-hover>

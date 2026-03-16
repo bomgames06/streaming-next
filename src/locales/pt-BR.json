@@ -6,7 +6,7 @@
     "openSearchView": "{accesskey} + 3 - Abrir tela de pesquisa",
     "openSettingsView": "{accesskey} + s - Abrir tela de configurações",
     "openStreamView": "{accesskey} + 1 - Abrir tela de transmissões ao vivo",
-    "shortkeys": "Atalhos",
+    "shortcuts": "Atalhos",
     "streamView": "Tela: Transmissão ao vivo"
   },
   "appLayout": {
@@ -60,6 +60,7 @@
   },
   "categoryNotificationDialog": {
     "addStream": "Adicionar stream",
+    "allStreams": "Todas streams",
     "category": "Categoria",
     "noNotifications": "Sem notificações",
     "stream": "Stream",
@@ -115,12 +116,13 @@
     "searchMore": "Buscar mais"
   },
   "settings": {
-    "cleanCategoryNotifications": "Notificação categoria",
-    "cleanFavorites": "Limpar favoritos",
-    "cleanNotifications": "Limpar notificações",
+    "clearCategoryFavorites": "Limpar categorias favoritas",
+    "clearCategoryNotifications": "Limpar notificações categoria",
+    "clearFavorites": "Limpar favoritos",
+    "clearNotifications": "Limpar notificações",
     "darkMode": "Modo dark",
     "favorites": "Favoritos",
-    "github": "Github",
+    "github": "GitHub",
     "languages": "Idiomas",
     "notificationType": {
       "all": "Todos",
@@ -129,8 +131,8 @@
     },
     "notifications": "Notificações",
     "showAlwaysOfflines": "Mostrar offlines sempre",
-    "sponsor": "Apoiar",
-    "sponsorProfile": "Apoiar {name}",
+    "support": "Apoiar",
+    "supportProfile": "Apoiar {name}",
     "title": "Configurações",
     "twitter": "Twitter",
     "twitterProfile": "Twitter {name}",
@@ -169,6 +171,7 @@
     "clips": "Clipes",
     "menu": {
       "addFavorite": "Adicionar favorito",
+      "addFavoriteCategory": "Adicionar categoria favorita",
       "category": "Categoria",
       "categoryNotification": "Notificar categoria",
       "clips": "Clipes",
@@ -176,6 +179,7 @@
       "enableNotification": "Ativar notificação",
       "groupStream": "Adicionar grupo",
       "removeFavorite": "Remover favorito",
+      "removeFavoriteCategory": "Remover categoria favorita",
       "videos": "Vídeos"
     },
     "noItems": "Sem streams",

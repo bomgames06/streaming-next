@@ -335,6 +335,16 @@ const TwitchBusiness = {
 
     return response.flat().map(twitchGameToCategoryItem())
   },
+  async fetchCategoriesByNames(token: string, names: string[]): Promise<CategoryItemType[]> {
+    const partitions = partition(names, 100)
+    const promises: Promise<TwitchApiGameType[]>[] = []
+    for (const partition of partitions) {
+      promises.push(TwitchApi.games.games(token, { name: partition }))
+    }
+    const response = await Promise.all(promises)
+
+    return response.flat().map(twitchGameToCategoryItem())
+  },
 }
 
 export default TwitchBusiness

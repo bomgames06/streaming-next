@@ -7,7 +7,7 @@ import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, debounce, orderBy, sortBy, uniqBy } from 'lodash'
 import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
-import { mdiBell, mdiController, mdiFilter, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
+import { mdiBell, mdiBellOutline, mdiController, mdiFilter, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -23,6 +23,7 @@ const categories = reactive<{
   items: [],
 })
 const favoriteItems = ref<CategoryItemType[]>([])
+const notificationItems = ref<CategoryItemType[]>([])
 const categorySelected = ref<CategoryItemType | CategorySearchItem>()
 const categoryId = ref<string | undefined>(props.categoryId)
 const categoryById = ref<CategoryItemType>()
@@ -52,6 +53,21 @@ onMounted(() => {
 const items = computed<(CategoryItemType | CategorySearchItem)[]>(() =>
   uniqBy(compact([categoryById.value, ...categories.items]), 'id')
 )
+const categoriesComp = computed<(CategoryItemType | CategorySearchItem)[]>(() => {
+  if (
+    categorySelected.value ||
+    system.categoryNameFilterComp ||
+    (!system.showCategoryFavoritesComp && !system.showCategoryNotificationsComp)
+  )
+    return items.value
+
+  const value: (CategoryItemType | CategorySearchItem)[] = []
+
+  if (system.showCategoryFavoritesComp) value.push(...favoriteItems.value)
+  if (system.showCategoryNotificationsComp) value.push(...notificationItems.value)
+
+  return uniqBy(value, 'id')
+})
 
 async function fetchCategory() {
   if (!categoryId.value) return
@@ -81,7 +97,7 @@ async function fetchCategories(category?: CategoryItemType): Promise<void> {
   system.refreshing()
   fetching.value = true
   try {
-    await Promise.all([fetchItemsCategories(category), fetchFavoriteCategories()])
+    await Promise.all([fetchItemsCategories(category), fetchCategoryFavorites(), fetchCategoryNotifcations()])
   } finally {
     system.loaded()
     system.refreshed()
@@ -108,8 +124,8 @@ async function fetchItemsCategories(category?: CategoryItemType): Promise<void> 
 
   if (category) categorySelected.value = category
 }
-async function fetchFavoriteCategories(): Promise<void> {
-  if (!system.favoriteCategories.length) {
+async function fetchCategoryFavorites(): Promise<void> {
+  if (!system.categoryFavorites.length) {
     favoriteItems.value = []
     return
   }
@@ -118,9 +134,26 @@ async function fetchFavoriteCategories(): Promise<void> {
   if (!account) return
 
   favoriteItems.value = sortBy(
-    await AppBusiness.fetchCategoriesByIds(
+    await AppBusiness.fetchCategoriesByNames(
       account,
-      system.favoriteCategories.map((value) => value.id)
+      system.categoryFavorites.map((value) => value.name)
+    ),
+    'name'
+  )
+}
+async function fetchCategoryNotifcations(): Promise<void> {
+  if (!system.categoryNotifications.length) {
+    notificationItems.value = []
+    return
+  }
+
+  const account = system.accounts.twitch
+  if (!account) return
+
+  notificationItems.value = sortBy(
+    await AppBusiness.fetchCategoriesByNames(
+      account,
+      system.categoryNotifications.map((value) => value.name)
     ),
     'name'
   )
@@ -133,14 +166,23 @@ watch(categorySelected, () => {
   }
 })
 watch(
-  () => system.favoriteCategories,
+  () => system.categoryFavorites,
   () => {
-    fetchFavoriteCategories()
+    fetchCategoryFavorites()
+  }
+)
+watch(
+  () => system.categoryNotifications,
+  () => {
+    fetchCategoryNotifcations()
   }
 )
 
 function toggleFavoriteCategory() {
-  system.showFavoriteCategoriesComp = !system.showFavoriteCategoriesComp
+  system.showCategoryFavoritesComp = !system.showCategoryFavoritesComp
+}
+function toggleNotificationCategory() {
+  system.showCategoryNotificationsComp = !system.showCategoryNotificationsComp
 }
 </script>
 
@@ -161,7 +203,7 @@ function toggleFavoriteCategory() {
                 <v-btn
                   v-tooltip="t('common.favorite', 2)"
                   accesskey="b"
-                  :aria-checked="system.showFavoriteCategoriesComp"
+                  :aria-checked="system.showCategoryFavoritesComp"
                   :aria-label="t('common.favorite', 2)"
                   class="rounded-lg"
                   :disabled="!!categorySelected || !!system.categoryNameFilterComp"
@@ -170,8 +212,26 @@ function toggleFavoriteCategory() {
                   size="24"
                   @click="toggleFavoriteCategory"
                 >
-                  <v-icon :color="system.showFavoriteCategoriesComp ? 'primary' : ''" size="18">
-                    {{ system.showFavoriteCategoriesComp ? mdiStar : mdiStarOutline }}
+                  <v-icon :color="system.showCategoryFavoritesComp ? 'primary' : ''" size="18">
+                    {{ system.showCategoryFavoritesComp ? mdiStar : mdiStarOutline }}
+                  </v-icon>
+                </v-btn>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  v-tooltip="t('common.notification', 2)"
+                  accesskey="b"
+                  :aria-checked="system.showCategoryNotificationsComp"
+                  :aria-label="t('common.notification', 2)"
+                  class="rounded-lg"
+                  :disabled="!!categorySelected || !!system.categoryNameFilterComp"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleNotificationCategory"
+                >
+                  <v-icon :color="system.showCategoryNotificationsComp ? 'primary' : ''" size="18">
+                    {{ system.showCategoryNotificationsComp ? mdiBell : mdiBellOutline }}
                   </v-icon>
                 </v-btn>
               </v-col>
@@ -212,15 +272,14 @@ function toggleFavoriteCategory() {
         </v-row>
       </v-sheet>
     </template>
-    <CategoriesList
-      v-model:category-selected="categorySelected"
-      :items="
-        system.showFavoriteCategoriesComp && !categorySelected && !system.categoryNameFilterComp ? favoriteItems : items
-      "
-      :loading="firstLoading"
-    />
+    <CategoriesList v-model:category-selected="categorySelected" :items="categoriesComp" :loading="firstLoading" />
     <v-btn
-      v-if="categories.cursor && !categorySelected && !system.showFavoriteCategoriesComp"
+      v-if="
+        categories.cursor &&
+        !categorySelected &&
+        !system.showCategoryFavoritesComp &&
+        !system.showCategoryNotificationsComp
+      "
       block
       class="mt-2"
       :disabled="fetching"

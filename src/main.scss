@@ -26,3 +26,11 @@ body {
     pointer-events: none;
   }
 }
+
+.diagonal-cut {
+  clip-path: polygon(0 0, 100% 0, 100% 0%, 0 100%);
+}
+
+.mb-1d5 {
+  margin-bottom: 1.5px;
+}

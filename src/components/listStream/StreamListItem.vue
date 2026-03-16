@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { StreamItemLiveType, StreamItemType } from '@/components/listStream/types/streamItemType'
+import type {
+  StreamItemLiveOnlineType,
+  StreamItemLiveType,
+  StreamItemType,
+} from '@/components/listStream/types/streamItemType'
 import { isOfflineStream, isStream } from '@/components/listStream/types/streamItemType'
 import { useI18n } from 'vue-i18n'
 import useMoment from '@/plugins/moment/useMoment'
@@ -116,23 +120,13 @@ async function showMenu(event: PointerEvent) {
   menu.x = event.clientX
   menu.y = event.clientY
   menuShow.value = item.value
-
-  await nextTick()
-  const element = document.getElementById(contextMenuListId)
-  if (element) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (entry.isIntersecting) (entry.target as HTMLElement).focus()
-      },
-      { threshold: [0] }
-    )
-    observer.observe(element)
-  }
 }
 
 function isLiveType(value: StreamItemType): value is StreamItemLiveType {
   return has(value, 'status') && !!value.status
+}
+function isLiveOnlineType(value: StreamItemType): value is StreamItemLiveOnlineType {
+  return value.status === 'online'
 }
 
 function enableDetail() {
@@ -177,6 +171,44 @@ function isVerified(value?: StreamItemType): boolean {
 
   return false
 }
+
+function addFavoriteCategory(item: StreamItemLiveOnlineType): void {
+  if (!item.gameId) return
+  system.addFavoriteCategory({
+    type: item.type,
+    id: item.gameId,
+  })
+}
+function removeFavoriteCategory(item: StreamItemLiveOnlineType): void {
+  if (!item.gameId) return
+  system.removeFavoriteCategory({
+    type: item.type,
+    id: item.gameId,
+  })
+}
+function favoriteCategoryEnabled(item: StreamItemLiveOnlineType): boolean {
+  return (
+    !!item.gameId &&
+    system.categoryFavorites.some((favorite) => favorite.type === item.type && favorite.id === item.gameId)
+  )
+}
+function notificationCategoryEnabled(item: StreamItemLiveOnlineType): boolean {
+  return (
+    !!item.game &&
+    system.categoryNotifications.some(
+      (notification) =>
+        notification.name === item.game &&
+        (!notification.streams.length ||
+          notification.streams.some((stream) => stream.type === item.type && stream.id === item.id))
+    )
+  )
+}
+function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean {
+  return (
+    !!item.game &&
+    system.categoryNotifications.some((notification) => notification.name === item.game && notification.streams.length)
+  )
+}
 </script>
 
 <template>
@@ -193,6 +225,7 @@ function isVerified(value?: StreamItemType): boolean {
               class="px-1 list-item"
               :disabled="props.disabled"
               height="64"
+              tabindex="0"
               @click.prevent="emit('itemClick', { item: props.item, middle: false })"
               @contextmenu.prevent="showMenu"
               @focusin="focusedItem = true"
@@ -279,13 +312,14 @@ function isVerified(value?: StreamItemType): boolean {
               </template>
               <template v-if="itemIntersected" #default>
                 <v-menu
-                  v-if="isLiveType(item) && item.type === 'twitch'"
+                  v-if="isLiveType(item) && item.type === 'twitch' && !!menuShow && equals(menuShow, item)"
                   :model-value="!!menuShow && equals(menuShow, item)"
                   :target="[menu.x, menu.y]"
                   @close="closeMenu()"
                   @update:model-value="closeMenu"
+                  @keydown.esc.prevent="closeMenu()"
                 >
-                  <v-list :id="contextMenuListId" @keydown.esc.prevent="menuShow = undefined">
+                  <v-list :id="contextMenuListId" @keydown.esc.prevent="closeMenu()">
                     <v-list-item
                       v-if="!props.disableNotificationMenu"
                       :prepend-icon="favoriteEnabled ? mdiStar : mdiStarOutline"
@@ -296,6 +330,24 @@ function isVerified(value?: StreamItemType): boolean {
                           : system.addFavorite(item.type, item.id)
                       "
                     />
+                    <v-list-item
+                      v-if="!props.disableNotificationMenu && isLiveOnlineType(item) && item.gameId"
+                      :title="
+                        favoriteCategoryEnabled(item)
+                          ? t('streamList.menu.removeFavoriteCategory')
+                          : t('streamList.menu.addFavoriteCategory')
+                      "
+                      @click="favoriteCategoryEnabled(item) ? removeFavoriteCategory(item) : addFavoriteCategory(item)"
+                    >
+                      <template #prepend>
+                        <v-badge color="surface" location="bottom end">
+                          <template #badge>
+                            <v-icon size="large" :icon="mdiController" />
+                          </template>
+                          <v-icon :icon="favoriteCategoryEnabled(item) ? mdiStar : mdiStarOutline" />
+                        </v-badge>
+                      </template>
+                    </v-list-item>
                     <v-list-item
                       v-if="system.notificationType === 'partial' && !props.disableNotificationMenu"
                       :prepend-icon="notificationEnabled ? mdiBell : mdiBellOutline"
@@ -394,14 +446,37 @@ function isVerified(value?: StreamItemType): boolean {
                     v-if="item.status === 'online' && item.type === 'twitch' && item.game"
                     class="text-body-small line-height-normal font-weight-bold"
                     :title="item.game"
-                    >{{ item.game }}</v-list-item-subtitle
                   >
+                    <div v-if="notificationCategoryEnabled(item)" class="d-inline position-relative">
+                      <v-icon
+                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                        :icon="mdiBell"
+                        :class="{
+                          'text-body-medium': true,
+                          'diagonal-cut': notificationCategoryHasStreams(item),
+                        }"
+                      />
+                      <v-icon
+                        :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                        :icon="mdiBellOutline"
+                        class="text-body-medium position-absolute left-0"
+                      />
+                    </div>
+                    <v-icon
+                      v-if="favoriteCategoryEnabled(item)"
+                      :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                      :icon="mdiStar"
+                      class="text-body-medium mb-1d5"
+                    />
+                    {{ item.game }}
+                  </v-list-item-subtitle>
                   <v-list-item-subtitle
                     v-if="item.title"
                     class="text-body-small line-height-normal font-weight-bold"
                     :title="item.title"
-                    >{{ item.title }}</v-list-item-subtitle
                   >
+                    {{ item.title }}
+                  </v-list-item-subtitle>
                 </template>
                 <template v-if="item.status === 'video' || item.status === 'clip'">
                   <v-list-item-subtitle

@@ -7,6 +7,7 @@ import { compact, debounce, orderBy, trim, uniqBy, upperCase } from 'lodash'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
 import TwitchBusiness from '@/services/business/twitchBusiness.ts'
 import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
+import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType.ts'
 
 const { t } = useI18n()
 
@@ -14,12 +15,16 @@ const model = defineModel<boolean>({ default: false })
 const props = defineProps<{
   streams?: StreamItemLiveStreamType[]
   streamItem?: StreamItemLiveStreamType
+  categoryItem?: CategoryItemType | CategorySearchItem
 }>()
 
 const system = useSystemStore()
 
+const imageCategoryRatio = 52 / 72
+
 const streamsFetched = ref<StreamItemLiveStreamType[]>([])
-const category = ref<string | CategorySearchItem>('')
+const categoryField = ref<string | CategorySearchItem>('')
+const streamField = ref<StreamItemLiveStreamType>()
 const search = ref<string>('')
 const fetching = ref<boolean>(false)
 const menu = ref<boolean>(false)
@@ -30,11 +35,11 @@ const expandCategory = ref<CategoryNotificationStore>()
 
 const streamsItemsComp = computed<StreamItemLiveStreamType[]>(() => props.streams || streamsFetched.value)
 const categoryComp = computed({
-  get: () => category.value,
+  get: () => categoryField.value,
   set: (value) => {
-    if (!value) category.value = ''
-    else if (typeof value === 'string') category.value = trim(value)
-    else category.value = value
+    if (!value) categoryField.value = ''
+    else if (typeof value === 'string') categoryField.value = trim(value)
+    else categoryField.value = value
   },
 })
 const categoryNotificationsItems = computed(() => orderBy(system.categoryNotifications, 'name'))
@@ -52,17 +57,27 @@ const streamCategoryNotications = computed(() => {
       )
   )
 })
+const categoryNotificationByCategoryItem = computed(() => {
+  const item = props.categoryItem
+  if (!item) return undefined
+  return system.categoryNotifications.find((categoryNotification) => categoryNotification.name === item.name)
+})
 
-watch(model, async () => {
-  category.value = ''
+watch(model, init)
+watch(search, debounce(fetchCategories, 500))
+watch([categoryField, categories], processCategory)
+
+onMounted(init)
+
+async function init(): Promise<void> {
+  categoryField.value = ''
+  streamField.value = undefined
   categories.value = []
   categoryAddStream.value = undefined
   stream.value = undefined
   expandCategory.value = undefined
   if (model.value && !props.streams) await fetchStreams()
-})
-watch(search, debounce(fetchCategories, 500))
-watch([category, categories], processCategory)
+}
 
 async function fetchStreams(): Promise<void> {
   if (!system.accounts.twitch || system.accounts.twitch.invalid) {
@@ -78,10 +93,10 @@ async function fetchStreams(): Promise<void> {
 }
 
 function processCategory() {
-  const rawCategory = toRaw(category.value)
+  const rawCategory = toRaw(categoryField.value)
   if (typeof rawCategory !== 'object') {
     const item = categories.value.find((item) => upperCase(item.name) === upperCase(rawCategory))
-    if (item) category.value = item
+    if (item) categoryField.value = item
   }
 }
 
@@ -107,23 +122,32 @@ async function fetchCategories() {
   }
 }
 
-function addCategory() {
-  if (!category.value) return
+function addCategory(): void {
+  if (!categoryField.value) return
 
   processCategory()
 
-  const rawCategory = toRaw(category.value)
+  const rawCategory = toRaw(categoryField.value)
 
   const id =
     typeof rawCategory === 'object'
       ? system.addCategoryNotification(rawCategory.name, rawCategory.imageUrl)
       : system.addCategoryNotification(rawCategory)
 
-  category.value = ''
+  categoryField.value = ''
 
   if (!props.streamItem) return
 
   system.addStreamCategoryNotification(id, props.streamItem.type, props.streamItem.id)
+}
+function addStreamByCategoryItem(): void {
+  if (!streamField.value || !props.categoryItem) return
+
+  const id = system.addCategoryNotification(props.categoryItem.name, getCategoryImage(props.categoryItem, 52))
+
+  system.addStreamCategoryNotification(id, streamField.value.type, streamField.value.id)
+
+  streamField.value = undefined
 }
 
 async function openAddStream(categoryNotification: CategoryNotificationStore) {
@@ -172,6 +196,35 @@ function deleteCategory(categoryItem: CategoryNotificationStore) {
 function clickCategory(categoryItem: CategoryNotificationStore) {
   expandCategory.value = !expandCategory.value || expandCategory.value.id !== categoryItem.id ? categoryItem : undefined
 }
+
+function getCategoryImage(
+  category: CategoryItemType | CategorySearchItem,
+  width?: number,
+  height?: number
+): string | undefined {
+  let src = 'boxArtUrl' in category ? category.boxArtUrl : category.imageUrl
+
+  if (width) src = src.replace('{width}', width.toFixed())
+  else if (height) src = src.replace('{width}', (height * imageCategoryRatio).toFixed())
+  if (height) src = src.replace('{height}', height.toFixed())
+  else if (width) src = src.replace('{height}', (width / imageCategoryRatio).toFixed())
+
+  return src
+}
+
+function toggleAllStreams(value: boolean | null): void {
+  if (!value) {
+    if (!categoryNotificationByCategoryItem.value) return
+    system.removeCategoryNotification(categoryNotificationByCategoryItem.value.id)
+    return
+  }
+
+  if (!props.categoryItem) return
+
+  if (categoryNotificationByCategoryItem.value)
+    system.cleanAllStreamsFromCategoryNotification(categoryNotificationByCategoryItem.value.id)
+  else system.addCategoryNotification(props.categoryItem.name, getCategoryImage(props.categoryItem))
+}
 </script>
 
 <template>
@@ -183,174 +236,81 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
       <v-card :title="t('gameNotificationDialog.title')">
         <v-card-text class="d-flex flex-column overflow-y-auto pb-1">
           <v-row v-if="props.streamItem" density="compact" class="flex-nowrap flex-grow-0">
-            <v-col cols="12">
+            <v-col cols="12" class="d-flex align-center">
               <v-avatar :image="props.streamItem.profileImage" class="mr-2" />
-              <span>{{ props.streamItem.name }}</span>
+              <span class="flex-grow-1 text-truncate">{{ props.streamItem.name }}</span>
             </v-col>
           </v-row>
-          <v-row density="compact" class="flex-nowrap flex-grow-0">
-            <v-col>
-              <v-combobox
-                v-model="categoryComp"
-                v-model:menu="menu"
-                :items="categoryItems"
-                item-title="name"
-                item-value="name"
-                :label="t('categoryNotificationDialog.category')"
-                variant="outlined"
-                density="compact"
-                :loading="fetching"
-                :menu-props="{
-                  location: 'bottom',
-                  origin: 'top',
-                  maxHeight: '275px',
-                }"
-                return-object
-                no-filter
-                item-props
-                autofocus
-                class="mt-2"
-                @update:search="search = trim($event)"
-                @keydown.esc.prevent="menu ? (menu = false) : (isActive.value = false)"
-                @keydown.enter="addCategory()"
-              >
-                <template #item="{ internalItem: item, props: itemComboboxProps }">
-                  <v-list-item v-bind="itemComboboxProps" @keydown.esc.prevent="menu = false">
-                    <template #prepend>
-                      <v-img :src="item.props.imageUrl" width="32" class="mr-2" />
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-combobox>
-            </v-col>
-            <v-col cols="auto">
-              <div class="pt-2 h-100">
-                <v-btn
-                  :aria-label="t('common.add')"
-                  :disabled="!category"
-                  height="100%"
-                  min-width="0"
-                  class="px-2"
-                  @click="addCategory()"
-                >
-                  <v-icon :icon="mdiPlus" />
-                </v-btn>
-              </div>
+          <v-row v-else-if="props.categoryItem" density="compact" class="flex-nowrap flex-grow-0">
+            <v-col cols="12" class="d-flex align-center">
+              <v-img
+                :src="getCategoryImage(props.categoryItem, 30)"
+                :aspect-ratio="imageCategoryRatio"
+                width="30"
+                class="mr-2 flex-grow-0"
+              />
+              <span class="flex-grow-1 text-truncate">{{ props.categoryItem.name }}</span>
             </v-col>
           </v-row>
-          <div class="flex-grow-1 overflow-y-auto mt-2">
-            <template v-if="system.categoryNotifications.length">
-              <v-list v-if="props.streamItem" density="compact" class="py-0">
-                <CategoryNotificationListItem
-                  v-for="categoryNotification in streamCategoryNotications"
-                  :key="categoryNotification.id"
-                  :category="categoryNotification"
-                  :stream-item="props.streamItem"
-                  @toggle-stream="
-                    $event
-                      ? system.addStreamCategoryNotification(
-                          categoryNotification.id,
-                          props.streamItem.type,
-                          props.streamItem.id
-                        )
-                      : system.removeStreamCategoryNotification(
-                          categoryNotification.id,
-                          props.streamItem.type,
-                          props.streamItem.id
-                        )
-                  "
-                />
-              </v-list>
-              <v-list v-else density="compact" class="py-0">
-                <v-tooltip
-                  v-for="categoryNotification in categoryNotificationsItems"
-                  :key="categoryNotification.id"
-                  :text="t('common.back')"
-                  location="bottom"
-                  :disabled="!expandCategory"
+          <template v-if="props.categoryItem">
+            <v-row density="compact" class="flex-nowrap flex-grow-0">
+              <v-col>
+                <v-autocomplete
+                  v-model="streamField"
+                  v-model:menu="menu"
+                  :items="streamsItems"
+                  item-title="name"
+                  item-value="id"
+                  :label="t('categoryNotificationDialog.stream')"
+                  variant="outlined"
+                  density="compact"
+                  :menu-props="{
+                    location: 'bottom',
+                    origin: 'top',
+                    maxHeight: '275px',
+                  }"
+                  return-object
+                  item-props
+                  autofocus
+                  class="mt-2"
+                  @keydown.esc.prevent="menu ? (menu = false) : (isActive.value = false)"
+                  @keydown.enter="addStreamByCategoryItem()"
                 >
-                  <template #activator="{ props: tooltipProps }">
-                    <CategoryNotificationListItem
-                      v-show="!expandCategory || expandCategory.id === categoryNotification.id"
-                      :list-item-props="tooltipProps"
-                      :category="categoryNotification"
-                      @delete="deleteCategory(categoryNotification)"
-                      @click="clickCategory(categoryNotification)"
-                    />
+                  <template #item="{ internalItem: item, props: itemComboboxProps }">
+                    <v-list-item v-bind="itemComboboxProps" @keydown.esc.prevent="menu = false">
+                      <template #prepend>
+                        <v-avatar :image="item.props.profileImage" size="32" class="mr-2" />
+                      </template>
+                    </v-list-item>
                   </template>
-                </v-tooltip>
-              </v-list>
-            </template>
-            <v-sheet v-else class="d-flex align-center justify-center h-100">
-              {{ t('categoryNotificationDialog.noNotifications') }}
-            </v-sheet>
-            <template v-if="expandCategory">
-              <v-divider />
-              <v-list density="compact" class="py-0">
+                </v-autocomplete>
+              </v-col>
+              <v-col cols="auto">
+                <div class="pt-2 h-100">
+                  <v-btn
+                    :aria-label="t('common.add')"
+                    :disabled="!streamField"
+                    height="100%"
+                    min-width="0"
+                    class="px-2"
+                    @click="addStreamByCategoryItem()"
+                  >
+                    <v-icon :icon="mdiPlus" />
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
+            <v-checkbox
+              :model-value="!!categoryNotificationByCategoryItem && !categoryNotificationByCategoryItem.streams.length"
+              :label="t('categoryNotificationDialog.allStreams')"
+              :true-value="true"
+              :false-value="false"
+              @update:model-value="toggleAllStreams"
+            />
+            <div class="flex-grow-1 overflow-y-auto mt-2">
+              <template v-if="categoryNotificationByCategoryItem && categoryNotificationByCategoryItem.streams.length">
                 <v-list-item
-                  v-if="categoryAddStream?.id !== expandCategory.id"
-                  :id="`list-item-add-${expandCategory.id}`"
-                  :title="t('categoryNotificationDialog.addStream')"
-                  :prepend-icon="mdiPlus"
-                  class="px-2"
-                  @click="openAddStream(expandCategory)"
-                />
-                <v-list-item v-else>
-                  <v-row density="compact" class="flex-nowrap">
-                    <v-col>
-                      <v-autocomplete
-                        :id="`autocomplete-${expandCategory.id}`"
-                        v-model="stream"
-                        :items="streamsItems"
-                        :item-value="(item) => `${item.type}:${item.id}`"
-                        item-title="name"
-                        :label="t('categoryNotificationDialog.stream')"
-                        density="compact"
-                        variant="outlined"
-                        return-object
-                        class="my-2"
-                        @keydown.enter.prevent="addStream(categoryAddStream, stream)"
-                      >
-                        <template #item="{ item, props: itemAutocompleteProps }">
-                          <v-list-item v-bind="itemAutocompleteProps">
-                            <template #prepend>
-                              <v-avatar size="small" :image="item.profileImage" />
-                            </template>
-                          </v-list-item>
-                        </template>
-                      </v-autocomplete>
-                    </v-col>
-                    <v-col cols="auto">
-                      <div class="py-2 h-100">
-                        <v-btn
-                          :aria-label="t('common.add')"
-                          :disabled="!stream"
-                          height="100%"
-                          min-width="0"
-                          class="px-2"
-                          @click="addStream(categoryAddStream, stream)"
-                        >
-                          <v-icon :icon="mdiPlus" />
-                        </v-btn>
-                      </div>
-                    </v-col>
-                    <v-col cols="auto">
-                      <div class="py-2 h-100">
-                        <v-btn
-                          :aria-label="t('common.close')"
-                          height="100%"
-                          min-width="0"
-                          class="px-2"
-                          @click="closeAddStream"
-                        >
-                          <v-icon :icon="mdiClose" />
-                        </v-btn>
-                      </div>
-                    </v-col>
-                  </v-row>
-                </v-list-item>
-                <v-list-item
-                  v-for="categoryNotificationStream in getStreamListFromCategory(expandCategory)"
+                  v-for="categoryNotificationStream in getStreamListFromCategory(categoryNotificationByCategoryItem)"
                   :key="categoryNotificationStream.id"
                   density="compact"
                   :title="categoryNotificationStream.name"
@@ -366,7 +326,7 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                       variant="flat"
                       @click="
                         system.removeStreamCategoryNotification(
-                          expandCategory.id,
+                          categoryNotificationByCategoryItem.id,
                           categoryNotificationStream.type,
                           categoryNotificationStream.id
                         )
@@ -376,9 +336,208 @@ function clickCategory(categoryItem: CategoryNotificationStore) {
                     </v-btn>
                   </template>
                 </v-list-item>
-              </v-list>
-            </template>
-          </div>
+              </template>
+              <v-sheet
+                v-else-if="!categoryNotificationByCategoryItem || !!categoryNotificationByCategoryItem.streams.length"
+                class="d-flex align-center justify-center h-100"
+              >
+                {{ t('categoryNotificationDialog.noNotifications') }}
+              </v-sheet>
+            </div>
+          </template>
+          <template v-else>
+            <v-row density="compact" class="flex-nowrap flex-grow-0">
+              <v-col>
+                <v-combobox
+                  v-model="categoryComp"
+                  v-model:menu="menu"
+                  :items="categoryItems"
+                  item-title="name"
+                  item-value="name"
+                  :label="t('categoryNotificationDialog.category')"
+                  variant="outlined"
+                  density="compact"
+                  :loading="fetching"
+                  :menu-props="{
+                    location: 'bottom',
+                    origin: 'top',
+                    maxHeight: '275px',
+                  }"
+                  return-object
+                  no-filter
+                  item-props
+                  autofocus
+                  class="mt-2"
+                  @update:search="search = trim($event)"
+                  @keydown.esc.prevent="menu ? (menu = false) : (isActive.value = false)"
+                  @keydown.enter="addCategory()"
+                >
+                  <template #item="{ internalItem: item, props: itemComboboxProps }">
+                    <v-list-item v-bind="itemComboboxProps" @keydown.esc.prevent="menu = false">
+                      <template #prepend>
+                        <v-img :src="item.props.imageUrl" width="32" class="mr-2" />
+                      </template>
+                    </v-list-item>
+                  </template>
+                </v-combobox>
+              </v-col>
+              <v-col cols="auto">
+                <div class="pt-2 h-100">
+                  <v-btn
+                    :aria-label="t('common.add')"
+                    :disabled="!categoryField"
+                    height="100%"
+                    min-width="0"
+                    class="px-2"
+                    @click="addCategory()"
+                  >
+                    <v-icon :icon="mdiPlus" />
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
+            <div class="flex-grow-1 overflow-y-auto mt-2">
+              <template v-if="system.categoryNotifications.length">
+                <v-list v-if="props.streamItem" density="compact" class="py-0">
+                  <CategoryNotificationListItem
+                    v-for="categoryNotification in streamCategoryNotications"
+                    :key="categoryNotification.id"
+                    :category="categoryNotification"
+                    :stream-item="props.streamItem"
+                    @toggle-stream="
+                      $event
+                        ? system.addStreamCategoryNotification(
+                            categoryNotification.id,
+                            props.streamItem.type,
+                            props.streamItem.id
+                          )
+                        : system.removeStreamCategoryNotification(
+                            categoryNotification.id,
+                            props.streamItem.type,
+                            props.streamItem.id
+                          )
+                    "
+                  />
+                </v-list>
+                <v-list v-else density="compact" class="py-0">
+                  <v-tooltip
+                    v-for="categoryNotification in categoryNotificationsItems"
+                    :key="categoryNotification.id"
+                    :text="t('common.back')"
+                    location="bottom"
+                    :disabled="!expandCategory"
+                  >
+                    <template #activator="{ props: tooltipProps }">
+                      <CategoryNotificationListItem
+                        v-show="!expandCategory || expandCategory.id === categoryNotification.id"
+                        :list-item-props="tooltipProps"
+                        :category="categoryNotification"
+                        @delete="deleteCategory(categoryNotification)"
+                        @click="clickCategory(categoryNotification)"
+                      />
+                    </template>
+                  </v-tooltip>
+                </v-list>
+              </template>
+              <v-sheet v-else class="d-flex align-center justify-center h-100">
+                {{ t('categoryNotificationDialog.noNotifications') }}
+              </v-sheet>
+              <template v-if="expandCategory">
+                <v-divider />
+                <v-list density="compact" class="py-0">
+                  <v-list-item
+                    v-if="categoryAddStream?.id !== expandCategory.id"
+                    :id="`list-item-add-${expandCategory.id}`"
+                    :title="t('categoryNotificationDialog.addStream')"
+                    :prepend-icon="mdiPlus"
+                    class="px-2"
+                    @click="openAddStream(expandCategory)"
+                  />
+                  <v-list-item v-else>
+                    <v-row density="compact" class="flex-nowrap">
+                      <v-col>
+                        <v-autocomplete
+                          :id="`autocomplete-${expandCategory.id}`"
+                          v-model="stream"
+                          :items="streamsItems"
+                          :item-value="(item) => `${item.type}:${item.id}`"
+                          item-title="name"
+                          :label="t('categoryNotificationDialog.stream')"
+                          density="compact"
+                          variant="outlined"
+                          return-object
+                          class="my-2"
+                          @keydown.enter.prevent="addStream(categoryAddStream, stream)"
+                        >
+                          <template #item="{ item, props: itemAutocompleteProps }">
+                            <v-list-item v-bind="itemAutocompleteProps">
+                              <template #prepend>
+                                <v-avatar size="small" :image="item.profileImage" />
+                              </template>
+                            </v-list-item>
+                          </template>
+                        </v-autocomplete>
+                      </v-col>
+                      <v-col cols="auto">
+                        <div class="py-2 h-100">
+                          <v-btn
+                            :aria-label="t('common.add')"
+                            :disabled="!stream"
+                            height="100%"
+                            min-width="0"
+                            class="px-2"
+                            @click="addStream(categoryAddStream, stream)"
+                          >
+                            <v-icon :icon="mdiPlus" />
+                          </v-btn>
+                        </div>
+                      </v-col>
+                      <v-col cols="auto">
+                        <div class="py-2 h-100">
+                          <v-btn
+                            :aria-label="t('common.close')"
+                            height="100%"
+                            min-width="0"
+                            class="px-2"
+                            @click="closeAddStream"
+                          >
+                            <v-icon :icon="mdiClose" />
+                          </v-btn>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-list-item>
+                  <v-list-item
+                    v-for="categoryNotificationStream in getStreamListFromCategory(expandCategory)"
+                    :key="categoryNotificationStream.id"
+                    density="compact"
+                    :title="categoryNotificationStream.name"
+                    class="stream-category-content"
+                  >
+                    <template #prepend>
+                      <v-avatar size="small" :image="categoryNotificationStream.profileImage" />
+                    </template>
+                    <template #append>
+                      <v-btn
+                        icon
+                        size="x-small"
+                        variant="flat"
+                        @click="
+                          system.removeStreamCategoryNotification(
+                            expandCategory.id,
+                            categoryNotificationStream.type,
+                            categoryNotificationStream.id
+                          )
+                        "
+                      >
+                        <v-icon size="large" color="error" :icon="mdiDelete" />
+                      </v-btn>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </template>
+            </div>
+          </template>
         </v-card-text>
         <v-card-actions>
           <v-spacer />

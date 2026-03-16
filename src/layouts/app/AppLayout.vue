@@ -63,7 +63,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
 <template>
   <h1 class="d-sr-only">{{ i18n.t('common.projectName') }}</h1>
   <div aria-live="polite" class="d-sr-only">
-    <h2>{{ i18n.t('accessibility.shortkeys') }}</h2>
+    <h2>{{ i18n.t('accessibility.shortcuts') }}</h2>
     <ul>
       <li>
         {{ i18n.t('accessibility.global') }}

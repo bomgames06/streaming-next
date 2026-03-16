@@ -13,7 +13,7 @@ import { isEqual, uniqBy } from 'lodash'
 import type { VMenu } from 'vuetify/components'
 import type { VList } from 'vuetify/components/VList'
 import { useTheme } from 'vuetify'
-import { mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
+import { mdiBell, mdiBellOutline, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -44,6 +44,7 @@ const menu = reactive({
   y: 0,
 })
 const listMenuRef = ref<InstanceType<typeof VList>>()
+const categoryNotification = ref<CategoryItemType | CategorySearchItem>()
 
 const streamItems = computed(() => uniqBy(streams.items, 'id'))
 
@@ -140,25 +141,13 @@ async function showMenu(event: PointerEvent, item: CategoryItemType | CategorySe
   menu.x = event.clientX
   menu.y = event.clientY
   menuShow.value = item
-
-  await nextTick()
-  if (listMenuRef.value && listMenuRef.value.$el) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (entry.isIntersecting) (entry.target as HTMLElement).focus()
-      },
-      { threshold: [0] }
-    )
-    observer.observe(listMenuRef.value.$el)
-  }
 }
 async function closeMenu(value?: boolean): Promise<void> {
-  if (value) return
-  if (menuShow.value) {
-    const item = menuShow.value
-    menuShow.value = undefined
-    await nextTick()
+  let item = menuShow.value
+  if (!value) menuShow.value = undefined
+
+  await nextTick()
+  if (!menuShow.value && item) {
     const element = document.getElementById(categoryElId(item))
     element && element.focus()
   }
@@ -168,16 +157,28 @@ function addFavoriteCategory(item: CategoryItemType | CategorySearchItem): void 
   system.addFavoriteCategory({
     type: item.type,
     id: item.id,
+    name: item.name,
   })
 }
 function removeFavoriteCategory(item: CategoryItemType | CategorySearchItem): void {
   system.removeFavoriteCategory({
     type: item.type,
     id: item.id,
+    name: item.name,
   })
 }
 function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
-  return system.favoriteCategories.some((favorite) => favorite.type === item.type && favorite.id === item.id)
+  return system.categoryFavorites.some((favorite) => favorite.type === item.type && favorite.name === item.name)
+}
+function notificationEnabled(item: CategoryItemType | CategorySearchItem): boolean {
+  return system.categoryNotifications.some((notification) => notification.name === item.name)
+}
+function notificationHasStream(item: CategoryItemType | CategorySearchItem): boolean {
+  return !!system.categoryNotifications.find((notification) => notification.name === item.name)?.streams.length
+}
+
+function showCategoryNotificationDialog(item: CategoryItemType | CategorySearchItem) {
+  categoryNotification.value = item
 }
 </script>
 
@@ -186,9 +187,11 @@ function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
     <v-list-item
       v-for="category in props.items"
       v-show="showItem(category)"
+      :id="categoryElId(category)"
       :key="category.id"
       class="pa-0"
       :disabled="!showItem(category)"
+      tabindex="0"
       @click="clickCategory(category)"
       @contextmenu.prevent="showMenu($event, category)"
     >
@@ -206,14 +209,32 @@ function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
           <div class="position-relative">
             <v-img :max-width="categorySelected && 108" :src="categoryImg(category)" :width="categorySelected && 108" />
             <div class="badge-content">
-              <v-card v-if="favoriteEnabled(category)" class="bg-background badge-item">
+              <v-card
+                v-if="notificationEnabled(category)"
+                :aria-label="t('common.notification')"
+                class="bg-background badge-item position-relative"
+              >
                 <v-icon
-                  aria-hidden="false"
-                  :aria-label="t('common.favorite')"
                   :color="theme.current.value.dark ? 'yellow' : 'warning'"
                   size="x-small"
-                  :icon="mdiStar"
+                  :icon="mdiBell"
+                  :class="{
+                    'diagonal-cut': notificationHasStream(category),
+                  }"
                 />
+                <v-icon
+                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                  size="x-small"
+                  :icon="mdiBellOutline"
+                  class="position-absolute bell-notification-position"
+                />
+              </v-card>
+              <v-card
+                v-if="favoriteEnabled(category)"
+                :aria-label="t('common.favorite')"
+                class="bg-background badge-item"
+              >
+                <v-icon :color="theme.current.value.dark ? 'yellow' : 'warning'" size="x-small" :icon="mdiStar" />
               </v-card>
             </div>
           </div>
@@ -250,8 +271,9 @@ function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
     :target="[menu.x, menu.y]"
     @close="closeMenu()"
     @update:model-value="closeMenu"
+    @keydown.esc.prevent="closeMenu()"
   >
-    <v-list :id="listMenuRef" @keydown.esc.prevent="menuShow = undefined">
+    <v-list :id="listMenuRef" @keydown.esc.prevent="closeMenu()">
       <v-list-item
         :prepend-icon="favoriteEnabled(menuShow) ? mdiStar : mdiStarOutline"
         :title="
@@ -259,8 +281,20 @@ function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
         "
         @click="favoriteEnabled(menuShow) ? removeFavoriteCategory(menuShow) : addFavoriteCategory(menuShow)"
       />
+      <v-list-item
+        v-if="system.notificationType !== 'none'"
+        :prepend-icon="mdiBell"
+        :title="t('streamList.menu.categoryNotification')"
+        @click="showCategoryNotificationDialog(menuShow)"
+      />
     </v-list>
   </v-menu>
+  <CategoryNotificationDialog
+    v-if="categoryNotification"
+    :model-value="!!categoryNotification"
+    :category-item="categoryNotification"
+    @update:model-value="categoryNotification = $event ? categoryNotification : undefined"
+  />
   <div v-if="categorySelected" class="mt-3">
     <StreamList v-model:detail-item="detailItem" disable-category-menu disable-notification-menu :items="streamItems" />
     <v-btn
@@ -306,5 +340,8 @@ function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
   top: 0;
   right: 0;
   margin: 1px;
+}
+.bell-notification-position {
+  left: 2px;
 }
 </style>
