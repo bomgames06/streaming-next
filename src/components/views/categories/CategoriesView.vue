@@ -29,6 +29,34 @@ const categoryId = ref<string | undefined>(props.categoryId)
 const categoryById = ref<CategoryItemType>()
 const firstLoading = ref<boolean>(true)
 
+emitter.on('refresh', refresh)
+onUnmounted(() => {
+  emitter.off('refresh', refresh)
+})
+onMounted(() => {
+  if (categoryId.value) fetchCategory()
+  else fetchCategories()
+})
+
+const favoriteNotificationFilter = computed<boolean>(
+  () => system.showCategoryFavoritesComp || system.showCategoryNotificationsComp
+)
+const items = computed<(CategoryItemType | CategorySearchItem)[]>(() =>
+  uniqBy(compact([categoryById.value, ...categories.items]), 'id')
+)
+const categoriesComp = computed<(CategoryItemType | CategorySearchItem)[]>(() => {
+  let value: (CategoryItemType | CategorySearchItem)[] = []
+
+  if (system.showCategoryFavoritesComp) value.push(...favoriteItems.value)
+  if (system.showCategoryNotificationsComp) value.push(...notificationItems.value)
+
+  if (categorySelected.value || !favoriteNotificationFilter.value) value.push(...items.value)
+  else if (!categorySelected.value && favoriteNotificationFilter && system.categoryNameFilterComp)
+    value = value.filter((item) => item.name.toLowerCase().includes(system.categoryNameFilterComp.toLowerCase()))
+
+  return uniqBy(value, 'id')
+})
+
 watch(
   () => system.accounts.twitch,
   () => {
@@ -40,34 +68,6 @@ watch(
   () => system.categoryNameFilterComp,
   debounce(() => fetchCategories(), 500)
 )
-
-emitter.on('refresh', refresh)
-onUnmounted(() => {
-  emitter.off('refresh', refresh)
-})
-onMounted(() => {
-  if (categoryId.value) fetchCategory()
-  else fetchCategories()
-})
-
-const items = computed<(CategoryItemType | CategorySearchItem)[]>(() =>
-  uniqBy(compact([categoryById.value, ...categories.items]), 'id')
-)
-const categoriesComp = computed<(CategoryItemType | CategorySearchItem)[]>(() => {
-  if (
-    categorySelected.value ||
-    system.categoryNameFilterComp ||
-    (!system.showCategoryFavoritesComp && !system.showCategoryNotificationsComp)
-  )
-    return items.value
-
-  const value: (CategoryItemType | CategorySearchItem)[] = []
-
-  if (system.showCategoryFavoritesComp) value.push(...favoriteItems.value)
-  if (system.showCategoryNotificationsComp) value.push(...notificationItems.value)
-
-  return uniqBy(value, 'id')
-})
 
 async function fetchCategory() {
   if (!categoryId.value) return
@@ -93,14 +93,18 @@ function refresh() {
 
 const fetching = ref(false)
 async function fetchCategories(category?: CategoryItemType): Promise<void> {
-  system.loading()
-  system.refreshing()
+  if (!favoriteNotificationFilter.value) {
+    system.loading()
+    system.refreshing()
+  }
   fetching.value = true
   try {
     await Promise.all([fetchItemsCategories(category), fetchCategoryFavorites(), fetchCategoryNotifcations()])
   } finally {
-    system.loaded()
-    system.refreshed()
+    if (!favoriteNotificationFilter.value) {
+      system.loaded()
+      system.refreshed()
+    }
     fetching.value = false
     firstLoading.value = false
   }
@@ -206,7 +210,7 @@ function toggleNotificationCategory() {
                   :aria-checked="system.showCategoryFavoritesComp"
                   :aria-label="t('common.favorite', 2)"
                   class="rounded-lg"
-                  :disabled="!!categorySelected || !!system.categoryNameFilterComp"
+                  :disabled="!!categorySelected"
                   :icon="true"
                   role="checkbox"
                   size="24"
@@ -224,7 +228,7 @@ function toggleNotificationCategory() {
                   :aria-checked="system.showCategoryNotificationsComp"
                   :aria-label="t('common.notification', 2)"
                   class="rounded-lg"
-                  :disabled="!!categorySelected || !!system.categoryNameFilterComp"
+                  :disabled="!!categorySelected"
                   :icon="true"
                   role="checkbox"
                   size="24"

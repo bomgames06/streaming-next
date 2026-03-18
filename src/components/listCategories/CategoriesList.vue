@@ -90,6 +90,7 @@ watch(
 )
 
 watch(categorySelected, () => {
+  streams.cursor = undefined
   nextTick(() => {
     fetchStreams()
   })

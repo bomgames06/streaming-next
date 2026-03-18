@@ -145,7 +145,9 @@ function filterItem(value: StreamItemLiveType): boolean {
     !(
       (!system.showFavoritesComp && !system.showNotificationsComp) ||
       (system.showFavoritesComp && favoriteItemEnabled(value)) ||
-      (system.showNotificationsComp && notificationItemEnabled(value))
+      (system.showFavoritesComp && favoriteItemCategoryEnabled(value)) ||
+      (system.showNotificationsComp && notificationItemEnabled(value)) ||
+      (system.showNotificationsComp && notificationItemCategoryEnabled(value))
     )
   )
     show = false
@@ -164,8 +166,20 @@ function filterItem(value: StreamItemLiveType): boolean {
 function favoriteItemEnabled(item: StreamItemType) {
   return system.favorites.some((value) => value.type === item.type && value.id === item.id)
 }
+function favoriteItemCategoryEnabled(item: StreamItemType) {
+  if (!isOnlineStream(item) || !item.game) return false
+  return system.categoryFavorites.some((value) => value.type === item.type && value.name === item.game)
+}
 function notificationItemEnabled(item: StreamItemType) {
   return system.notifications.some((value) => value.type === item.type && value.id === item.id)
+}
+function notificationItemCategoryEnabled(item: StreamItemType) {
+  if (!isOnlineStream(item) || !item.game) return false
+  return system.categoryNotifications.some(
+    (value) =>
+      value.name === item.game &&
+      (!value.streams.length || value.streams.some((stream) => (stream.type === item.type && stream.id) === item.id))
+  )
 }
 
 watch(() => system.validAccounts, fetchData)
