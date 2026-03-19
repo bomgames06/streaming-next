@@ -4,6 +4,7 @@ import type { StreamItemLiveStreamType, StreamItemType } from '@/components/list
 import useSystemStore from '@/store/system/useSystemStore.ts'
 import { orderBy } from 'lodash'
 import type { GroupStreamStore } from '@/store/system/types/systemStoreType.ts'
+import { mdiArrowCollapse, mdiArrowExpand, mdiFolderOff, mdiFolderOffOutline } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -58,7 +59,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
 
 <template>
   <div class="d-flex flex-column h-100">
-    <v-row v-if="!detailItem" dense class="flex-nowrap flex-grow-0">
+    <v-row v-if="!detailItem" density="compact" class="flex-nowrap flex-grow-0">
       <v-col>
         <GroupStreamDialog :streams="props.streams || []">
           <template #activator="{ props: groupStreamDialogProps }">
@@ -76,7 +77,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
           class="px-2"
           @click="system.groupExpandedComp = groupIds"
         >
-          <v-icon icon="mdi-arrow-expand" />
+          <v-icon :icon="mdiArrowExpand" />
         </v-btn>
       </v-col>
       <v-col cols="auto">
@@ -87,7 +88,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
           class="px-2"
           @click="system.groupExpandedComp = []"
         >
-          <v-icon icon="mdi-arrow-collapse" />
+          <v-icon :icon="mdiArrowCollapse" />
         </v-btn>
       </v-col>
       <v-col cols="auto">
@@ -99,7 +100,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
           @click="system.setShowNoGroup(!system.showNoGroup)"
         >
           <v-icon
-            :icon="system.showNoGroup ? 'mdi-folder-off' : 'mdi-folder-off-outline'"
+            :icon="system.showNoGroup ? mdiFolderOff : mdiFolderOffOutline"
             :color="system.showNoGroup ? 'primary' : undefined"
           />
         </v-btn>
@@ -163,7 +164,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
-    <v-row v-else dense align="center" justify="center">
+    <v-row v-else class="align-center justify-center" density="compact">
       <v-col cols="auto" class="text-center">
         {{ t('streamGroupList.noGroupAdded') }}
       </v-col>

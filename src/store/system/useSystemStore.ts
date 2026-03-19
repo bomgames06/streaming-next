@@ -4,6 +4,7 @@ import {
   STORAGE_KEY_ACCOUNTS,
   STORAGE_KEY_CATEGORY_NOTIFICATIONS,
   STORAGE_KEY_DARK,
+  STORAGE_KEY_CATEGORY_FAVORITES,
   STORAGE_KEY_FAVORITES,
   STORAGE_KEY_GROUP_EXPANDED,
   STORAGE_KEY_GROUP_STREAMS,
@@ -12,12 +13,14 @@ import {
   STORAGE_KEY_NOTIFICATIONS,
   STORAGE_KEY_SHOW_ALWAYS_OFFLINES,
   STORAGE_KEY_SHOW_FAVORITES,
+  STORAGE_KEY_SHOW_CATEGORY_FAVORITES,
   STORAGE_KEY_SHOW_GROUPS,
   STORAGE_KEY_SHOW_NO_GROUP,
   STORAGE_KEY_SHOW_NOTIFICATIONS,
   STORAGE_KEY_STREAM_ORDER,
   STORAGE_KEY_STREAM_ORDER_SORT,
   type StorageSyncTypes,
+  STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS,
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
@@ -34,6 +37,7 @@ import type {
   AccountStoreType,
   CategoryNotificationStore,
   ClipPeriodStore,
+  FavoriteGroup,
   FavoriteStore,
   GroupStreamStore,
   HeaderAppBarViewStore,
@@ -72,6 +76,7 @@ const useSystemStore = defineStore('System', () => {
   const showNoGroup = ref<boolean>(false)
   const accountsCacheStreams = ref<AccountCacheStreamsDataStore>({})
   const groupStreams = ref<GroupStreamStore[]>([])
+  const categoryFavorites = ref<FavoriteGroup[]>([])
 
   // View
   const streamFilter = ref<string>('')
@@ -81,6 +86,8 @@ const useSystemStore = defineStore('System', () => {
   const categoryNameFilter = ref<string>('')
   const showGroups = ref<boolean>(false)
   const showFavorites = ref<boolean>(false)
+  const showCategoryFavorites = ref<boolean>(false)
+  const showCategoryNotifications = ref<boolean>(false)
   const showNotifications = ref<boolean>(false)
   const groupExpanded = ref<string[]>([])
 
@@ -118,6 +125,14 @@ const useSystemStore = defineStore('System', () => {
   const categoryNameFilterComp = computed({ get: () => categoryNameFilter.value, set: setCategoryNameFilter })
   const showGroupsComp = computed({ get: () => showGroups.value, set: setShowGroups })
   const showFavoritesComp = computed({ get: () => showFavorites.value, set: setShowFavorites })
+  const showCategoryFavoritesComp = computed({
+    get: () => showCategoryFavorites.value,
+    set: setShowcategoryFavorites,
+  })
+  const showCategoryNotificationsComp = computed({
+    get: () => showCategoryNotifications.value,
+    set: setShowCategoryNotifications,
+  })
   const showNotificationsComp = computed({ get: () => showNotifications.value, set: setShowNotifications })
   const groupExpandedComp = computed({ get: () => groupExpanded.value, set: setGroupExpanded })
 
@@ -165,10 +180,13 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_STREAM_ORDER_SORT,
       STORAGE_KEY_SHOW_GROUPS,
       STORAGE_KEY_SHOW_FAVORITES,
+      STORAGE_KEY_SHOW_CATEGORY_FAVORITES,
+      STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS,
       STORAGE_KEY_SHOW_NOTIFICATIONS,
       STORAGE_KEY_CATEGORY_NOTIFICATIONS,
       STORAGE_KEY_GROUP_STREAMS,
       STORAGE_KEY_GROUP_EXPANDED,
+      STORAGE_KEY_CATEGORY_FAVORITES,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -184,11 +202,14 @@ const useSystemStore = defineStore('System', () => {
     streamOrderSort.value = syncStorage[STORAGE_KEY_STREAM_ORDER_SORT] ?? true
     showGroups.value = syncStorage[STORAGE_KEY_SHOW_GROUPS] ?? false
     showFavorites.value = syncStorage[STORAGE_KEY_SHOW_FAVORITES] ?? false
+    showCategoryFavorites.value = syncStorage[STORAGE_KEY_SHOW_CATEGORY_FAVORITES] ?? false
+    showCategoryNotifications.value = syncStorage[STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS] ?? false
     showNotifications.value = syncStorage[STORAGE_KEY_SHOW_NOTIFICATIONS] ?? false
     accountsCacheStreams.value = localStorage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] ?? {}
     categoryNotifications.value = syncStorage[STORAGE_KEY_CATEGORY_NOTIFICATIONS] ?? []
     groupStreams.value = syncStorage[STORAGE_KEY_GROUP_STREAMS] ?? []
     groupExpanded.value = syncStorage[STORAGE_KEY_GROUP_EXPANDED] ?? []
+    categoryFavorites.value = syncStorage[STORAGE_KEY_CATEGORY_FAVORITES] ?? []
 
     setDark(dark.value, theme)
     setLanguage(language.value, i18n)
@@ -294,6 +315,14 @@ const useSystemStore = defineStore('System', () => {
 
     void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
   }
+  function cleanAllStreamsFromCategoryNotification(id: string) {
+    const item = categoryNotifications.value.find((value) => value.id === id)
+    if (!item) return
+
+    item.streams = []
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_NOTIFICATIONS]: cloneDeep(categoryNotifications.value) })
+  }
   function addStreamCategoryNotification(id: string, type: AccountStoreType, streamId: string) {
     const item = categoryNotifications.value.find((item) => item.id === id)
     if (!item || item.streams.find((item) => item.type === type && item.id === streamId)) return
@@ -322,13 +351,17 @@ const useSystemStore = defineStore('System', () => {
     favorites.value = []
     void browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: cloneDeep(favorites.value) })
   }
+  function cleanCategoryFavorite() {
+    categoryFavorites.value = []
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_FAVORITES]: cloneDeep(categoryFavorites.value) })
+  }
   function setNotificationType(type: NotificationTypeStore) {
     notificationType.value = type
     void browser.storage.sync.set({ [STORAGE_KEY_NOTIFICATION_TYPE]: cloneDeep(notificationType.value) })
   }
   function setDark(value: boolean, theme: ThemeInstance) {
     dark.value = value
-    theme.global.name.value = dark.value ? 'dark' : 'light'
+    theme.change(dark.value ? 'dark' : 'light')
     void browser.storage.sync.set({ [STORAGE_KEY_DARK]: cloneDeep(dark.value) })
   }
   function setLanguage(value: Locales, i18n: Composer) {
@@ -390,6 +423,28 @@ const useSystemStore = defineStore('System', () => {
 
     void browser.storage.sync.set({ [STORAGE_KEY_GROUP_STREAMS]: cloneDeep(groupStreams.value) })
   }
+  function addFavoriteCategory(category: FavoriteGroup): void {
+    const favoriteCategory = categoryFavorites.value.find(
+      (value) => value.id === category.id && value.type === category.type
+    )
+    if (favoriteCategory) return
+
+    categoryFavorites.value = [...categoryFavorites.value, category]
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_FAVORITES]: cloneDeep(categoryFavorites.value) })
+  }
+  function removeFavoriteCategory(category: FavoriteGroup): void {
+    const favoriteCategory = categoryFavorites.value.find(
+      (value) => value.id === category.id && value.type === category.type
+    )
+    if (!favoriteCategory) return
+
+    categoryFavorites.value = categoryFavorites.value.filter(
+      (value) => !(value.id === category.id && value.type === category.type)
+    )
+
+    void browser.storage.sync.set({ [STORAGE_KEY_CATEGORY_FAVORITES]: cloneDeep(categoryFavorites.value) })
+  }
 
   // View actions
   function setStreamFilter(value: string) {
@@ -418,6 +473,16 @@ const useSystemStore = defineStore('System', () => {
   function setShowFavorites(value: boolean) {
     showFavorites.value = value
     void browser.storage.sync.set({ [STORAGE_KEY_SHOW_FAVORITES]: cloneDeep(showFavorites.value) })
+  }
+  function setShowcategoryFavorites(value: boolean) {
+    showCategoryFavorites.value = value
+    void browser.storage.sync.set({ [STORAGE_KEY_SHOW_CATEGORY_FAVORITES]: cloneDeep(showCategoryFavorites.value) })
+  }
+  function setShowCategoryNotifications(value: boolean) {
+    showCategoryNotifications.value = value
+    void browser.storage.sync.set({
+      [STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS]: cloneDeep(showCategoryNotifications.value),
+    })
   }
   function setShowNotifications(value: boolean) {
     showNotifications.value = value
@@ -464,6 +529,7 @@ const useSystemStore = defineStore('System', () => {
     showNoGroup,
     accountsCacheStreams,
     groupStreams,
+    categoryFavorites,
     // view
     streamFilter,
     streamOrder,
@@ -489,6 +555,8 @@ const useSystemStore = defineStore('System', () => {
     categoryNameFilterComp,
     showGroupsComp,
     showFavoritesComp,
+    showCategoryFavoritesComp,
+    showCategoryNotificationsComp,
     showNotificationsComp,
     groupExpandedComp,
     // utils
@@ -513,11 +581,13 @@ const useSystemStore = defineStore('System', () => {
     removeFavorite,
     addCategoryNotification,
     removeCategoryNotification,
+    cleanAllStreamsFromCategoryNotification,
     addStreamCategoryNotification,
     removeStreamCategoryNotification,
     cleanNotification,
     cleanCategoryNotification,
     cleanFavorite,
+    cleanCategoryFavorite,
     setNotificationType,
     setDark,
     setLanguage,
@@ -529,6 +599,8 @@ const useSystemStore = defineStore('System', () => {
     editGroupStream,
     addStreamToGroupStream,
     removeStreamFromGroupStream,
+    addFavoriteCategory,
+    removeFavoriteCategory,
     // view action
     setStreamOrder,
     // video view action,

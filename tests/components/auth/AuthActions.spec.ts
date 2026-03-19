@@ -10,6 +10,7 @@ import { cloneDeep } from 'lodash'
 import AppBusiness from '@/services/business/appBusiness'
 import type { Mock } from '@vitest/spy'
 import browser from 'webextension-polyfill'
+import { mdiAccount, mdiCloseCircle, mdiDelete, mdiLogout, mdiTwitch } from '@mdi/js'
 
 vi.mock('@/services/business/appBusiness', () => ({
   default: {
@@ -41,21 +42,21 @@ describe('AuthActions.vue', () => {
           const buttonAuthTypes: {
             [key in AccountStoreType]: {
               text: string
-              iconClass: string
+              icon: string
               element: DOMWrapper<Element>
             }
           } = {
             twitch: {
               text: dictionary.twitchButtonText,
-              iconClass: 'mdi-twitch',
+              icon: mdiTwitch,
               element: wrapper.find('button[data-testid="twitch-auth"]'),
             },
           }
 
-          Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
+          Object.values(buttonAuthTypes).forEach(({ text, icon, element }) => {
             expect(element.exists()).toBe(true)
             expect(element.text()).toBe(text)
-            expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
+            expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${icon}"]`).exists()).toBe(true)
           })
         },
         {
@@ -104,7 +105,7 @@ describe('AuthActions.vue', () => {
       const buttonAuthTypes: {
         [key in AccountStoreType]: {
           text: string
-          iconClass: string
+          icon: string
           avatarUrl: string
           element: DOMWrapper<Element>
           deleteElement: DOMWrapper<Element>
@@ -112,28 +113,28 @@ describe('AuthActions.vue', () => {
       } = {
         twitch: {
           text: 'twitchAccountName',
-          iconClass: 'mdi-twitch',
+          icon: mdiTwitch,
           avatarUrl: 'https://some-domain/avatar.png',
           element: wrapper.find('button[data-testid="twitch-auth"]'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
         },
       }
 
-      for (const [key, { text, iconClass, avatarUrl, element, deleteElement }] of Object.entries(buttonAuthTypes)) {
+      for (const [key, { text, icon, avatarUrl, element, deleteElement }] of Object.entries(buttonAuthTypes)) {
         const accountType = key as AccountStoreType
 
         expect(element.exists()).toBe(true)
         expect(element.text()).toBe(text)
-        expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
-        expect(element.find(`i.mdi-close-circle.mdi.v-icon`).exists()).toBe(true)
+        expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${icon}"]`).exists()).toBe(true)
+        expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiCloseCircle}"]`).exists()).toBe(true)
         expect(deleteElement.exists()).toBe(true)
         expect(deleteElement.text()).toBe('')
-        expect(deleteElement.find(`i.mdi-delete.mdi.v-icon`).exists()).toBe(true)
+        expect(deleteElement.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiDelete}"]`).exists()).toBe(true)
 
         const imgElement = element.find('img')
         expect(imgElement.exists()).toBe(true)
         expect(imgElement.attributes().src).toBe(avatarUrl)
-        const accountIconNotFound = element.find('i.mdi-account.mdi.v-icon')
+        const accountIconNotFound = element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiAccount}"]`)
         expect(accountIconNotFound.exists()).toBe(false)
 
         system.$patch({
@@ -148,7 +149,7 @@ describe('AuthActions.vue', () => {
 
         const imgElementNotFound = element.find('img')
         expect(imgElementNotFound.exists()).toBe(false)
-        const accountIcon = element.find('i.mdi-account.mdi.v-icon')
+        const accountIcon = element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiAccount}"]`)
         expect(accountIcon.exists()).toBe(true)
 
         system.$patch({
@@ -172,21 +173,21 @@ describe('AuthActions.vue', () => {
           const buttonAuthTypes: {
             [key in AccountStoreType]: {
               text: string
-              iconClass: string
+              icon: string
               element: DOMWrapper<Element>
             }
           } = {
             twitch: {
               text: dictionary.twitchButtonText,
-              iconClass: 'mdi-twitch',
+              icon: mdiTwitch,
               element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
             },
           }
 
-          Object.values(buttonAuthTypes).forEach(({ text, iconClass, element }) => {
+          Object.values(buttonAuthTypes).forEach(({ text, icon, element }) => {
             expect(element.exists()).toBe(true)
             expect(element.text()).toBe(text)
-            expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(true)
+            expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${icon}"]`).exists()).toBe(true)
           })
         },
         {
@@ -235,7 +236,7 @@ describe('AuthActions.vue', () => {
       const buttonAuthTypes: {
         [key in AccountStoreType]: {
           text: string
-          iconClass: string
+          icon: string
           avatarUrl: string
           element: DOMWrapper<Element>
           deleteElement: DOMWrapper<Element>
@@ -243,14 +244,14 @@ describe('AuthActions.vue', () => {
       } = {
         twitch: {
           text: 'twitchAccountName',
-          iconClass: 'mdi-twitch',
+          icon: mdiTwitch,
           avatarUrl: 'https://some-domain/avatar.png',
           element: wrapper.find('div[data-testid="twitch-auth"].v-list-item'),
           deleteElement: wrapper.find('button[data-testid="twitch-auth-delete"]'),
         },
       }
 
-      for (const [key, { text, iconClass, avatarUrl, element, deleteElement }] of Object.entries(buttonAuthTypes)) {
+      for (const [key, { text, icon, avatarUrl, element, deleteElement }] of Object.entries(buttonAuthTypes)) {
         const accountType = key as AccountStoreType
 
         for (const status of [true, false]) {
@@ -266,15 +267,17 @@ describe('AuthActions.vue', () => {
 
           expect(element.exists()).toBe(true)
           expect(element.text()).toBe(text)
-          expect(element.find(`i.${iconClass}.mdi.v-icon`).exists()).toBe(false)
-          expect(element.find(`i.mdi-close-circle.mdi.v-icon`).exists()).toBe(status)
+          expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${icon}"]`).exists()).toBe(false)
+          expect(element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiCloseCircle}"]`).exists()).toBe(status)
           expect(deleteElement.text()).toBe('')
-          expect(deleteElement.find(`i.mdi-${status ? 'delete' : 'logout'}.mdi.v-icon`).exists()).toBe(true)
+          expect(
+            deleteElement.find(`i.v-icon>svg.v-icon__svg>path[d="${status ? mdiDelete : mdiLogout}"]`).exists()
+          ).toBe(true)
 
           const imgElement = element.find('img')
           expect(imgElement.exists()).toBe(true)
           expect(imgElement.attributes().src).toBe(avatarUrl)
-          const accountIconNotFound = element.find('i.mdi-account.mdi.v-icon')
+          const accountIconNotFound = element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiAccount}"]`)
           expect(accountIconNotFound.exists()).toBe(false)
 
           system.$patch({
@@ -289,7 +292,7 @@ describe('AuthActions.vue', () => {
 
           const imgElementNotFound = element.find('img')
           expect(imgElementNotFound.exists()).toBe(false)
-          const accountIcon = element.find('i.mdi-account.mdi.v-icon')
+          const accountIcon = element.find(`i.v-icon>svg.v-icon__svg>path[d="${mdiAccount}"]`)
           expect(accountIcon.exists()).toBe(true)
 
           system.$patch({

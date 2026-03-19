@@ -5,6 +5,7 @@ import type { NotificationTypeStore } from '@/store/system/types/systemStoreType
 import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import browser from 'webextension-polyfill'
+import { mdiBroom, mdiGithub, mdiHeart } from '@mdi/js'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -27,8 +28,8 @@ function openDonation(middle?: boolean) {
   <ViewContainer>
     <div class="d-flex flex-column h-100">
       <div class="flex-grow-1">
-        <h2>{{ i18n.t('settings.title') }}</h2>
-        <v-divider class="mb-1" />
+        <h2 class="my-0">{{ i18n.t('settings.title') }}</h2>
+        <v-divider class="mb-3" />
         <v-row>
           <v-col cols="12">
             <v-select
@@ -61,28 +62,37 @@ function openDonation(middle?: boolean) {
             <v-row>
               <v-col cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanFavorites')"
+                  :aria-label="i18n.t('settings.clearFavorites')"
                   :disabled="!system.favorites.length"
-                  prepend-icon="mdi-broom"
-                  :text="i18n.t('settings.favorites')"
+                  :prepend-icon="mdiBroom"
+                  :text="i18n.t('settings.clearFavorites')"
                   @click="system.cleanFavorite()"
+                />
+              </v-col>
+              <v-col cols="auto">
+                <v-btn
+                  :aria-label="i18n.t('settings.clearCategoryFavorites')"
+                  :disabled="!system.categoryFavorites.length"
+                  :prepend-icon="mdiBroom"
+                  :text="i18n.t('settings.clearCategoryFavorites')"
+                  @click="system.cleanCategoryFavorite()"
                 />
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanNotifications')"
+                  :aria-label="i18n.t('settings.clearNotifications')"
                   :disabled="!system.notifications.length"
-                  prepend-icon="mdi-broom"
-                  :text="i18n.t('settings.notifications')"
+                  :prepend-icon="mdiBroom"
+                  :text="i18n.t('settings.clearNotifications')"
                   @click="system.cleanNotification()"
                 />
               </v-col>
               <v-col v-if="system.notificationType === 'partial'" cols="auto">
                 <v-btn
-                  :aria-label="i18n.t('settings.cleanCategoryNotifications')"
+                  :aria-label="i18n.t('settings.clearCategoryNotifications')"
                   :disabled="!system.categoryNotifications.length"
-                  prepend-icon="mdi-broom"
-                  :text="i18n.t('settings.cleanCategoryNotifications')"
+                  :prepend-icon="mdiBroom"
+                  :text="i18n.t('settings.clearCategoryNotifications')"
                   @click="system.cleanCategoryNotification()"
                 />
               </v-col>
@@ -114,7 +124,7 @@ function openDonation(middle?: boolean) {
           </v-col>
         </v-row>
       </div>
-      <div class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-subtitle-2">
+      <div class="mt-1 pb-1 flex-grow-0 text-center font-weight-bold text-label-large">
         <div class="d-flex align-center justify-center text-center">
           <div class="mt-1">
             <span class="about-span">{{ i18n.t('settings.version', { version: appVersion }) }}</span>
@@ -131,7 +141,7 @@ function openDonation(middle?: boolean) {
                 @click="openGithub(false)"
                 @mousedown.middle.prevent="openGithub(true)"
               >
-                <v-icon class="mr-1">mdi-github</v-icon>
+                <v-icon class="mr-1" :icon="mdiGithub" />
                 <span>{{ i18n.t('settings.github') }}</span>
               </v-btn>
             </template>
@@ -141,15 +151,15 @@ function openDonation(middle?: boolean) {
             <template #default="{ isHovering, props }">
               <v-btn
                 v-bind="props"
-                :aria-label="i18n.t('settings.sponsorProfile', { name: buyMeACoffeName })"
+                :aria-label="i18n.t('settings.supportProfile', { name: buyMeACoffeName })"
                 class="about-button"
                 :color="isHovering ? 'red' : ''"
                 variant="text"
                 @click="openDonation(false)"
                 @mousedown.middle.prevent="openDonation(true)"
               >
-                <v-icon class="mr-1">mdi-heart</v-icon>
-                <span>{{ i18n.t('settings.sponsor') }}</span>
+                <v-icon class="mr-1" :icon="mdiHeart" />
+                <span>{{ i18n.t('settings.support') }}</span>
               </v-btn>
             </template>
           </v-hover>

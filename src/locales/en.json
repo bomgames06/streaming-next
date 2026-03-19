@@ -6,8 +6,8 @@
     "openSearchView": "{accesskey} + 3 - Open Search view",
     "openSettingsView": "{accesskey} + s - Open Settings view",
     "openStreamView": "{accesskey} + 1 - Open Stream view",
-    "shortkeys": "Shortkeys",
-    "streamView": "View: Stream"
+    "shortcuts": "Shortcuts",
+    "streamView": "View: Streams"
   },
   "appLayout": {
     "accounts": "Accounts",
@@ -19,7 +19,7 @@
     "logout": "Logout"
   },
   "auth": {
-    "accountAlreadyAddedError": "AccountStore already added",
+    "accountAlreadyAddedError": "Account already added",
     "authAccount": "Authenticate {name}",
     "authenticate": "Authenticate",
     "differentAccountError": "Different account",
@@ -36,7 +36,7 @@
     "appBarView": {
       "language": "Language",
       "languages": {
-        "chinese": "Chineses",
+        "chinese": "Chinese",
         "english": "English",
         "japanese": "Japanese",
         "korean": "Korean",
@@ -45,6 +45,11 @@
       },
       "languagesSelected": "{count} Languages"
     },
+    "menu": {
+      "addFavorite": "Add favorite",
+      "removeFavorite": "Remove favorite"
+    },
+    "noItems": "No categories",
     "searchMore": "Search more"
   },
   "categoriesView": {
@@ -55,6 +60,7 @@
   },
   "categoryNotificationDialog": {
     "addStream": "Add stream",
+    "allStreams": "All streams",
     "category": "Category",
     "noNotifications": "No notifications",
     "stream": "Stream",
@@ -62,10 +68,10 @@
   },
   "common": {
     "add": "Add",
-    "asc": "Ascendent",
+    "asc": "Ascending",
     "back": "Back",
     "close": "Close",
-    "desc": "Descendent",
+    "desc": "Descending",
     "edit": "Edit",
     "favorite": "Favorite | Favorites",
     "filter": "Filter",
@@ -81,7 +87,7 @@
     "refresh": "Refresh",
     "sort": "Sort",
     "systemError": "System error",
-    "unauthorizedAccount": "AccountStore is no longer authorized",
+    "unauthorizedAccount": "Account is no longer authorized",
     "value": "Value"
   },
   "gameNotificationDialog": {
@@ -105,17 +111,18 @@
     "showMenu": "Show menu"
   },
   "searchView": {
-    "fillFieldToSearchChannels": "Fill in the \"Search\" field to search the channels",
+    "fillFieldToSearchChannels": "Fill in the \"Search\" field to search for channels",
     "search": "Search",
     "searchMore": "Search more"
   },
   "settings": {
-    "cleanCategoryNotifications": "Category notification",
-    "cleanFavorites": "Clean favorites",
-    "cleanNotifications": "Clean notifications",
+    "clearCategoryFavorites": "Clear favorite categories",
+    "clearCategoryNotifications": "Clear category notifications",
+    "clearFavorites": "Clear favorites",
+    "clearNotifications": "Clear notifications",
     "darkMode": "Dark mode",
     "favorites": "Favorites",
-    "github": "Github",
+    "github": "GitHub",
     "languages": "Languages",
     "notificationType": {
       "all": "All",
@@ -124,8 +131,8 @@
     },
     "notifications": "Notifications",
     "showAlwaysOfflines": "Always show offlines",
-    "sponsor": "Sponsor",
-    "sponsorProfile": "Sponsor {name}",
+    "support": "Sponsor",
+    "supportProfile": "Support {name}",
     "title": "Settings",
     "twitter": "Twitter",
     "twitterProfile": "Twitter {name}",
@@ -163,14 +170,16 @@
     },
     "clips": "Clips",
     "menu": {
-      "addFavorite": "Add Favorite",
+      "addFavorite": "Add favorite",
+      "addFavoriteCategory": "Add favorite category",
       "category": "Category",
       "categoryNotification": "Notify category",
       "clips": "Clips",
       "disableNotification": "Disable notification",
       "enableNotification": "Enable notification",
-      "groupStream": "Add group",
+      "groupStream": "Add to group",
       "removeFavorite": "Remove favorite",
+      "removeFavoriteCategory": "Remove favorite category",
       "videos": "Videos"
     },
     "noItems": "No streams",
