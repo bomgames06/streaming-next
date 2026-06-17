@@ -175,74 +175,76 @@ function showGroupStreamDialog(item: StreamItemLiveType) {
 </script>
 
 <template>
-  <v-list v-if="props.items.length" :accesskey="detailItem ? undefined : 'l'" class="bg-transparent py-0">
-    <template v-for="(item, idx) in props.items" :key="`${keyListItem}:${item.type}:${item.id}`">
-      <StreamListItem
-        v-show="showItem(item)"
-        v-model:detail-item="detailItem"
-        v-model:menu-show="menuShow"
-        :disable-category-menu="props.disableCategoryMenu"
-        :disable-context-menu="props.disableContextMenu"
-        :disable-notification-menu="props.disableNotificationMenu"
-        :disable-view-count="props.disableViewCount"
-        :disabled="!showItem(item)"
-        :dump="props.dump"
-        :item="item"
-        :parent="props.parent"
-        @item-click="itemClick"
-        @menu-item-click="menuItemClick"
-        @menu-item-category-notification-click="showCategoryNotificationDialog"
-        @menu-item-group-stream-click="showGroupStreamDialog"
-      />
-      <v-divider v-if="idx !== props.items.length - 1 && !detailItem" />
+  <div class="d-flex flex-column flex-grow-1">
+    <v-list v-if="props.items.length" :accesskey="detailItem ? undefined : 'l'" class="bg-transparent py-0">
+      <template v-for="(item, idx) in props.items" :key="`${keyListItem}:${item.type}:${item.id}`">
+        <StreamListItem
+          v-show="showItem(item)"
+          v-model:detail-item="detailItem"
+          v-model:menu-show="menuShow"
+          :disable-category-menu="props.disableCategoryMenu"
+          :disable-context-menu="props.disableContextMenu"
+          :disable-notification-menu="props.disableNotificationMenu"
+          :disable-view-count="props.disableViewCount"
+          :disabled="!showItem(item)"
+          :dump="props.dump"
+          :item="item"
+          :parent="props.parent"
+          @item-click="itemClick"
+          @menu-item-click="menuItemClick"
+          @menu-item-category-notification-click="showCategoryNotificationDialog"
+          @menu-item-group-stream-click="showGroupStreamDialog"
+        />
+        <v-divider v-if="idx !== props.items.length - 1 && !detailItem" />
+      </template>
+    </v-list>
+    <v-row v-else density="compact" class="align-center justify-center flex-grow-1">
+      <v-col v-if="props.loading" cols="auto" class="text-center">
+        <v-progress-circular color="primary" indeterminate />
+      </v-col>
+      <v-col v-else cols="auto" class="text-center">
+        {{ t('streamList.noItems') }}
+      </v-col>
+    </v-row>
+    <CategoryNotificationDialog
+      v-if="streamCategoryNotification && !!props.streams?.length"
+      :model-value="!!streamCategoryNotification"
+      :streams="props.streams"
+      :stream-item="streamCategoryNotification"
+      @update:model-value="streamCategoryNotification = $event ? streamCategoryNotification : undefined"
+    />
+    <GroupStreamDialog
+      v-if="streamGroupStream && !!props.streams?.length"
+      :model-value="!!streamGroupStream"
+      :streams="props.streams"
+      :stream-item="streamGroupStream"
+      @update:model-value="streamGroupStream = $event ? streamGroupStream : undefined"
+    />
+    <template v-if="detailItem">
+      <template v-if="detailType === 'video'">
+        <h2 class="mt-2">{{ t('streamList.videos') }}</h2>
+        <v-divider class="mt-1 mb-2" />
+        <StreamList disable-context-menu :items="videos.items" :parent="detailItem" />
+      </template>
+      <template v-if="detailType === 'clip'">
+        <h2 class="mt-2">{{ t('streamList.clips') }}</h2>
+        <v-divider class="mt-1 mb-2" />
+        <StreamList disable-context-menu :items="clips.items" :parent="detailItem" />
+      </template>
+      <v-btn
+        v-if="hasMoreItems"
+        block
+        class="mt-2"
+        :disabled="fetching"
+        height="54"
+        :loading="fetching"
+        @click="fetchMore()"
+      >
+        <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
+        <span>{{ t('streamList.searchMore') }}</span>
+      </v-btn>
     </template>
-  </v-list>
-  <v-row v-else density="compact" class="h-100 align-center justify-center">
-    <v-col v-if="props.loading" cols="auto" class="text-center">
-      <v-progress-circular color="primary" indeterminate />
-    </v-col>
-    <v-col v-else cols="auto" class="text-center">
-      {{ t('streamList.noItems') }}
-    </v-col>
-  </v-row>
-  <CategoryNotificationDialog
-    v-if="streamCategoryNotification && !!props.streams?.length"
-    :model-value="!!streamCategoryNotification"
-    :streams="props.streams"
-    :stream-item="streamCategoryNotification"
-    @update:model-value="streamCategoryNotification = $event ? streamCategoryNotification : undefined"
-  />
-  <GroupStreamDialog
-    v-if="streamGroupStream && !!props.streams?.length"
-    :model-value="!!streamGroupStream"
-    :streams="props.streams"
-    :stream-item="streamGroupStream"
-    @update:model-value="streamGroupStream = $event ? streamGroupStream : undefined"
-  />
-  <template v-if="detailItem">
-    <template v-if="detailType === 'video'">
-      <h2 class="mt-2">{{ t('streamList.videos') }}</h2>
-      <v-divider class="mt-1 mb-2" />
-      <StreamList disable-context-menu :items="videos.items" :parent="detailItem" />
-    </template>
-    <template v-if="detailType === 'clip'">
-      <h2 class="mt-2">{{ t('streamList.clips') }}</h2>
-      <v-divider class="mt-1 mb-2" />
-      <StreamList disable-context-menu :items="clips.items" :parent="detailItem" />
-    </template>
-    <v-btn
-      v-if="hasMoreItems"
-      block
-      class="mt-2"
-      :disabled="fetching"
-      height="54"
-      :loading="fetching"
-      @click="fetchMore()"
-    >
-      <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
-      <span>{{ t('streamList.searchMore') }}</span>
-    </v-btn>
-  </template>
+  </div>
 </template>
 
 <style scoped lang="scss"></style>
