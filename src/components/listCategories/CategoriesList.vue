@@ -184,132 +184,143 @@ function showCategoryNotificationDialog(item: CategoryItemType | CategorySearchI
 </script>
 
 <template>
-  <v-list v-if="props.items.length" class="bg-transparent category-list py-0">
-    <v-list-item
-      v-for="category in props.items"
-      v-show="showItem(category)"
-      :id="categoryElId(category)"
-      :key="category.id"
-      class="pa-0"
-      :disabled="!showItem(category)"
-      tabindex="0"
-      @click="clickCategory(category)"
-      @contextmenu.prevent="showMenu($event, category)"
-    >
-      <v-tooltip activator="parent" location="bottom" :text="categorySelected ? t('common.back') : category.name" />
-      <div class="pa-1">
-        <v-card
-          :class="{
-            'category-item-card': true,
-            'd-flex': true,
-            'flex-column': !categorySelected,
-          }"
-          elevation="1"
-          height="100%"
-        >
-          <div class="position-relative">
-            <v-img :max-width="categorySelected && 108" :src="categoryImg(category)" :width="categorySelected && 108" />
-            <div class="badge-content">
-              <v-card
-                v-if="notificationEnabled(category)"
-                :aria-label="t('common.notification')"
-                class="bg-background badge-item position-relative"
-              >
-                <v-icon
-                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                  size="x-small"
-                  :icon="mdiBell"
-                  :class="{
-                    'diagonal-cut': notificationHasStream(category),
-                  }"
-                />
-                <v-icon
-                  :color="theme.current.value.dark ? 'yellow' : 'warning'"
-                  size="x-small"
-                  :icon="mdiBellOutline"
-                  class="position-absolute bell-notification-position"
-                />
-              </v-card>
-              <v-card
-                v-if="favoriteEnabled(category)"
-                :aria-label="t('common.favorite')"
-                class="bg-background badge-item"
-              >
-                <v-icon :color="theme.current.value.dark ? 'yellow' : 'warning'" size="x-small" :icon="mdiStar" />
-              </v-card>
-            </div>
-          </div>
-          <p
+  <div class="d-flex flex-column flex-grow-1">
+    <v-list v-if="props.items.length" class="bg-transparent category-list py-0">
+      <v-list-item
+        v-for="category in props.items"
+        v-show="showItem(category)"
+        :id="categoryElId(category)"
+        :key="category.id"
+        class="pa-0"
+        :disabled="!showItem(category)"
+        tabindex="0"
+        @click="clickCategory(category)"
+        @contextmenu.prevent="showMenu($event, category)"
+      >
+        <v-tooltip activator="parent" location="bottom" :text="categorySelected ? t('common.back') : category.name" />
+        <div class="pa-1">
+          <v-card
             :class="{
-              'text-truncate': !categorySelected,
-              'text-body-small': !categorySelected,
-              'text-headline-small': !!categorySelected,
-              'ml-2': !!categorySelected,
-              'line-height-normal': true,
-              'font-weight-black': true,
-              'category-item-title': true,
-              'my-0': true,
-              'mt-1': true,
+              'category-item-card': true,
+              'd-flex': true,
+              'flex-column': !categorySelected,
             }"
+            elevation="1"
+            height="100%"
           >
-            {{ category.name }}
-          </p>
-        </v-card>
-      </div>
-    </v-list-item>
-  </v-list>
-  <v-row v-else density="compact" class="h-100 align-center justify-center">
-    <v-col v-if="props.loading" cols="auto" class="text-center">
-      <v-progress-circular color="primary" indeterminate />
-    </v-col>
-    <v-col v-else cols="auto" class="text-center">
-      {{ t('categoriesList.noItems') }}
-    </v-col>
-  </v-row>
-  <v-menu
-    v-if="!categorySelected && menuShow"
-    :model-value="!!menuShow"
-    :target="[menu.x, menu.y]"
-    @close="closeMenu()"
-    @update:model-value="closeMenu"
-    @keydown.esc.prevent="closeMenu()"
-  >
-    <v-list :id="listMenuRef" @keydown.esc.prevent="closeMenu()">
-      <v-list-item
-        :prepend-icon="favoriteEnabled(menuShow) ? mdiStar : mdiStarOutline"
-        :title="
-          favoriteEnabled(menuShow) ? t('categoriesList.menu.removeFavorite') : t('categoriesList.menu.addFavorite')
-        "
-        @click="favoriteEnabled(menuShow) ? removeFavoriteCategory(menuShow) : addFavoriteCategory(menuShow)"
-      />
-      <v-list-item
-        v-if="system.notificationType !== 'none'"
-        :prepend-icon="mdiBell"
-        :title="t('streamList.menu.categoryNotification')"
-        @click="showCategoryNotificationDialog(menuShow)"
-      />
+            <div class="position-relative">
+              <v-img
+                :max-width="categorySelected && 108"
+                :src="categoryImg(category)"
+                :width="categorySelected && 108"
+              />
+              <div class="badge-content">
+                <v-card
+                  v-if="notificationEnabled(category)"
+                  :aria-label="t('common.notification')"
+                  class="bg-background badge-item position-relative"
+                >
+                  <v-icon
+                    :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                    size="x-small"
+                    :icon="mdiBell"
+                    :class="{
+                      'diagonal-cut': notificationHasStream(category),
+                    }"
+                  />
+                  <v-icon
+                    :color="theme.current.value.dark ? 'yellow' : 'warning'"
+                    size="x-small"
+                    :icon="mdiBellOutline"
+                    class="position-absolute bell-notification-position"
+                  />
+                </v-card>
+                <v-card
+                  v-if="favoriteEnabled(category)"
+                  :aria-label="t('common.favorite')"
+                  class="bg-background badge-item"
+                >
+                  <v-icon :color="theme.current.value.dark ? 'yellow' : 'warning'" size="x-small" :icon="mdiStar" />
+                </v-card>
+              </div>
+            </div>
+            <p
+              :class="{
+                'text-truncate': !categorySelected,
+                'text-body-small': !categorySelected,
+                'text-headline-small': !!categorySelected,
+                'ml-2': !!categorySelected,
+                'line-height-normal': true,
+                'font-weight-black': true,
+                'category-item-title': true,
+                'my-0': true,
+                'mt-1': true,
+              }"
+            >
+              {{ category.name }}
+            </p>
+          </v-card>
+        </div>
+      </v-list-item>
     </v-list>
-  </v-menu>
-  <CategoryNotificationDialog
-    v-if="categoryNotification"
-    :model-value="!!categoryNotification"
-    :category-item="categoryNotification"
-    @update:model-value="categoryNotification = $event ? categoryNotification : undefined"
-  />
-  <div v-if="categorySelected" class="mt-3">
-    <StreamList v-model:detail-item="detailItem" disable-category-menu disable-notification-menu :items="streamItems" />
-    <v-btn
-      v-if="streams.cursor && !detailItem"
-      block
-      class="mt-2"
-      :disabled="fetching"
-      height="54"
-      :loading="fetching"
-      @click="fetchStreams()"
+    <v-row v-else density="compact" class="flex-grow-1 align-center justify-center">
+      <v-col v-if="props.loading" cols="auto" class="text-center">
+        <v-progress-circular color="primary" indeterminate />
+      </v-col>
+      <v-col v-else cols="auto" class="text-center">
+        {{ t('categoriesList.noItems') }}
+      </v-col>
+    </v-row>
+    <v-menu
+      v-if="!categorySelected && menuShow"
+      :model-value="!!menuShow"
+      :target="[menu.x, menu.y]"
+      @close="closeMenu()"
+      @update:model-value="closeMenu"
+      @keydown.esc.prevent="closeMenu()"
     >
-      <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
-      <span>{{ t('categoriesList.searchMore') }}</span>
-    </v-btn>
+      <v-list :id="listMenuRef" @keydown.esc.prevent="closeMenu()">
+        <v-list-item
+          :prepend-icon="favoriteEnabled(menuShow) ? mdiStar : mdiStarOutline"
+          :title="
+            favoriteEnabled(menuShow) ? t('categoriesList.menu.removeFavorite') : t('categoriesList.menu.addFavorite')
+          "
+          @click="favoriteEnabled(menuShow) ? removeFavoriteCategory(menuShow) : addFavoriteCategory(menuShow)"
+        />
+        <v-list-item
+          v-if="system.notificationType !== 'none'"
+          :prepend-icon="mdiBell"
+          :title="t('streamList.menu.categoryNotification')"
+          @click="showCategoryNotificationDialog(menuShow)"
+        />
+      </v-list>
+    </v-menu>
+    <CategoryNotificationDialog
+      v-if="categoryNotification"
+      :model-value="!!categoryNotification"
+      :category-item="categoryNotification"
+      @update:model-value="categoryNotification = $event ? categoryNotification : undefined"
+    />
+    <div v-if="categorySelected" class="mt-3 flex-grow-1 d-flex flex-column">
+      <StreamList
+        v-model:detail-item="detailItem"
+        disable-category-menu
+        disable-notification-menu
+        :items="streamItems"
+      />
+      <v-btn
+        v-if="streams.cursor && !detailItem"
+        block
+        class="mt-2"
+        :disabled="fetching"
+        height="54"
+        :loading="fetching"
+        @click="fetchStreams()"
+      >
+        <v-icon class="mr-2" size="x-large" :icon="mdiMagnify" />
+        <span>{{ t('categoriesList.searchMore') }}</span>
+      </v-btn>
+    </div>
   </div>
 </template>
 

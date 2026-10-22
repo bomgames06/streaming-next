@@ -500,9 +500,6 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
   ::v-deep(.v-list-item__content) {
     align-self: start;
   }
-  ::v-deep(.v-list-item-subtitle) {
-    max-height: 15px;
-  }
 }
 .content-size {
   height: 64px;
