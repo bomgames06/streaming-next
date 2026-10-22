@@ -1,7 +1,7 @@
 import TwitchApi from '@/services/api/twitch/twitchApi'
 import type { User } from '@/types/userType'
 import type { AuthBackgroundMessageType, RevokeBackgroundMessageType } from '@/background/types/backgroundMessageType'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import type {
   CategorySearchItem,
   StreamItemClipType,
@@ -25,7 +25,6 @@ import type {
   TwitchApiStreamsFollowedType,
   TwitchApiUserType,
 } from '@/services/api/twitch/types/twitchApiType'
-import useSystemStore from '@/store/system/useSystemStore'
 
 function isStreamVerified(value?: TwitchApiBroadcasterType): value is 'partner' {
   return value === 'partner'
@@ -117,7 +116,7 @@ const TwitchBusiness = {
     const streamersIds = channelFollowed.map((value) => value.broadcaster_id)
     const users = !streamersIds.length ? [] : await TwitchApi.users.usersByIds(token, streamersIds)
 
-    const streamers: StreamItemLiveStreamType[] = users.map((value) => ({
+    return users.map((value) => ({
       type: 'twitch',
       status: 'stream',
       id: value.id,
@@ -126,13 +125,9 @@ const TwitchBusiness = {
       profileImage: value.profile_image_url,
       verified: isStreamVerified(value.broadcaster_type),
     }))
-
-    const system = useSystemStore()
-    system.setAccountCacheStreams('twitch', streamers)
-
-    return streamers
   },
   async getUsersByIds(token: string, ids: string[]): Promise<User[]> {
+    if (!ids.length) return []
     const response = await TwitchApi.users.usersByIds(token, ids)
 
     return response.map((value) => ({
@@ -289,7 +284,6 @@ const TwitchBusiness = {
                 startedAt: moment(value.started_at),
                 previewImage: value.thumbnail_url,
                 verified: isStreamVerified(value.user?.broadcaster_type),
-                viewerCount: value.user?.view_count,
               } as StreamItemLiveOnlineType)
             : ({
                 type: 'twitch',

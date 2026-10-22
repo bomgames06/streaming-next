@@ -1,5 +1,5 @@
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS,
@@ -14,116 +14,128 @@ import type {
   NotificationStore,
   NotificationTypeStore,
 } from '@/store/system/types/systemStoreType'
+import { DEFAULT_NOTIFICATION_TYPE } from '@/store/system/types/systemStoreType'
 import type { StorageSessionTypes } from '@/types/sessionStorageKeysTypes'
 import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { User } from '@/types/userType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
-import { generateState, twitchUrl } from '@/utils/util'
-import { uniqBy, upperCase } from 'lodash'
+import { generateState, isSameCategoryName, twitchUrl } from '@/utils/util'
+import countHandler from '@/background/handlers/countHandler'
+import { uniqBy } from 'lodash'
 
 export type OnlineHistory = {
   twitch: { id: string; category: string }[]
 }
 
+const NOTIFICATION_ID_REGEX = /^([a-zA-Z0-9]{10})-N-(.+)-(.+)$/
+const FALLBACK_ICON_URL = '/icons/128.png'
+
 export default async function notificationHandler(onlines: StreamItemLiveOnlineType[]) {
-  const syncStorage: StorageSyncTypes = (await browser.storage.sync.get([
+  const syncStorage = (await browser.storage.sync.get([
     STORAGE_KEY_NOTIFICATION_TYPE,
     STORAGE_KEY_NOTIFICATIONS,
     STORAGE_KEY_ACCOUNTS,
     STORAGE_KEY_CATEGORY_NOTIFICATIONS,
-  ])) as StorageSyncTypes
+  ])) as Partial<StorageSyncTypes>
 
   const accounts: AccountDataStore = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
   if (!accounts.twitch || accounts.twitch.invalid) return
 
-  const sessionStorage: StorageSessionTypes = (await browser.storage.session.get([
+  const sessionStorage = (await browser.storage.session.get([
     STORAGE_KEY_ONLINE_HISTORY,
     STORAGE_KEY_STARTED,
-  ])) as StorageSessionTypes
+  ])) as Partial<StorageSessionTypes>
 
   const onlineHistory: OnlineHistory = sessionStorage[STORAGE_KEY_ONLINE_HISTORY] ?? { twitch: [] }
-  const notificationType: NotificationTypeStore = syncStorage[STORAGE_KEY_NOTIFICATION_TYPE] ?? 'none'
+  const notificationType: NotificationTypeStore =
+    syncStorage[STORAGE_KEY_NOTIFICATION_TYPE] ?? DEFAULT_NOTIFICATION_TYPE
   const notifications: NotificationStore[] = syncStorage[STORAGE_KEY_NOTIFICATIONS] ?? []
   const categoryNotifications: CategoryNotificationStore[] = syncStorage[STORAGE_KEY_CATEGORY_NOTIFICATIONS] ?? []
-  let started: boolean = sessionStorage[STORAGE_KEY_STARTED] ?? false
+  const started: boolean = sessionStorage[STORAGE_KEY_STARTED] ?? false
 
   if (started && notificationType !== 'none') {
-    const onlinesFiltered = onlines.filter(
-      (online) =>
-        checkOnlineNotification(notificationType, notifications, online, onlineHistory) ||
-        checkCategoryNotification(categoryNotifications, online, onlineHistory)
+    const onlinesFiltered = uniqBy(
+      onlines.filter(
+        (online) =>
+          checkOnlineNotification(notificationType, notifications, online, onlineHistory) ||
+          checkCategoryNotification(categoryNotifications, online, onlineHistory)
+      ),
+      (item) => `${item.type}:${item.id}`
     )
-    let users: User[]
-    try {
-      users = await TwitchBusiness.getUsersByIds(
-        accounts.twitch.token,
-        onlinesFiltered.map((value) => value.id)
-      )
-    } catch (e) {
-      if (accounts.twitch && isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {
-        accounts.twitch.invalid = true
-        await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
 
-        const message: FetchAccountsApplicationMessageType = { type: 'fetchAccounts' }
-        void browser.runtime.sendMessage(message)
+    if (onlinesFiltered.length) {
+      let users: User[]
+      try {
+        users = await TwitchBusiness.getUsersByIds(
+          accounts.twitch.token,
+          onlinesFiltered.map((value) => value.id)
+        )
+      } catch (e) {
+        if (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {
+          accounts.twitch.invalid = true
+          await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
+          await countHandler(accounts, onlines.length)
+
+          const message: FetchAccountsApplicationMessageType = { type: 'fetchAccounts' }
+          // The popup may be closed, so there may be no receiver for this message
+          browser.runtime.sendMessage(message).catch(() => undefined)
+        }
+        return
       }
-      return
+
+      for (const online of onlinesFiltered) {
+        const user = users.find((value) => value.id === online.id)
+        if (!user) continue
+
+        void browser.notifications.create(`${generateState(10)}-N-${online.type}-${online.login}`, {
+          type: 'basic',
+          iconUrl: user.avatarUrl || browser.runtime.getURL(FALLBACK_ICON_URL),
+          title: online.name,
+          message: online.title || '',
+          contextMessage: online.game || undefined,
+        })
+      }
     }
-
-    uniqBy(onlinesFiltered, (item) => `${item.type}:${item.id}`).forEach((online) => {
-      const user = users.find((value) => value.id === online.id)
-      if (!user) return
-
-      browser.notifications.create(`${generateState(10)}-N-${online.type}-${online.login}`, {
-        type: 'basic',
-        iconUrl: user.avatarUrl,
-        title: online.name,
-        message: online.title || '',
-        contextMessage: online.game || undefined,
-      })
-    })
   }
 
   onlineHistory.twitch = onlines.map((value) => ({ id: value.id, category: value.game || '' }))
-  await browser.storage.session.set({ [STORAGE_KEY_ONLINE_HISTORY]: onlineHistory })
-
-  started = true
-  await browser.storage.session.set({ [STORAGE_KEY_STARTED]: started })
+  await browser.storage.session.set({ [STORAGE_KEY_ONLINE_HISTORY]: onlineHistory, [STORAGE_KEY_STARTED]: true })
 }
 
-browser.notifications.onClicked.addListener((notificationId) => {
-  const match = notificationId.match(/^([a-zA-Z0-9]{10})-N-(.+)-(.+)$/)
-  if (match && match[3]) {
-    if (match[2] === ('twitch' as AccountStoreType)) void browser.tabs.create({ url: twitchUrl(match[3]) })
-  }
-})
+export function registerNotificationHandler() {
+  browser.notifications.onClicked.addListener((notificationId) => {
+    const match = notificationId.match(NOTIFICATION_ID_REGEX)
+    if (match && match[3] && match[2] === ('twitch' as AccountStoreType))
+      void browser.tabs.create({ url: twitchUrl(match[3]) })
+    void browser.notifications.clear(notificationId)
+  })
+}
 
 function checkCategoryNotification(
   categoryNotifications: CategoryNotificationStore[],
   online: StreamItemLiveOnlineType,
   onlineHistory: OnlineHistory
-): unknown {
+): boolean {
+  if (!online.game) return false
   return (
     categoryNotifications.some(
       (value) =>
-        upperCase(value.name) === upperCase(online.game) &&
+        isSameCategoryName(value.name, online.game) &&
         (!value.streams.length ||
           value.streams.some((stream) => stream.id === online.id && stream.type === online.type))
     ) &&
-    !onlineHistory.twitch.some(
-      (value) => value.id === online.id && upperCase(value.category) === upperCase(online.game)
-    )
+    !onlineHistory.twitch.some((value) => value.id === online.id && isSameCategoryName(value.category, online.game))
   )
 }
 
 function checkOnlineNotification(
-  notificationType: string,
+  notificationType: NotificationTypeStore,
   notifications: NotificationStore[],
   online: StreamItemLiveOnlineType,
   onlineHistory: OnlineHistory
-): unknown {
+): boolean {
   return (
     (notificationType === 'all' ||
       notifications.some((value) => value.type === online.type && value.id === online.id)) &&

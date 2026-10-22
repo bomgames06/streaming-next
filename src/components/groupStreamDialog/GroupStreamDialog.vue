@@ -91,7 +91,9 @@ function deleteGroup(groupItem: GroupStreamStore) {
   expandGroup.value = undefined
 }
 function editGroupName(groupItem: GroupStreamStore, value: string) {
-  system.editGroupStream(groupItem.id, { name: value })
+  const name = value.trim()
+  if (!name) return
+  system.editGroupStream(groupItem.id, { name })
 }
 function clickGroup(groupItem: GroupStreamStore) {
   expandGroup.value = !expandGroup.value || expandGroup.value.id !== groupItem.id ? groupItem : undefined

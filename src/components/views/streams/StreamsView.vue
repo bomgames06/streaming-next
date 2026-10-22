@@ -8,12 +8,13 @@ import type {
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
 import { isOfflineStream, isOnlineStream } from '@/components/listStream/types/streamItemType'
-import { debounce, deburr, orderBy, uniqBy } from 'lodash'
+import { debounce, uniqBy } from 'lodash'
+import useStreamOrder from '@/composables/useStreamOrder'
 import emitter from '@/events'
-import { includeUtil } from '@/utils/util'
+import { includeUtil, isSameCategoryName } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
 import {
   mdiBell,
@@ -34,7 +35,7 @@ const firstLoading = ref<boolean>(true)
 const showOfflines = ref<boolean>(false)
 const onlines = ref<StreamItemLiveOnlineType[]>([])
 const streams = ref<StreamItemLiveStreamType[]>([])
-const fetchTimeout = ref<ReturnType<typeof setInterval>>()
+const fetchTimeout = ref<ReturnType<typeof setTimeout>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
@@ -52,32 +53,9 @@ watch(
   }
 )
 
-const orders = computed(() => {
-  const items: ((item: StreamItemLiveType) => string | number)[] = []
-
-  if (!filter.value) items.push(orderStatus)
-  if (system.streamOrder === 'name') items.push(orderName)
-  if (system.streamOrder === 'view') items.push(orderView)
-  if (system.streamOrder === 'game') items.push(orderGame)
-  items.push(orderType)
-
-  return items
-})
-const sorts = computed(() => {
-  const items: ('asc' | 'desc')[] = []
-
-  if (!filter.value) items.push('desc')
-  items.push(system.streamOrderSort ? 'asc' : 'desc')
-  items.push('asc')
-
-  return items
-})
+const { sortStreams } = useStreamOrder(filter)
 const itemsFiltered = computed(() =>
-  orderBy(
-    uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem),
-    orders.value,
-    sorts.value
-  )
+  sortStreams(uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem))
 )
 const showOfflinesComp = computed(
   () =>
@@ -100,6 +78,7 @@ const renderOfflinesComp = computed(
 emitter.on('refresh', fetchData)
 onUnmounted(() => {
   emitter.off('refresh', fetchData)
+  filterDebounce.cancel()
   if (fetchTimeout.value) clearTimeout(fetchTimeout.value)
 })
 onMounted(() => {
@@ -119,37 +98,17 @@ function toggleOffline() {
   showOfflines.value = !showOfflines.value
 }
 
-function orderStatus(value: StreamItemLiveType) {
-  return isOnlineStream(value) ? 1 : 0
-}
-function orderName(value: StreamItemLiveType) {
-  return deburr(value.name).toLowerCase()
-}
-function orderView(value: StreamItemLiveType) {
-  return value.status === 'online' && value.viewerCount ? value.viewerCount : orderName(value)
-}
-function orderGame(value: StreamItemLiveType) {
-  return value.status === 'online' && value.type === 'twitch'
-    ? deburr(value.game).toLowerCase() || ''
-    : orderName(value)
-}
-function orderType(value: StreamItemType) {
-  return value.type
-}
-
 function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
   if (!showOfflinesComp.value && isOfflineStream(value)) show = false
-  else if (
-    !(
-      (!system.showFavoritesComp && !system.showNotificationsComp) ||
-      (system.showFavoritesComp && favoriteItemEnabled(value)) ||
-      (system.showFavoritesComp && favoriteItemCategoryEnabled(value)) ||
-      (system.showNotificationsComp && notificationItemEnabled(value)) ||
-      (system.showNotificationsComp && notificationItemCategoryEnabled(value))
-    )
-  )
+  else if (!(
+    (!system.showFavoritesComp && !system.showNotificationsComp) ||
+    (system.showFavoritesComp && favoriteItemEnabled(value)) ||
+    (system.showFavoritesComp && favoriteItemCategoryEnabled(value)) ||
+    (system.showNotificationsComp && notificationItemEnabled(value)) ||
+    (system.showNotificationsComp && notificationItemCategoryEnabled(value))
+  ))
     show = false
   else if (filter.value) {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
@@ -167,8 +126,8 @@ function favoriteItemEnabled(item: StreamItemType) {
   return system.favorites.some((value) => value.type === item.type && value.id === item.id)
 }
 function favoriteItemCategoryEnabled(item: StreamItemType) {
-  if (!isOnlineStream(item) || !item.game) return false
-  return system.categoryFavorites.some((value) => value.type === item.type && value.name === item.game)
+  if (!isOnlineStream(item) || !item.gameId) return false
+  return system.categoryFavorites.some((value) => value.type === item.type && value.id === item.gameId)
 }
 function notificationItemEnabled(item: StreamItemType) {
   return system.notifications.some((value) => value.type === item.type && value.id === item.id)
@@ -177,20 +136,22 @@ function notificationItemCategoryEnabled(item: StreamItemType) {
   if (!isOnlineStream(item) || !item.game) return false
   return system.categoryNotifications.some(
     (value) =>
-      value.name === item.game &&
-      (!value.streams.length || value.streams.some((stream) => (stream.type === item.type && stream.id) === item.id))
+      isSameCategoryName(value.name, item.game) &&
+      (!value.streams.length || value.streams.some((stream) => stream.type === item.type && stream.id === item.id))
   )
 }
 
 watch(() => system.validAccounts, fetchData)
 
-let fetching = 0
+// Calls made while a fetch is running are coalesced into a single extra fetch at the end
+let fetching = false
+let fetchPending = false
 async function fetchData() {
   if (fetching) {
-    fetching += 1
+    fetchPending = true
     return
   }
-  fetching += 1
+  fetching = true
 
   try {
     system.loading()
@@ -206,8 +167,11 @@ async function fetchData() {
     system.refreshed()
     firstLoading.value = false
     fetchTimeout.value = setTimeout(fetchData, 60000 * 5)
-    fetching -= 1
-    if (fetching) void fetchData()
+    fetching = false
+    if (fetchPending) {
+      fetchPending = false
+      void fetchData()
+    }
   }
 }
 
@@ -246,10 +210,7 @@ async function fetchStreamsTwitch(): Promise<void> {
     }
 
     streams.value = system.accountsCacheStreams?.twitch || []
-    streams.value = await TwitchBusiness.getStreamersFollowed(
-      system.accounts.twitch.token,
-      system.accounts.twitch.accountId
-    )
+    streams.value = await system.fetchStreamersFollowed(system.accounts.twitch)
   } finally {
     system.loaded()
   }

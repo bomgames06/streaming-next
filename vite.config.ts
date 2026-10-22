@@ -1,26 +1,15 @@
-import type { ConfigEnv } from 'vitest/config'
-import { defineConfig } from 'vitest/config'
+import type { UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import webExtension, { readJsonFile } from 'vite-plugin-web-extension'
-import { fileURLToPath, URL } from 'node:url'
-import manifestConfig from './manifest.config'
+import { readFileSync } from 'node:fs'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import type { UserConfig } from 'vite'
 
-const pkg = readJsonFile('package.json')
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string }
 
-function generateManifest(command: 'build' | 'serve') {
+// Shared Vite config used by both WXT (wxt.config.ts) and Vitest (vitest.config.ts)
+export default function viteConfig(): UserConfig {
   return {
-    version: pkg.version,
-    ...manifestConfig(command),
-  }
-}
-
-export default defineConfig(({ command }: ConfigEnv): UserConfig => {
-  return {
-    base: './',
     plugins: [
       vue({
         template: { transformAssetUrls },
@@ -30,12 +19,6 @@ export default defineConfig(({ command }: ConfigEnv): UserConfig => {
       }),
       Components({
         dts: 'src/components.d.ts',
-      }),
-      webExtension({
-        browser: process.env.TARGET || 'chrome',
-        manifest: () => generateManifest(command),
-        watchFilePaths: ['package.json', 'manifest.config.ts'],
-        disableAutoLaunch: true,
       }),
       AutoImport({
         imports: ['vue'],
@@ -51,11 +34,5 @@ export default defineConfig(({ command }: ConfigEnv): UserConfig => {
     define: {
       'import.meta.env.__APP_VERSION__': JSON.stringify(pkg.version),
     },
-    resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-      },
-      extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
-    },
   }
-})
+}

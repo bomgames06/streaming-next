@@ -1,24 +1,26 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
 import path from 'node:path'
+import { WxtVitest } from 'wxt/testing/vitest-plugin'
 import viteConfig from './vite.config.ts'
 
-export default defineConfig((configEnv) => ({
+export default defineConfig(async () => ({
   test: {
     projects: [
-      mergeConfig(viteConfig(configEnv), {
+      mergeConfig(viteConfig(), {
+        plugins: [await WxtVitest()],
         test: {
           name: 'unit',
           setupFiles: './vitest.setup.ts',
           environment: 'jsdom',
           server: {
             deps: {
-              inline: ['vuetify', '@webext-core/storage'],
+              inline: ['vuetify'],
             },
           },
         },
         resolve: {
           alias: {
-            '@tests': path.resolve(__dirname, './tests'),
+            '@tests': path.resolve(import.meta.dirname, './tests'),
           },
         },
       }),

@@ -1,4 +1,5 @@
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
+import type { Browser } from 'wxt/browser'
 import {
   STORAGE_KEY_ACCOUNTS,
   STORAGE_KEY_FAVORITES,
@@ -23,10 +24,17 @@ function isVersionLowerOrEqual(version1: string, version2: string) {
   return true
 }
 
-async function migrateOldSave(details: browser.Runtime.OnInstalledDetailsType) {
+async function migrateOldSave(details: Browser.runtime.InstalledDetails) {
   if (!details.previousVersion || !isVersionLowerOrEqual(details.previousVersion, '1.2.5')) return
-  const keys = ['accessToken', 'expiredToken', 'filterOrderList', 'filterOrderAsc', 'notification', 'notificationIds']
-  const oldSave = (await browser.storage.sync.get(keys)) as {
+  const keys = [
+    'accessToken',
+    'expiredToken',
+    'filterOrderList',
+    'filterOrderAsc',
+    'notification',
+    'notificationIds',
+  ] as const
+  const oldSave = (await browser.storage.sync.get([...keys])) as {
     accessToken: string
     expiredToken: unknown
     filterOrderList: unknown
@@ -65,18 +73,22 @@ async function migrateOldSave(details: browser.Runtime.OnInstalledDetailsType) {
       type: 'twitch',
     })),
   })
-  await browser.storage.sync.remove(keys)
+  await browser.storage.sync.remove([...keys])
 }
 
-async function upgradeFavorites(details: browser.Runtime.OnInstalledDetailsType) {
+async function upgradeFavorites(details: Browser.runtime.InstalledDetails) {
   if (!details.previousVersion || !isVersionLowerOrEqual(details.previousVersion, '1.3.1')) return
   const syncStorage = await browser.storage.sync.get([STORAGE_KEY_NOTIFICATIONS])
   await browser.storage.sync.set({ [STORAGE_KEY_FAVORITES]: syncStorage[STORAGE_KEY_NOTIFICATIONS] })
 }
 
-browser.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'update') {
-    void migrateOldSave(details)
-    void upgradeFavorites(details)
-  }
-})
+export default function registerUpdateBackground() {
+  browser.runtime.onInstalled.addListener((details) => {
+    if (details.reason !== 'update') return
+    // upgradeFavorites reads the notifications written by migrateOldSave, so they must run in order
+    void (async () => {
+      await migrateOldSave(details)
+      await upgradeFavorites(details)
+    })()
+  })
+}

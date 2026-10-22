@@ -7,6 +7,7 @@ import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
 import { compact, debounce, orderBy, sortBy, uniqBy } from 'lodash'
 import type { CategorySearchItem } from '@/components/listStream/types/streamItemType'
+import { includeUtil } from '@/utils/util'
 import { mdiBell, mdiBellOutline, mdiController, mdiFilter, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
 
 const system = useSystemStore()
@@ -51,8 +52,8 @@ const categoriesComp = computed<(CategoryItemType | CategorySearchItem)[]>(() =>
   if (system.showCategoryNotificationsComp) value.push(...notificationItems.value)
 
   if (categorySelected.value || !favoriteNotificationFilter.value) value.push(...items.value)
-  else if (!categorySelected.value && favoriteNotificationFilter && system.categoryNameFilterComp)
-    value = value.filter((item) => item.name.toLowerCase().includes(system.categoryNameFilterComp.toLowerCase()))
+  else if (system.categoryNameFilterComp)
+    value = value.filter((item) => includeUtil(item.name, system.categoryNameFilterComp))
 
   return uniqBy(value, 'id')
 })
@@ -64,10 +65,14 @@ watch(
   },
   { immediate: true }
 )
-watch(
-  () => system.categoryNameFilterComp,
-  debounce(() => fetchCategories(), 500)
-)
+const fetchCategoriesDebounce = debounce(() => {
+  categories.cursor = undefined
+  void fetchCategories()
+}, 500)
+watch(() => system.categoryNameFilterComp, fetchCategoriesDebounce)
+onUnmounted(() => {
+  fetchCategoriesDebounce.cancel()
+})
 
 async function fetchCategory() {
   if (!categoryId.value) return
@@ -109,17 +114,21 @@ async function fetchCategories(category?: CategoryItemType): Promise<void> {
     firstLoading.value = false
   }
 }
+let fetchItemsRequestId = 0
 async function fetchItemsCategories(category?: CategoryItemType): Promise<void> {
   const account = system.accounts.twitch
   if (!account) return
 
+  const requestId = ++fetchItemsRequestId
   if (system.categoryNameFilterComp) {
     const response = await AppBusiness.searchCategories(account, system.categoryNameFilterComp, undefined, 99)
+    if (requestId !== fetchItemsRequestId) return
 
     categories.items = orderBy(response.items, ['name'])
     categories.cursor = undefined
   } else {
     const response = await AppBusiness.getTopGamesCategory(account, categories.cursor, 99)
+    if (requestId !== fetchItemsRequestId) return
 
     if (categories.cursor) categories.items.push(...response.items)
     else categories.items = response.items
@@ -138,9 +147,9 @@ async function fetchCategoryFavorites(): Promise<void> {
   if (!account) return
 
   favoriteItems.value = sortBy(
-    await AppBusiness.fetchCategoriesByNames(
+    await AppBusiness.fetchCategoriesByIds(
       account,
-      system.categoryFavorites.map((value) => value.name)
+      system.categoryFavorites.map((value) => value.id)
     ),
     'name'
   )
@@ -224,7 +233,7 @@ function toggleNotificationCategory() {
               <v-col cols="auto">
                 <v-btn
                   v-tooltip="t('common.notification', 2)"
-                  accesskey="b"
+                  accesskey="n"
                   :aria-checked="system.showCategoryNotificationsComp"
                   :aria-label="t('common.notification', 2)"
                   class="rounded-lg"

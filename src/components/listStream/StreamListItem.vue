@@ -11,7 +11,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { has } from 'lodash'
 import type { Duration } from 'moment/moment'
-import { accountTypeColor } from '@/utils/util'
+import { accountTypeColor, isSameCategoryName } from '@/utils/util'
 import { v4 as uuidV4 } from 'uuid'
 import {
   mdiAccount,
@@ -173,10 +173,11 @@ function isVerified(value?: StreamItemType): boolean {
 }
 
 function addFavoriteCategory(item: StreamItemLiveOnlineType): void {
-  if (!item.gameId) return
+  if (!item.gameId || !item.game) return
   system.addFavoriteCategory({
     type: item.type,
     id: item.gameId,
+    name: item.game,
   })
 }
 function removeFavoriteCategory(item: StreamItemLiveOnlineType): void {
@@ -184,6 +185,7 @@ function removeFavoriteCategory(item: StreamItemLiveOnlineType): void {
   system.removeFavoriteCategory({
     type: item.type,
     id: item.gameId,
+    name: item.game || '',
   })
 }
 function favoriteCategoryEnabled(item: StreamItemLiveOnlineType): boolean {
@@ -197,7 +199,7 @@ function notificationCategoryEnabled(item: StreamItemLiveOnlineType): boolean {
     !!item.game &&
     system.categoryNotifications.some(
       (notification) =>
-        notification.name === item.game &&
+        isSameCategoryName(notification.name, item.game) &&
         (!notification.streams.length ||
           notification.streams.some((stream) => stream.type === item.type && stream.id === item.id))
     )
@@ -206,7 +208,9 @@ function notificationCategoryEnabled(item: StreamItemLiveOnlineType): boolean {
 function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean {
   return (
     !!item.game &&
-    system.categoryNotifications.some((notification) => notification.name === item.game && notification.streams.length)
+    system.categoryNotifications.some(
+      (notification) => isSameCategoryName(notification.name, item.game) && notification.streams.length
+    )
   )
 }
 </script>

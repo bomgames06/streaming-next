@@ -5,9 +5,9 @@ import AppBusiness from '@/services/business/appBusiness'
 import type { CategorySearchItem, StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 import { compact, debounce, orderBy, trim, uniqBy, upperCase } from 'lodash'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
-import TwitchBusiness from '@/services/business/twitchBusiness.ts'
 import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType.ts'
+import { isSameCategoryName } from '@/utils/util'
 
 const { t } = useI18n()
 
@@ -60,11 +60,17 @@ const streamCategoryNotications = computed(() => {
 const categoryNotificationByCategoryItem = computed(() => {
   const item = props.categoryItem
   if (!item) return undefined
-  return system.categoryNotifications.find((categoryNotification) => categoryNotification.name === item.name)
+  return system.categoryNotifications.find((categoryNotification) =>
+    isSameCategoryName(categoryNotification.name, item.name)
+  )
 })
 
 watch(model, init)
-watch(search, debounce(fetchCategories, 500))
+const fetchCategoriesDebounce = debounce(fetchCategories, 500)
+watch(search, fetchCategoriesDebounce)
+onUnmounted(() => {
+  fetchCategoriesDebounce.cancel()
+})
 watch([categoryField, categories], processCategory)
 
 onMounted(init)
@@ -86,10 +92,7 @@ async function fetchStreams(): Promise<void> {
   }
 
   streamsFetched.value = system.accountsCacheStreams?.twitch || []
-  streamsFetched.value = await TwitchBusiness.getStreamersFollowed(
-    system.accounts.twitch.token,
-    system.accounts.twitch.accountId
-  )
+  streamsFetched.value = await system.fetchStreamersFollowed(system.accounts.twitch)
 }
 
 function processCategory() {

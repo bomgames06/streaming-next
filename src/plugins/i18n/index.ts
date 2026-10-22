@@ -11,8 +11,18 @@ export type Messages = {
   [key in Locales]: typeof en & { $vuetify: LocaleMessages }
 }
 
-export const locale: Locales = navigator.language || import.meta.env.VITE_I18N_LOCALE || 'en'
 export const fallbackLocale: Locales = import.meta.env.VITE_I18N_FALLBACK_LOCALE || 'en'
+
+export function resolveLocale(value?: string): Locales | undefined {
+  if (!value) return undefined
+  const exact = locales.find((item) => item.toLowerCase() === value.toLowerCase())
+  if (exact) return exact
+  const language = value.split('-')[0].toLowerCase()
+  return locales.find((item) => item.split('-')[0].toLowerCase() === language)
+}
+
+export const locale: Locales =
+  resolveLocale(navigator.language) || resolveLocale(import.meta.env.VITE_I18N_LOCALE) || fallbackLocale
 
 const messages: Messages = {
   en: {

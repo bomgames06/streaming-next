@@ -110,6 +110,11 @@
     "menuContent": "Menu content",
     "showMenu": "Show menu"
   },
+  "quickDialog": {
+    "close": "Close",
+    "filter": "Filter streams",
+    "hint": "Enter opens the first stream"
+  },
   "searchView": {
     "fillFieldToSearchChannels": "Fill in the \"Search\" field to search for channels",
     "search": "Search",
@@ -130,6 +135,9 @@
       "partial": "Partial"
     },
     "notifications": "Notifications",
+    "quickDialogShortcut": "Quick list shortcut: {shortcut}",
+    "quickDialogShortcutChange": "Change shortcut",
+    "quickDialogShortcutNotSet": "Quick list shortcut not set",
     "showAlwaysOfflines": "Always show offlines",
     "support": "Sponsor",
     "supportProfile": "Support {name}",

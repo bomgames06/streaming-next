@@ -2,22 +2,22 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "types": [
-      "chrome",
       "vitest/jsdom",
       "vitest/importMeta",
-      "vitest/globals",
-      "@vitest/browser/providers/playwright"
+      "vitest/globals"
     ],
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@tests/*": [
-        "tests/*"
+        "./tests/*"
       ]
     },
   },
   "include": [
+    ".wxt/wxt.d.ts",
+    "src/**/*.d.ts",
     "src/auto-imports.d.ts",
     "src/components.d.ts",
     "tests/**/*",

@@ -2,7 +2,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationMessageType, FetchStreamBackgroundMessageType } from '@/background/types/backgroundMessageType'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 
 export default function useAppInit(noAuth?: boolean) {
   const system = useSystemStore()
@@ -18,9 +18,10 @@ export default function useAppInit(noAuth?: boolean) {
     clearInterval(timerInterval)
   })
 
-  system.init(theme, i18n).then(init)
+  void init()
   async function init(): Promise<void> {
     try {
+      await system.init(theme, i18n)
       await system.fetchAccounts()
 
       loaded.value = true
@@ -50,7 +51,9 @@ export default function useAppInit(noAuth?: boolean) {
 
   watch([() => system.hasAccount, () => system.hasInvalidAccount], () => {
     const message: FetchStreamBackgroundMessageType = { type: 'fetchStream' }
-    void browser.runtime.sendMessage(message)
+    browser.runtime.sendMessage(message).catch((e: unknown) => {
+      console.error('Failed to request a stream fetch', e)
+    })
   })
 
   return { loaded, error }

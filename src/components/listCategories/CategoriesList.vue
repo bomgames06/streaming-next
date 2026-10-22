@@ -10,8 +10,7 @@ import AppBusiness from '@/services/business/appBusiness'
 import { useI18n } from 'vue-i18n'
 import emitter from '@/events'
 import { isEqual, uniqBy } from 'lodash'
-import type { VMenu } from 'vuetify/components'
-import type { VList } from 'vuetify/components/VList'
+import { isSameCategoryName } from '@/utils/util'
 import { useTheme } from 'vuetify'
 import { mdiBell, mdiBellOutline, mdiMagnify, mdiStar, mdiStarOutline } from '@mdi/js'
 
@@ -43,7 +42,6 @@ const menu = reactive({
   x: 0,
   y: 0,
 })
-const listMenuRef = ref<InstanceType<typeof VList>>()
 const categoryNotification = ref<CategoryItemType | CategorySearchItem>()
 
 const streamItems = computed(() => uniqBy(streams.items, 'id'))
@@ -169,13 +167,14 @@ function removeFavoriteCategory(item: CategoryItemType | CategorySearchItem): vo
   })
 }
 function favoriteEnabled(item: CategoryItemType | CategorySearchItem): boolean {
-  return system.categoryFavorites.some((favorite) => favorite.type === item.type && favorite.name === item.name)
+  return system.categoryFavorites.some((favorite) => favorite.type === item.type && favorite.id === item.id)
 }
 function notificationEnabled(item: CategoryItemType | CategorySearchItem): boolean {
-  return system.categoryNotifications.some((notification) => notification.name === item.name)
+  return system.categoryNotifications.some((notification) => isSameCategoryName(notification.name, item.name))
 }
 function notificationHasStream(item: CategoryItemType | CategorySearchItem): boolean {
-  return !!system.categoryNotifications.find((notification) => notification.name === item.name)?.streams.length
+  return !!system.categoryNotifications.find((notification) => isSameCategoryName(notification.name, item.name))
+    ?.streams.length
 }
 
 function showCategoryNotificationDialog(item: CategoryItemType | CategorySearchItem) {
@@ -279,7 +278,7 @@ function showCategoryNotificationDialog(item: CategoryItemType | CategorySearchI
       @update:model-value="closeMenu"
       @keydown.esc.prevent="closeMenu()"
     >
-      <v-list :id="listMenuRef" @keydown.esc.prevent="closeMenu()">
+      <v-list @keydown.esc.prevent="closeMenu()">
         <v-list-item
           :prepend-icon="favoriteEnabled(menuShow) ? mdiStar : mdiStarOutline"
           :title="

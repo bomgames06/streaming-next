@@ -1,24 +1,6 @@
-import type { Manifest } from 'webextension-polyfill'
+import type { UserManifest } from 'wxt'
 
-type Primitive = boolean | number | string | symbol | null | undefined | Primitive[]
-
-type ManifestBrowserPrefixBase<K> = {
-  [P in keyof K]?: K[P] extends Primitive ? K[P] : ManifestBrowserPrefix<K[P]>
-}
-type ManifestBrowserPrefixChrome<K> = {
-  [P in keyof K as `{{chrome}}.${string & P}`]?: K[P]
-}
-type ManifestBrowserPrefixFirefox<K> = {
-  [P in keyof K as `{{firefox}}.${string & P}`]?: K[P]
-}
-
-type ManifestBrowserPrefix<K> = ManifestBrowserPrefixBase<K> &
-  ManifestBrowserPrefixChrome<K> &
-  ManifestBrowserPrefixFirefox<K>
-
-type ManifestBrowser = ManifestBrowserPrefix<Manifest.WebExtensionManifest>
-
-function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
+function manifestConfig(command: 'build' | 'serve'): UserManifest {
   let extensionPages = ''
   extensionPages += "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   extensionPages += `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
@@ -30,7 +12,6 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
   return {
     name: '__MSG_appName__',
     description: '__MSG_appDesc__',
-    manifest_version: 3,
     default_locale: 'en',
     icons: {
       '16': 'icons/16.png',
@@ -38,7 +19,6 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
       '128': 'icons/128.png',
     },
     action: {
-      default_popup: 'src/popup.html',
       default_title: 'Streaming Next',
       default_icon: {
         '16': 'icons/16.png',
@@ -46,13 +26,22 @@ function manifestConfig(command: 'build' | 'serve'): ManifestBrowser {
         '128': 'icons/128.png',
       },
     },
-    options_ui: {
-      page: 'src/option.html',
+    // activeTab + scripting inject the quick dialog only in the tab where the command was used
+    permissions: ['identity', 'storage', 'notifications', 'alarms', 'activeTab', 'scripting'],
+    commands: {
+      'open-quick-dialog': {
+        suggested_key: {
+          default: 'Alt+Shift+S',
+        },
+        description: '__MSG_quickDialogCommand__',
+      },
     },
-    background: {
-      service_worker: 'src/background.ts',
-    },
-    permissions: ['identity', 'storage', 'notifications', 'alarms'],
+    web_accessible_resources: [
+      {
+        resources: ['quick-dialog.html'],
+        matches: ['<all_urls>'],
+      },
+    ],
     content_security_policy: {
       extension_pages: extensionPages,
     },

@@ -27,7 +27,9 @@ const channels = reactive<{
 })
 
 const fetching = ref(false)
+let requestId = 0
 async function fetchChannels() {
+  const currentRequestId = ++requestId
   if (!system.streamNameFilter) {
     channels.items = []
     channels.cursor = undefined
@@ -40,6 +42,8 @@ async function fetchChannels() {
     if (!account) return
 
     const response = await AppBusiness.searchChannels(account, system.streamNameFilter, channels.cursor, 100)
+    // A newer search was started while this one was running
+    if (currentRequestId !== requestId) return
     response.items = orderBy(response.items, ['name'])
 
     if (channels.cursor) channels.items.push(...response.items)
@@ -51,6 +55,9 @@ async function fetchChannels() {
   }
 }
 const fetchChannelsDebounce = debounce(fetchChannels, 500)
+onUnmounted(() => {
+  fetchChannelsDebounce.cancel()
+})
 
 watch(
   () => system.streamNameFilter,

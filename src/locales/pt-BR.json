@@ -110,6 +110,11 @@
     "menuContent": "Conteúdo do menu",
     "showMenu": "Mostrar menu"
   },
+  "quickDialog": {
+    "close": "Fechar",
+    "filter": "Filtrar streams",
+    "hint": "Enter abre a primeira stream"
+  },
   "searchView": {
     "fillFieldToSearchChannels": "Preencha o campo \"Pesquisar\" para buscar os canais",
     "search": "Pesquisar",
@@ -130,6 +135,9 @@
       "partial": "Parcial"
     },
     "notifications": "Notificações",
+    "quickDialogShortcut": "Atalho da lista rápida: {shortcut}",
+    "quickDialogShortcutChange": "Alterar atalho",
+    "quickDialogShortcutNotSet": "Atalho da lista rápida não definido",
     "showAlwaysOfflines": "Mostrar offlines sempre",
     "support": "Apoiar",
     "supportProfile": "Apoiar {name}",
