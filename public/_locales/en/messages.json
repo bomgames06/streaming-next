@@ -4,5 +4,8 @@
   },
   "appDesc": {
     "message": "Facilitate interaction with the Twitch platform. View, notify and open stream, video and clips page."
+  },
+  "quickDialogCommand": {
+    "message": "Open the quick stream list on the current page"
   }
 }

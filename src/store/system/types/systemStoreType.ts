@@ -39,6 +39,7 @@ export type ViewDataStore = {
   categoryId?: string
 }
 export type NotificationTypeStore = 'all' | 'partial' | 'none'
+export const DEFAULT_NOTIFICATION_TYPE: NotificationTypeStore = 'partial'
 export type ScreenStore = 'loading' | 'auth' | 'home'
 export type ViewStore = 'streams' | 'categories' | 'search' | 'settings'
 export type StreamOrderStore = 'name' | 'view' | 'game'

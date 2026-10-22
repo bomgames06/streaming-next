@@ -7,7 +7,7 @@ import type {
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
 import { isContentStream, isStream } from '@/components/listStream/types/streamItemType'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import { streamItemProfileUrl } from '@/utils/util'
 import AppBusiness from '@/services/business/appBusiness'
 import useSystemStore from '@/store/system/useSystemStore'
@@ -65,9 +65,12 @@ function itemClick(value: { item: StreamItemType; middle?: boolean }): void {
   }
 }
 
-watch(props.items, (items) => {
-  if (detailItem.value) detailItem.value = items.find((value) => equals(value, detailItem.value!))
-})
+watch(
+  () => props.items,
+  (items) => {
+    if (detailItem.value) detailItem.value = items.find((value) => equals(value, detailItem.value!))
+  }
+)
 
 function menuItemClick(value: { type: 'video' | 'clip'; item: StreamItemType }): void {
   detailItem.value = value.item

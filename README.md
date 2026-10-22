@@ -29,11 +29,20 @@ bun install
 ### Compiles for development
 ```
 bun run dev
+bun run dev:firefox
 ```
 
 ### Compiles and minifies for production
+Output goes to `dist/chrome-mv3` and `dist/firefox-mv3`.
 ```
 bun run build
+bun run build:firefox
+```
+
+### Packages the extension as a zip for the stores
+```
+bun run zip
+bun run zip:firefox
 ```
 
 ### Lints and fixes files

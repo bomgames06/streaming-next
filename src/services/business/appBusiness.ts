@@ -11,6 +11,7 @@ import type {
   CategorySearchItem,
   StreamItemClipType,
   StreamItemLiveOnlineType,
+  StreamItemLiveStreamType,
   StreamItemLiveType,
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
@@ -42,6 +43,11 @@ const AppBusiness = {
   async getSelfUser(token: string, type: AccountStoreType): Promise<User> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.getSelfUser(token),
+    })
+  },
+  async getStreamersFollowed(account: AccountStore): Promise<StreamItemLiveStreamType[]> {
+    return handlerAccounts(account.type, {
+      twitch: async () => TwitchBusiness.getStreamersFollowed(account.token, account.accountId),
     })
   },
   async getUserVideosArchive(

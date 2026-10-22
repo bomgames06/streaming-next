@@ -14,7 +14,8 @@ export default class AxiosBase {
       responseType: 'json',
       validateStatus: (status) => status >= 200 && status < 300,
       transformResponse(data) {
-        if (this.responseType === 'json') {
+        // Empty bodies (e.g. 204) are not valid JSON
+        if (this.responseType === 'json' && typeof data === 'string' && data) {
           return JSON.parse(data)
         }
         return data

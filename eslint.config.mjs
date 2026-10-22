@@ -9,7 +9,7 @@ import eslintrcAutoImport from './.eslintrc-auto-import.mjs'
 
 export default [
   {
-    ignores: ['**/node_modules', '**/dist', '.eslintrc-auto-import.mjs'],
+    ignores: ['**/node_modules', '**/dist', '**/.output', '**/.wxt', '.eslintrc-auto-import.mjs'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

@@ -154,7 +154,7 @@ function setDetailitem(detailItemValue?: StreamItemType, group?: GroupStreamStor
         </v-expansion-panel-title>
         <v-expansion-panel-text>
           <StreamList
-            v-model:detail-item="detailItem"
+            :detail-item="detailItem"
             :dump="props.dump"
             :items="streamsWithoutGroup"
             :streams="props.streams"

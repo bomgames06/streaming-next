@@ -4,8 +4,9 @@ import { locales } from '@/plugins/i18n'
 import type { NotificationTypeStore } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
-import browser from 'webextension-polyfill'
-import { mdiBroom, mdiGithub, mdiHeart } from '@mdi/js'
+import { browser } from 'wxt/browser'
+import { mdiBroom, mdiGithub, mdiHeart, mdiKeyboard } from '@mdi/js'
+import { QUICK_DIALOG_COMMAND } from '@/types/quickDialogTypes'
 
 const system = useSystemStore()
 const theme = useTheme()
@@ -21,6 +22,18 @@ function openGithub(middle?: boolean) {
 }
 function openDonation(middle?: boolean) {
   browser.tabs.create({ url: buyMeACoffeUrl, active: !middle })
+}
+
+const quickDialogShortcut = ref<string>()
+onMounted(async () => {
+  const commands = await browser.commands.getAll()
+  quickDialogShortcut.value = commands.find((command) => command.name === QUICK_DIALOG_COMMAND)?.shortcut || undefined
+})
+function openShortcutSettings() {
+  // Firefox has its own API, on Chromium the shortcuts page is a normal tab
+  const commands = browser.commands as typeof browser.commands & { openShortcutSettings?: () => Promise<void> }
+  if (commands.openShortcutSettings) void commands.openShortcutSettings()
+  else void browser.tabs.create({ url: 'chrome://extensions/shortcuts' })
 }
 </script>
 
@@ -87,7 +100,7 @@ function openDonation(middle?: boolean) {
                   @click="system.cleanNotification()"
                 />
               </v-col>
-              <v-col v-if="system.notificationType === 'partial'" cols="auto">
+              <v-col v-if="system.notificationType !== 'none'" cols="auto">
                 <v-btn
                   :aria-label="i18n.t('settings.clearCategoryNotifications')"
                   :disabled="!system.categoryNotifications.length"
@@ -121,6 +134,17 @@ function openDonation(middle?: boolean) {
               class="px-2"
               @update:model-value="system.setShowAlwaysOfflines(!!$event)"
             />
+          </v-col>
+          <v-col cols="12" class="d-flex align-center flex-wrap ga-2">
+            <v-icon :icon="mdiKeyboard" />
+            <span>
+              {{
+                quickDialogShortcut
+                  ? i18n.t('settings.quickDialogShortcut', { shortcut: quickDialogShortcut })
+                  : i18n.t('settings.quickDialogShortcutNotSet')
+              }}
+            </span>
+            <v-btn size="small" :text="i18n.t('settings.quickDialogShortcutChange')" @click="openShortcutSettings" />
           </v-col>
         </v-row>
       </div>

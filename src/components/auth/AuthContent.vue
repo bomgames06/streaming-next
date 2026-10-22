@@ -9,23 +9,11 @@ const { t } = useI18n()
 
 const authenticating = ref(false)
 
-async function authenticated({ token, user }: { token: string; user: User }): Promise<void> {
-  system.loading()
+async function authenticated(value: { token: string; user: User }): Promise<void> {
   authenticating.value = true
   try {
-    system.addAccount({
-      type: user.type,
-      accountId: user.id,
-      name: user.name,
-      login: user.login,
-      avatarUrl: user.avatarUrl,
-      token,
-    })
-
-    await system.fetchAccounts()
-    system.setScreen('home')
+    await system.addAuthenticatedAccount(value)
   } finally {
-    system.loaded()
     authenticating.value = false
   }
 }

@@ -9,7 +9,7 @@ import useSystemStore from '@/store/system/useSystemStore.ts'
 import { cloneDeep } from 'lodash'
 import AppBusiness from '@/services/business/appBusiness'
 import type { Mock } from '@vitest/spy'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import { mdiAccount, mdiCloseCircle, mdiDelete, mdiLogout, mdiTwitch } from '@mdi/js'
 
 vi.mock('@/services/business/appBusiness', () => ({

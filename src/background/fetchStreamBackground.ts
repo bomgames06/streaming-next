@@ -1,32 +1,32 @@
-import type { Alarms } from 'webextension-polyfill'
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
+import type { Browser } from 'wxt/browser'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
 import type { AccountDataStore } from '@/store/system/types/systemStoreType'
 import type { StreamItemLiveOnlineType } from '@/components/listStream/types/streamItemType'
-import countHandler from '@/background/handlers/countHandler'
+import countHandler, { registerCountHandler } from '@/background/handlers/countHandler'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
-import notificationHandler from '@/background/handlers/notificationHandler'
+import notificationHandler, { registerNotificationHandler } from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
 
+const FETCH_STREAM_ALARM = 'fetchStream'
+const FETCH_STREAM_PERIOD_IN_MINUTES = 0.5
+
 let isFetching = false
 
-void browser.alarms.create('fetchStream', { periodInMinutes: 0.5 })
-
-async function fetchStreams(alarm?: Alarms.Alarm): Promise<void> {
-  if (alarm && alarm.name !== 'fetchStream') return
+async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
+  if (alarm && alarm.name !== FETCH_STREAM_ALARM) return
   if (isFetching) return
 
   isFetching = true
 
-  let syncStorage: Record<string, unknown>
   let accounts: AccountDataStore = {}
 
   const onlines: StreamItemLiveOnlineType[] = []
   try {
-    syncStorage = await browser.storage.sync.get([STORAGE_KEY_ACCOUNTS])
+    const syncStorage = await browser.storage.sync.get([STORAGE_KEY_ACCOUNTS])
 
-    accounts = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
+    accounts = (syncStorage[STORAGE_KEY_ACCOUNTS] as AccountDataStore | undefined) ?? {}
 
     if (accounts.twitch && !accounts.twitch.invalid)
       onlines.push(
@@ -45,16 +45,29 @@ async function fetchStreams(alarm?: Alarms.Alarm): Promise<void> {
     isFetching = false
   }
 }
-void fetchStreams()
 
-browser.alarms.onAlarm.addListener(fetchStreams)
+async function ensureAlarm(): Promise<void> {
+  // Recreating the alarm on every service worker wake-up would reset its schedule
+  const alarm = await browser.alarms.get(FETCH_STREAM_ALARM)
+  if (!alarm) await browser.alarms.create(FETCH_STREAM_ALARM, { periodInMinutes: FETCH_STREAM_PERIOD_IN_MINUTES })
+}
 
-browser.runtime.onMessage.addListener((messageValue: unknown) => {
-  const message = messageValue as BackgroundMessageType
-  switch (message.type) {
-    case 'fetchStream':
-      return fetchStreams()
-    default:
-      break
-  }
-})
+export default function registerFetchStreamBackground() {
+  registerCountHandler()
+  registerNotificationHandler()
+
+  void ensureAlarm()
+  void fetchStreams()
+
+  browser.alarms.onAlarm.addListener(fetchStreams)
+
+  browser.runtime.onMessage.addListener((messageValue: unknown) => {
+    const message = messageValue as BackgroundMessageType
+    switch (message.type) {
+      case 'fetchStream':
+        return fetchStreams()
+      default:
+        break
+    }
+  })
+}

@@ -1,4 +1,4 @@
-import browser from 'webextension-polyfill'
+import { browser } from 'wxt/browser'
 import type {
   AuthBackgroundMessageType,
   BackgroundMessageType,
@@ -6,17 +6,19 @@ import type {
 } from '@/background/types/backgroundMessageType'
 import { generateState, twitchOAuthRevoke, twitchOAuthWebAuth } from '@/utils/util'
 
-browser.runtime.onMessage.addListener((messageValue: unknown) => {
-  const message = messageValue as BackgroundMessageType
-  switch (message.type) {
-    case 'auth':
-      return auth(message)
-    case 'revoke':
-      return revoke(message)
-    default:
-      break
-  }
-})
+export default function registerAuthBackground() {
+  browser.runtime.onMessage.addListener((messageValue: unknown) => {
+    const message = messageValue as BackgroundMessageType
+    switch (message.type) {
+      case 'auth':
+        return auth(message)
+      case 'revoke':
+        return revoke(message)
+      default:
+        break
+    }
+  })
+}
 
 async function auth(message: AuthBackgroundMessageType) {
   if (message.authType === 'twitch') {
@@ -27,6 +29,7 @@ async function auth(message: AuthBackgroundMessageType) {
       url: twitchUrl,
       interactive: message.interactive ?? true,
     })
+    if (!response) throw new Error('Auth flow without response')
 
     const urlObj = new URL(response.replace('#', '?'))
     if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect')
@@ -40,8 +43,8 @@ async function auth(message: AuthBackgroundMessageType) {
 
 async function revoke(message: RevokeBackgroundMessageType): Promise<boolean> {
   if (message.authType === 'twitch') {
-    const twitchRevokeUrl = twitchOAuthRevoke(message.token)
-    await fetch(twitchRevokeUrl, { method: 'POST' })
+    const { url, body } = twitchOAuthRevoke(message.token)
+    await fetch(url, { method: 'POST', body })
   } else throw new Error('Type is undefined')
   return true
 }

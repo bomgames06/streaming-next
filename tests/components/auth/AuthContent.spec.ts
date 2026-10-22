@@ -78,8 +78,7 @@ describe('AuthContent.vue', () => {
 
       system.loading.mockClear()
       system.loaded.mockClear()
-      system.addAccount.mockClear()
-      system.fetchAccounts.mockClear()
+      system.addAuthenticatedAccount.mockClear()
       authAppBusinessMock.mockClear()
 
       authAppBusinessMock.mockImplementation(() =>
@@ -96,20 +95,21 @@ describe('AuthContent.vue', () => {
       )
       await element.trigger('click')
 
-      expect(system.loading).toHaveBeenCalledTimes(2)
-      expect(system.loaded).toHaveBeenCalledTimes(2)
+      expect(system.loading).toHaveBeenCalledOnce()
+      expect(system.loaded).toHaveBeenCalledOnce()
       expect(authAppBusinessMock).toHaveBeenCalledOnce()
       expect(authAppBusinessMock.mock.lastCall).toStrictEqual(['twitch', undefined])
-      expect(system.addAccount).toHaveBeenCalledOnce()
-      expect(system.addAccount).toHaveBeenCalledWith({
-        type: accountType,
-        accountId: 'id',
-        name: 'name',
-        login: 'login',
-        avatarUrl: 'https://some-domain/avatar.png',
+      expect(system.addAuthenticatedAccount).toHaveBeenCalledOnce()
+      expect(system.addAuthenticatedAccount).toHaveBeenCalledWith({
         token: 'tokenTest',
+        user: {
+          type: accountType,
+          id: 'id',
+          name: 'name',
+          login: 'login',
+          avatarUrl: 'https://some-domain/avatar.png',
+        },
       })
-      expect(system.fetchAccounts).toHaveBeenCalledOnce()
     }
   })
 })
