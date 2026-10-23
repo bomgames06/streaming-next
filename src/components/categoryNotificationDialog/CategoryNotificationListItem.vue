@@ -63,7 +63,7 @@ function itemClick() {
       <v-icon v-if="props.streamItem">
         {{ selected ? mdiCheckboxMarked : mdiCheckboxBlankOutline }}
       </v-icon>
-      <v-btn v-else icon size="x-small" variant="flat" @click="emit('delete')">
+      <v-btn v-else icon size="x-small" variant="flat" @click.stop="emit('delete')">
         <v-icon size="large" color="error" :icon="mdiDelete" />
       </v-btn>
     </template>

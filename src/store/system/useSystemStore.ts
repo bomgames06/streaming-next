@@ -21,6 +21,8 @@ import {
   STORAGE_KEY_STREAM_ORDER_SORT,
   type StorageSyncTypes,
   STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS,
+  STORAGE_KEY_SHOW_UPCOMINGS,
+  STORAGE_KEY_HIDDEN_STREAM_TYPES,
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
@@ -94,6 +96,8 @@ const useSystemStore = defineStore('System', () => {
   const showCategoryNotifications = ref<boolean>(false)
   const showNotifications = ref<boolean>(false)
   const groupExpanded = ref<string[]>([])
+  const showUpcomings = ref<boolean>(true)
+  const hiddenStreamTypes = ref<AccountStoreType[]>([])
 
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
@@ -115,7 +119,7 @@ const useSystemStore = defineStore('System', () => {
     return compact(Object.values(accounts.value)).length
   })
   const mainAccount = computed(() => {
-    return accounts.value.twitch
+    return accounts.value.twitch ?? accounts.value.youtube
   })
   const validAccounts = computed(() => {
     return compact(Object.values(accounts.value)).filter((value) => !value.invalid)
@@ -139,6 +143,7 @@ const useSystemStore = defineStore('System', () => {
   })
   const showNotificationsComp = computed({ get: () => showNotifications.value, set: setShowNotifications })
   const groupExpandedComp = computed({ get: () => groupExpanded.value, set: setGroupExpanded })
+  const showUpcomingsComp = computed({ get: () => showUpcomings.value, set: setShowUpcomings })
 
   // System actions
   function setScreen(value: ScreenStore) {
@@ -191,6 +196,8 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_GROUP_STREAMS,
       STORAGE_KEY_GROUP_EXPANDED,
       STORAGE_KEY_CATEGORY_FAVORITES,
+      STORAGE_KEY_SHOW_UPCOMINGS,
+      STORAGE_KEY_HIDDEN_STREAM_TYPES,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -214,6 +221,8 @@ const useSystemStore = defineStore('System', () => {
     groupStreams.value = syncStorage[STORAGE_KEY_GROUP_STREAMS] ?? []
     groupExpanded.value = syncStorage[STORAGE_KEY_GROUP_EXPANDED] ?? []
     categoryFavorites.value = syncStorage[STORAGE_KEY_CATEGORY_FAVORITES] ?? []
+    showUpcomings.value = syncStorage[STORAGE_KEY_SHOW_UPCOMINGS] ?? true
+    hiddenStreamTypes.value = syncStorage[STORAGE_KEY_HIDDEN_STREAM_TYPES] ?? []
 
     // Only apply the stored values here, writing them back would waste the sync storage write quota
     applyDark(theme)
@@ -237,8 +246,27 @@ const useSystemStore = defineStore('System', () => {
   }
 
   // Storage actions
+  /**
+   * Tokens that expire quickly (YouTube lasts 1 hour) are renewed without showing any page, it only works while the
+   * user is still logged in the provider. On failure the account is invalid and the user authenticates again.
+   */
+  async function renewAccountToken(account: AccountStore) {
+    if (account.expiresAt === undefined || account.invalid || account.expiresAt > Date.now()) return
+
+    try {
+      const { token, expiresAt } = await AppBusiness.auth(account.type, false, false)
+      account.token = token
+      account.expiresAt = expiresAt
+    } catch {
+      account.invalid = true
+    }
+    saveAccounts()
+  }
   async function fetchAccounts() {
     for (const account of compact(Object.values(accounts.value))) {
+      await renewAccountToken(account)
+      if (account.invalid && account.expiresAt !== undefined) continue
+
       try {
         const user = await AppBusiness.getSelfUser(account.token, account.type)
         account.name = user.name
@@ -262,6 +290,7 @@ const useSystemStore = defineStore('System', () => {
       accountItem.login = account.login
       accountItem.avatarUrl = account.avatarUrl
       accountItem.token = account.token
+      accountItem.expiresAt = account.expiresAt
     } else {
       const id = uuidV4()
       accounts.value[account.type] = {
@@ -273,7 +302,15 @@ const useSystemStore = defineStore('System', () => {
     saveAccounts()
     setAccountCacheStreams(account.type, [])
   }
-  async function addAuthenticatedAccount({ token, user }: { token: string; user: User }) {
+  async function addAuthenticatedAccount({
+    token,
+    user,
+    expiresAt,
+  }: {
+    token: string
+    user: User
+    expiresAt?: number
+  }) {
     loading()
     try {
       addAccount({
@@ -283,6 +320,7 @@ const useSystemStore = defineStore('System', () => {
         login: user.login,
         avatarUrl: user.avatarUrl,
         token,
+        expiresAt,
       })
 
       await fetchAccounts()
@@ -549,6 +587,16 @@ const useSystemStore = defineStore('System', () => {
     groupExpanded.value = value
     saveSync(STORAGE_KEY_GROUP_EXPANDED, groupExpanded.value)
   }
+  function setShowUpcomings(value: boolean) {
+    showUpcomings.value = value
+    saveSync(STORAGE_KEY_SHOW_UPCOMINGS, showUpcomings.value)
+  }
+  function toggleHiddenStreamType(value: AccountStoreType) {
+    hiddenStreamTypes.value = hiddenStreamTypes.value.includes(value)
+      ? hiddenStreamTypes.value.filter((type) => type !== value)
+      : [...hiddenStreamTypes.value, value]
+    saveSync(STORAGE_KEY_HIDDEN_STREAM_TYPES, hiddenStreamTypes.value)
+  }
 
   // Video view actions
   function setVideoOrder(value: VideoOrderStore) {
@@ -592,6 +640,8 @@ const useSystemStore = defineStore('System', () => {
     streamOrder,
     streamOrderSort,
     streamNameFilter,
+    showUpcomings,
+    hiddenStreamTypes,
     // video view
     videoOrder,
     // clip view
@@ -616,6 +666,7 @@ const useSystemStore = defineStore('System', () => {
     showCategoryNotificationsComp,
     showNotificationsComp,
     groupExpandedComp,
+    showUpcomingsComp,
     // utils
     getAccountByType,
     // actions system
@@ -628,6 +679,7 @@ const useSystemStore = defineStore('System', () => {
     updateTimer,
     setHeaderAppBarView,
     // actions storage
+    renewAccountToken,
     fetchAccounts,
     addAccount,
     addAuthenticatedAccount,
@@ -662,6 +714,7 @@ const useSystemStore = defineStore('System', () => {
     removeFavoriteCategory,
     // view action
     setStreamOrder,
+    toggleHiddenStreamType,
     // video view action,
     setVideoOrder,
     // clip view action,

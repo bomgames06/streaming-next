@@ -4,8 +4,8 @@ function manifestConfig(command: 'build' | 'serve'): UserManifest {
   let extensionPages = ''
   extensionPages += "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   extensionPages += `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
-  extensionPages += `connect-src 'self' https://api.twitch.tv https://id.twitch.tv https://static-cdn.jtvnw.net${command === 'serve' ? ' ws://localhost:*' : ''};`
-  extensionPages += `img-src 'self' https://vod-secure.twitch.tv https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv data:${command === 'serve' ? ' http://localhost:*' : ''};`
+  extensionPages += `connect-src 'self' https://api.twitch.tv https://id.twitch.tv https://static-cdn.jtvnw.net https://www.googleapis.com https://oauth2.googleapis.com https://www.youtube.com${command === 'serve' ? ' ws://localhost:*' : ''};`
+  extensionPages += `img-src 'self' https://vod-secure.twitch.tv https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://i.ytimg.com https://yt3.ggpht.com https://yt3.googleusercontent.com data:${command === 'serve' ? ' http://localhost:*' : ''};`
   extensionPages += `font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net${command === 'serve' ? ' http://localhost:*' : ''};`
   extensionPages += "frame-src 'self' https://player.twitch.tv;"
 
@@ -28,6 +28,8 @@ function manifestConfig(command: 'build' | 'serve'): UserManifest {
     },
     // activeTab + scripting inject the quick dialog only in the tab where the command was used
     permissions: ['identity', 'storage', 'notifications', 'alarms', 'activeTab', 'scripting'],
+    // The YouTube RSS feeds have no CORS, optional so a new permission does not disable existing installs
+    optional_host_permissions: ['https://www.youtube.com/*'],
     commands: {
       'open-quick-dialog': {
         suggested_key: {

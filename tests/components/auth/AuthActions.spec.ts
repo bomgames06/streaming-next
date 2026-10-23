@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getTestPlugins, localesEnvironment, mockedStore } from '@tests/__utils__/util.ts'
 import type { DOMWrapper } from '@vue/test-utils'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import AuthActions from '@/components/auth/AuthActions.vue'
 import type { AccountDataStore, AccountStoreType } from '@/store/system/types/systemStoreType.ts'
 import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
@@ -40,7 +40,7 @@ describe('AuthActions.vue', () => {
           })
 
           const buttonAuthTypes: {
-            [key in AccountStoreType]: {
+            [key in AccountStoreType]?: {
               text: string
               icon: string
               element: DOMWrapper<Element>
@@ -101,9 +101,11 @@ describe('AuthActions.vue', () => {
       })
 
       const system = mockedStore(useSystemStore)
+      // v-img renders the image once it is reported visible
+      await flushPromises()
 
       const buttonAuthTypes: {
-        [key in AccountStoreType]: {
+        [key in AccountStoreType]?: {
           text: string
           icon: string
           avatarUrl: string
@@ -171,7 +173,7 @@ describe('AuthActions.vue', () => {
           })
 
           const buttonAuthTypes: {
-            [key in AccountStoreType]: {
+            [key in AccountStoreType]?: {
               text: string
               icon: string
               element: DOMWrapper<Element>
@@ -234,7 +236,7 @@ describe('AuthActions.vue', () => {
       const system = mockedStore(useSystemStore)
 
       const buttonAuthTypes: {
-        [key in AccountStoreType]: {
+        [key in AccountStoreType]?: {
           text: string
           icon: string
           avatarUrl: string
@@ -263,7 +265,7 @@ describe('AuthActions.vue', () => {
               },
             },
           })
-          await nextTick()
+          await flushPromises()
 
           expect(element.exists()).toBe(true)
           expect(element.text()).toBe(text)
@@ -305,7 +307,7 @@ describe('AuthActions.vue', () => {
   })
   it('Authenticate', async () => {
     const buttonAuthTypes: {
-      [key in AccountStoreType]: {
+      [key in AccountStoreType]?: {
         dataTestid: string
       }
     } = {
@@ -508,7 +510,7 @@ describe('AuthActions.vue', () => {
     })
 
     const buttonAuthTypes: {
-      [key in AccountStoreType]: {
+      [key in AccountStoreType]?: {
         url: string
         dataTestid: string
       }
@@ -548,7 +550,7 @@ describe('AuthActions.vue', () => {
     }
 
     const buttonAuthTypes: {
-      [key in AccountStoreType]: {
+      [key in AccountStoreType]?: {
         dataTestid: string
       }
     } = {

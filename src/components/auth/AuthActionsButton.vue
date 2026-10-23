@@ -29,8 +29,6 @@ const emit = defineEmits<{
       :class="props.colorClass"
       :data-testid="props.dataTestid"
       @click="emit('click', { account: props.account, middle: false })"
-      @keydown.enter="emit('click', { account: props.account, middle: false })"
-      @keydown.space="emit('click', { account: props.account, middle: false })"
       @mousedown.middle.prevent="emit('click', { account: props.account, middle: true })"
     >
       <template #prepend>
@@ -44,8 +42,6 @@ const emit = defineEmits<{
           size="x-small"
           variant="text"
           @click.stop="emit('delete')"
-          @keydown.enter.stop="emit('delete')"
-          @keydown.space.stop="emit('delete')"
         >
           <v-icon size="large">{{ props.account.invalid ? mdiDelete : mdiLogout }}</v-icon>
         </v-btn>

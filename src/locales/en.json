@@ -9,6 +9,10 @@
     "shortcuts": "Shortcuts",
     "streamView": "View: Streams"
   },
+  "accountTypes": {
+    "twitch": "Twitch",
+    "youtube": "YouTube"
+  },
   "appLayout": {
     "accounts": "Accounts",
     "addAccount": "Add",
@@ -30,7 +34,8 @@
     "remove": "Remove",
     "removeAccount": "Remove {name}",
     "twitchAuth": "Authenticate on Twitch",
-    "twitchExpireMessage": "* Twitch authentication by default lasts 60 days"
+    "twitchExpireMessage": "* Twitch authentication by default lasts 60 days",
+    "youtubeAuth": "Authenticate on YouTube"
   },
   "categoriesList": {
     "appBarView": {
@@ -87,7 +92,9 @@
     "refresh": "Refresh",
     "sort": "Sort",
     "systemError": "System error",
+    "twitchOnly": "Only available for Twitch at the moment",
     "unauthorizedAccount": "Account is no longer authorized",
+    "upcomings": "Scheduled",
     "value": "Value"
   },
   "gameNotificationDialog": {
@@ -196,6 +203,7 @@
     "spectators": "Viewer | Viewers",
     "streamerPreview": "Live preview from {name}",
     "streamerProfile": "Profile image from {name}",
+    "upcoming": "Scheduled · {time}",
     "videos": "Videos"
   },
   "streamView": {
@@ -209,10 +217,12 @@
     "filter": "Filter"
   },
   "streamsView": {
+    "allow": "Allow",
     "category": "Category",
     "favorites": "Favorites",
     "hideOfflines": "Hide offlines",
-    "showOfflines": "Show offlines"
+    "showOfflines": "Show offlines",
+    "youtubePermission": "Allow access to the YouTube feeds to find the lives"
   },
   "views": {
     "categories": "Categories",

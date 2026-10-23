@@ -5,6 +5,7 @@ const dark: ThemeDefinition = {
   colors: {
     primary: '#ba97ff',
     twitch: '#9559ff',
+    youtube: '#ff4e45',
   },
 }
 

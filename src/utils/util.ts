@@ -15,6 +15,31 @@ export function twitchOAuthRevoke(token: string): { url: string; body: URLSearch
   }
 }
 
+export function youtubeOAuthWebAuth(state: string, forceVerify?: boolean, interactive?: boolean): string {
+  const params = new URLSearchParams({
+    client_id: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID ?? '',
+    redirect_uri: browser.identity.getRedirectURL(),
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/youtube.readonly',
+    include_granted_scopes: 'true',
+    state,
+  })
+  // The silent renew must not show any page, otherwise the user picks the Google account (and so the channel)
+  if (interactive === false) params.set('prompt', 'none')
+  else params.set('prompt', forceVerify ? 'select_account consent' : 'select_account')
+
+  return `${import.meta.env.VITE_APP_OAUTH2_YOUTUBE_URL}/auth?${params.toString()}`
+}
+export function youtubeOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
+  return {
+    url: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_REVOKE_URL,
+    body: new URLSearchParams({ token }),
+  }
+}
+export function isYoutubeEnabled(): boolean {
+  return !!import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID
+}
+
 export function generateState(size?: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   // Used as the OAuth state, so it must come from a cryptographically secure source
@@ -24,19 +49,31 @@ export function generateState(size?: number): string {
 
 export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, text?: boolean): string {
   if (accountType === 'twitch') return `${bg ? 'bg-' : text ? 'text-' : ''}twitch`
+  else if (accountType === 'youtube') return `${bg ? 'bg-' : text ? 'text-' : ''}youtube`
   else throw new Error('accountType is undefined')
 }
 
 export function twitchUrl(name: string): string {
   return `https://twitch.tv/${name}`
 }
+export function youtubeChannelUrl(channelId: string): string {
+  return `https://www.youtube.com/channel/${channelId}`
+}
+export function youtubeVideoUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`
+}
 export function accountProfileUrl(account: AccountStore): string {
   if (account.type === 'twitch') return twitchUrl(account.login)
+  else if (account.type === 'youtube') return youtubeChannelUrl(account.accountId)
   else throw new Error('accountType is undefined')
 }
 export function streamItemProfileUrl(item: StreamItemType): string {
   if (item.type === 'twitch') return twitchUrl(item.login)
-  else throw new Error('accountType is undefined')
+  else if (item.type === 'youtube') {
+    // Live and upcoming items open the video itself, the channel page would only show it after some clicks
+    if ((item.status === 'online' || item.status === 'upcoming') && item.videoId) return youtubeVideoUrl(item.videoId)
+    return youtubeChannelUrl(item.id)
+  } else throw new Error('accountType is undefined')
 }
 
 export function partition<T>(collection: T[], amount: number): T[][] {
@@ -73,6 +110,25 @@ export function getTimeByClipPeriod(period?: ClipPeriodStore): Moment | undefine
   if (period === '7d') return moment().subtract(7, 'days')
   if (period === '30d') return moment().subtract(30, 'days')
   return undefined
+}
+
+// Like Promise.all over a map, but with at most `concurrency` handlers running at the same time
+export async function mapConcurrent<T, R>(
+  items: T[],
+  concurrency: number,
+  handler: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array<R>(items.length)
+  let nextIndex = 0
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++
+      results[index] = await handler(items[index])
+    }
+  })
+  await Promise.all(workers)
+
+  return results
 }
 
 export function sleep(ms: number): Promise<void> {

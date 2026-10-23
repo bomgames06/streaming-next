@@ -5,27 +5,34 @@ import type {
   StreamItemLiveOnlineType,
   StreamItemLiveStreamType,
   StreamItemLiveType,
+  StreamItemLiveUpcomingType,
   StreamItemType,
 } from '@/components/listStream/types/streamItemType'
-import { isOfflineStream, isOnlineStream } from '@/components/listStream/types/streamItemType'
+import { isOfflineStream, isOnlineStream, isUpcomingStream } from '@/components/listStream/types/streamItemType'
 import { debounce, uniqBy } from 'lodash'
 import useStreamOrder from '@/composables/useStreamOrder'
 import emitter from '@/events'
-import { includeUtil, isSameCategoryName } from '@/utils/util'
+import { accountTypeColor, includeUtil, isSameCategoryName } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
+import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import type { AccountStoreType } from '@/store/system/types/systemStoreType'
+import { ACCOUNT_STORE_TYPES } from '@/store/system/types/systemStoreType'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import { browser } from 'wxt/browser'
 import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
 import {
   mdiBell,
   mdiBellOutline,
+  mdiCalendarClock,
   mdiController,
   mdiFilter,
   mdiFolder,
   mdiFolderOutline,
   mdiStar,
   mdiStarOutline,
+  mdiTwitch,
   mdiWifiOff,
+  mdiYoutube,
 } from '@mdi/js'
 
 const system = useSystemStore()
@@ -33,17 +40,35 @@ const { t } = useI18n()
 
 const firstLoading = ref<boolean>(true)
 const showOfflines = ref<boolean>(false)
-const onlines = ref<StreamItemLiveOnlineType[]>([])
-const streams = ref<StreamItemLiveStreamType[]>([])
+const twitchOnlines = ref<StreamItemLiveOnlineType[]>([])
+const twitchStreams = ref<StreamItemLiveStreamType[]>([])
+const youtubeOnlines = ref<StreamItemLiveOnlineType[]>([])
+const youtubeStreams = ref<StreamItemLiveStreamType[]>([])
+const upcomings = ref<StreamItemLiveUpcomingType[]>([])
+const youtubeMissingPermission = ref<boolean>(false)
 const fetchTimeout = ref<ReturnType<typeof setTimeout>>()
 const detailItem = ref<StreamItemType>()
 const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
 
+const typeIcons: Record<AccountStoreType, string> = { twitch: mdiTwitch, youtube: mdiYoutube }
+
+const onlines = computed(() => [...twitchOnlines.value, ...youtubeOnlines.value])
+const streams = computed(() => [...twitchStreams.value, ...youtubeStreams.value])
 const offlines = computed(() =>
-  streams.value.filter((value) => !onlines.value.some((item) => item.id === value.id && item.type === value.type))
+  streams.value.filter(
+    (value) =>
+      !onlines.value.some((item) => item.id === value.id && item.type === value.type) &&
+      !upcomings.value.some((item) => item.id === value.id && item.type === value.type)
+  )
 )
+const hasYoutube = computed(() => !!system.accounts.youtube && !system.accounts.youtube.invalid)
+// The platform filter only makes sense with more than one platform, it also avoids hiding everything with no way back
+const streamTypes = computed(() =>
+  ACCOUNT_STORE_TYPES.filter((type) => system.validAccounts.some((account) => account.type === type))
+)
+const showTypeFilter = computed(() => streamTypes.value.length > 1)
 
 const filterDebounce = debounce(() => (filter.value = system.streamFilter), 250)
 watch(
@@ -55,7 +80,11 @@ watch(
 
 const { sortStreams } = useStreamOrder(filter)
 const itemsFiltered = computed(() =>
-  sortStreams(uniqBy([...onlines.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(filterItem))
+  sortStreams(
+    uniqBy([...onlines.value, ...upcomings.value, ...offlines.value], (value) => `${value.type}:${value.id}`).filter(
+      filterItem
+    )
+  )
 )
 const showOfflinesComp = computed(
   () =>
@@ -75,9 +104,12 @@ const renderOfflinesComp = computed(
     !system.showNotificationsComp
 )
 
-emitter.on('refresh', fetchData)
+function refresh() {
+  void fetchData(true)
+}
+emitter.on('refresh', refresh)
 onUnmounted(() => {
-  emitter.off('refresh', fetchData)
+  emitter.off('refresh', refresh)
   filterDebounce.cancel()
   if (fetchTimeout.value) clearTimeout(fetchTimeout.value)
 })
@@ -97,11 +129,19 @@ function toggleNotification() {
 function toggleOffline() {
   showOfflines.value = !showOfflines.value
 }
+function toggleUpcomings() {
+  system.showUpcomingsComp = !system.showUpcomingsComp
+}
+async function allowYoutubeFeeds() {
+  if (await YoutubeBusiness.requestFeedPermission()) await fetchData(true)
+}
 
 function filterItem(value: StreamItemLiveType): boolean {
   let show = true
 
-  if (!showOfflinesComp.value && isOfflineStream(value)) show = false
+  if (showTypeFilter.value && system.hiddenStreamTypes.includes(value.type)) show = false
+  else if (!showOfflinesComp.value && isOfflineStream(value)) show = false
+  else if (!system.showUpcomingsComp && !filter.value && isUpcomingStream(value)) show = false
   else if (!(
     (!system.showFavoritesComp && !system.showNotificationsComp) ||
     (system.showFavoritesComp && favoriteItemEnabled(value)) ||
@@ -141,14 +181,20 @@ function notificationItemCategoryEnabled(item: StreamItemType) {
   )
 }
 
-watch(() => system.validAccounts, fetchData)
+watch(
+  () => system.validAccounts,
+  () => fetchData()
+)
 
 // Calls made while a fetch is running are coalesced into a single extra fetch at the end
 let fetching = false
 let fetchPending = false
-async function fetchData() {
+let forcePending = false
+// Forced fetches skip the caches of the providers with a small API quota (YouTube)
+async function fetchData(force?: boolean) {
   if (fetching) {
     fetchPending = true
+    forcePending ||= !!force
     return
   }
   fetching = true
@@ -161,7 +207,14 @@ async function fetchData() {
       fetchTimeout.value = undefined
     }
 
-    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch()])
+    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch(), fetchYoutube(force)])
+
+    // Counts the lives of every account, like the background does
+    const message: BackgroundMessageType = {
+      type: 'setCountBadge',
+      count: onlines.value.length,
+    }
+    void browser.runtime.sendMessage(message)
   } finally {
     system.loaded()
     system.refreshed()
@@ -169,8 +222,10 @@ async function fetchData() {
     fetchTimeout.value = setTimeout(fetchData, 60000 * 5)
     fetching = false
     if (fetchPending) {
+      const forceNext = forcePending
       fetchPending = false
-      void fetchData()
+      forcePending = false
+      void fetchData(forceNext)
     }
   }
 }
@@ -179,7 +234,7 @@ async function fetchOnlineTwitch(): Promise<void> {
   system.loading()
   try {
     if (!system.accounts.twitch || system.accounts.twitch.invalid) {
-      onlines.value = []
+      twitchOnlines.value = []
       return
     }
 
@@ -188,14 +243,8 @@ async function fetchOnlineTwitch(): Promise<void> {
       system.accounts.twitch.accountId
     )
 
-    const message: BackgroundMessageType = {
-      type: 'setCountBadge',
-      count: items.length,
-    }
-    void browser.runtime.sendMessage(message)
-
     dump.value = Date.now().toString()
-    onlines.value = items
+    twitchOnlines.value = items
   } finally {
     system.loaded()
   }
@@ -205,12 +254,42 @@ async function fetchStreamsTwitch(): Promise<void> {
   system.loading()
   try {
     if (!system.accounts.twitch || system.accounts.twitch.invalid) {
-      streams.value = []
+      twitchStreams.value = []
       return
     }
 
-    streams.value = system.accountsCacheStreams?.twitch || []
-    streams.value = await system.fetchStreamersFollowed(system.accounts.twitch)
+    twitchStreams.value = system.accountsCacheStreams?.twitch || []
+    twitchStreams.value = await system.fetchStreamersFollowed(system.accounts.twitch)
+  } finally {
+    system.loaded()
+  }
+}
+
+async function fetchYoutube(force?: boolean): Promise<void> {
+  system.loading()
+  try {
+    const account = system.accounts.youtube
+    if (account) await system.renewAccountToken(account)
+    if (!account || account.invalid) {
+      youtubeStreams.value = []
+      youtubeOnlines.value = []
+      upcomings.value = []
+      youtubeMissingPermission.value = false
+      return
+    }
+
+    youtubeStreams.value = system.accountsCacheStreams?.youtube || []
+    youtubeStreams.value = await system.fetchStreamersFollowed(account)
+
+    const lives = await YoutubeBusiness.getLivesFollowed(
+      account.token,
+      account.accountId,
+      youtubeStreams.value.map((value) => value.id),
+      force
+    )
+    youtubeOnlines.value = lives.onlines
+    upcomings.value = lives.upcomings
+    youtubeMissingPermission.value = lives.missingPermission
   } finally {
     system.loaded()
   }
@@ -299,6 +378,46 @@ async function fetchStreamsTwitch(): Promise<void> {
                   <v-icon :color="showOfflinesComp ? 'primary' : ''" size="18" :icon="mdiWifiOff" />
                 </v-btn>
               </v-col>
+              <v-col v-if="hasYoutube" cols="auto">
+                <v-btn
+                  v-tooltip="t('common.upcomings')"
+                  :aria-checked="system.showUpcomingsComp"
+                  :aria-label="t('common.upcomings')"
+                  class="rounded-lg"
+                  :disabled="!!detailItem"
+                  :icon="true"
+                  role="checkbox"
+                  size="24"
+                  @click="toggleUpcomings"
+                >
+                  <v-icon :color="system.showUpcomingsComp ? 'primary' : ''" size="18" :icon="mdiCalendarClock" />
+                </v-btn>
+              </v-col>
+              <template v-if="showTypeFilter">
+                <v-col class="d-flex" cols="auto">
+                  <v-divider class="h-75 align-self-center" vertical />
+                </v-col>
+                <v-col v-for="type in streamTypes" :key="type" cols="auto">
+                  <v-btn
+                    v-tooltip="t(`accountTypes.${type}`)"
+                    :aria-checked="!system.hiddenStreamTypes.includes(type)"
+                    :aria-label="t(`accountTypes.${type}`)"
+                    class="rounded-lg"
+                    :data-testid="`stream-type-${type}`"
+                    :disabled="!!detailItem"
+                    :icon="true"
+                    role="checkbox"
+                    size="24"
+                    @click="system.toggleHiddenStreamType(type)"
+                  >
+                    <v-icon
+                      :color="system.hiddenStreamTypes.includes(type) ? '' : accountTypeColor(type)"
+                      size="18"
+                      :icon="typeIcons[type]"
+                    />
+                  </v-btn>
+                </v-col>
+              </template>
             </v-row>
           </v-col>
           <v-spacer />
@@ -310,7 +429,7 @@ async function fetchStreamsTwitch(): Promise<void> {
           >
             <v-row density="compact" class="flex-nowrap">
               <v-col cols="auto">
-                <CategoryNotificationDialog :streams="streams">
+                <CategoryNotificationDialog :streams="twitchStreams">
                   <template #activator="{ props }">
                     <v-btn
                       v-tooltip:start="t('streamsView.category')"
@@ -336,6 +455,18 @@ async function fetchStreamsTwitch(): Promise<void> {
         </v-row>
       </v-sheet>
       <v-divider />
+      <v-alert
+        v-if="youtubeMissingPermission"
+        class="rounded-0"
+        density="compact"
+        :icon="mdiYoutube"
+        :text="t('streamsView.youtubePermission')"
+        type="warning"
+      >
+        <template #append>
+          <v-btn size="small" variant="tonal" @click="allowYoutubeFeeds">{{ t('streamsView.allow') }}</v-btn>
+        </template>
+      </v-alert>
     </template>
     <StreamGroupList
       v-if="system.showGroupsComp"

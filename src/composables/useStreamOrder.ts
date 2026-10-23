@@ -2,15 +2,18 @@ import type { Ref } from 'vue'
 import { deburr, orderBy } from 'lodash'
 import useSystemStore from '@/store/system/useSystemStore'
 import type { StreamItemLiveType } from '@/components/listStream/types/streamItemType'
-import { isOnlineStream } from '@/components/listStream/types/streamItemType'
+import { isOnlineStream, isUpcomingStream } from '@/components/listStream/types/streamItemType'
 
+// Upcoming lives are sorted together with the online ones
 function orderStatus(value: StreamItemLiveType) {
-  return isOnlineStream(value) ? 1 : 0
+  return isOnlineStream(value) || isUpcomingStream(value) ? 1 : 0
 }
 function orderName(value: StreamItemLiveType) {
   return deburr(value.name).toLowerCase()
 }
 function orderView(value: StreamItemLiveType) {
+  // Upcoming lives have no viewers yet
+  if (isUpcomingStream(value)) return 0
   return value.status === 'online' && value.viewerCount ? value.viewerCount : orderName(value)
 }
 function orderGame(value: StreamItemLiveType) {
@@ -24,7 +27,7 @@ function orderType(value: StreamItemLiveType) {
 
 /**
  * Stream list ordering configured by the user (store `streamOrder`/`streamOrderSort`).
- * Online streams come first, except while filtering, where only the configured order matters.
+ * Online and upcoming streams come first, except while filtering, where only the configured order matters.
  */
 export default function useStreamOrder(filter: Ref<string | undefined>) {
   const system = useSystemStore()

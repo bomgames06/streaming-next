@@ -16,6 +16,7 @@
     "test:run": "vitest --run",
     "test:dev": "vitest",
     "test:ui": "vitest --ui",
+    "test:coverage": "vitest --run --coverage",
     "check": "vue-tsc --noEmit -p tsconfig.app.json && vue-tsc --noEmit -p tsconfig.vitest.json && vue-tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint . --max-warnings 0",
     "lint:staged": "lint-staged",

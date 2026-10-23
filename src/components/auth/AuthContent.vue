@@ -9,7 +9,7 @@ const { t } = useI18n()
 
 const authenticating = ref(false)
 
-async function authenticated(value: { token: string; user: User }): Promise<void> {
+async function authenticated(value: { token: string; user: User; expiresAt?: number }): Promise<void> {
   authenticating.value = true
   try {
     await system.addAuthenticatedAccount(value)

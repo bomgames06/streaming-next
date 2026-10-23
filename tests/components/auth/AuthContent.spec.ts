@@ -58,7 +58,7 @@ describe('AuthContent.vue', () => {
   })
   it('Click on authentication buttons', async () => {
     const buttonAuthTypes: {
-      [key in AccountStoreType]: {
+      [key in AccountStoreType]?: {
         dataTestid: string
       }
     } = {

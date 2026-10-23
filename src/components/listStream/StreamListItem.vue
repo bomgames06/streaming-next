@@ -26,6 +26,7 @@ import {
   mdiStarOutline,
   mdiTwitch,
   mdiVideo,
+  mdiYoutube,
 } from '@mdi/js'
 
 const aspectRatio = 16 / 9
@@ -71,8 +72,8 @@ const previewImage = computed(() => {
     return typeof item.value.previewImage === 'function'
       ? item.value.previewImage(imageWidth, imageWidth * (1 / aspectRatio), props.dump)
       : item.value.previewImage
-  if (item.value.type === 'twitch' && item.value.status === 'clip' && item.value.previewImage)
-    return item.value.previewImage
+  if (item.value.status === 'clip' && item.value.previewImage) return item.value.previewImage
+  if (item.value.status === 'upcoming' && item.value.previewImage) return item.value.previewImage
   return ''
 })
 const spectatorsCount = computed<number | undefined>(() => {
@@ -101,14 +102,23 @@ const dataDiff = computed(() => {
   if (duration) return duration.format('y __ w __ d __ h __ m __ s __', { largest: 1 })
   return ''
 })
+const upcomingText = computed(() => {
+  if (item.value.status !== 'upcoming') return ''
+  return t('streamList.upcoming', { time: moment.value(item.value.scheduledAt.valueOf()).from(system.timer) })
+})
 
 function equals(a: StreamItemType, b: StreamItemType) {
   return a.type === b.type && a.id === b.id
 }
 
 function formatStreamDuration(value: StreamItemType) {
-  if (value.status === 'online' && value.type === 'twitch' && value.startedAt)
+  if (value.status === 'online' && value.startedAt)
     return moment.value.duration(moment.value(system.timer).diff(value.startedAt)).format('hh:mm:ss', { trim: false })
+  if (value.status === 'upcoming') {
+    // Created from the epoch so the current locale is used
+    const scheduledAt = moment.value(value.scheduledAt.valueOf())
+    return scheduledAt.format(scheduledAt.isSame(system.timer, 'day') ? 'LT' : 'D MMM LT')
+  }
   if (value.status === 'video' && value.duration)
     return moment.value.duration(value.duration, 'seconds').format('hh:mm:ss', { trim: false })
   if (value.status === 'clip' && value.duration) return `${value.duration.toFixed()}s`
@@ -116,7 +126,7 @@ function formatStreamDuration(value: StreamItemType) {
 }
 
 async function showMenu(event: PointerEvent) {
-  if (detailItem.value || props.disableContextMenu || item.value.type !== 'twitch') return
+  if (detailItem.value || props.disableContextMenu) return
   menu.x = event.clientX
   menu.y = event.clientY
   menuShow.value = item.value
@@ -237,7 +247,14 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
               @mousedown.middle.prevent="emit('itemClick', { item: props.item, middle: true })"
             >
               <template v-if="itemIntersected" #prepend>
-                <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
+                <template
+                  v-if="
+                    item.status === 'online' ||
+                    item.status === 'upcoming' ||
+                    item.status === 'video' ||
+                    item.status === 'clip'
+                  "
+                >
                   <div class="mr-2 position-relative">
                     <v-img
                       :alt="t('streamList.streamerPreview', { name: item.name })"
@@ -247,14 +264,16 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                       :width="previewWidth"
                     />
                     <v-card
-                      v-if="isHovering || focusedItem || item.status === 'video' || item.status === 'clip'"
+                      v-if="
+                        isHovering ||
+                        focusedItem ||
+                        item.status === 'upcoming' ||
+                        item.status === 'video' ||
+                        item.status === 'clip'
+                      "
                       class="start-at-content text-body-small bg-background"
                     >
-                      {{
-                        isHovering || focusedItem || item.status === 'video' || item.status === 'clip'
-                          ? formatStreamDuration(item)
-                          : null
-                      }}
+                      {{ formatStreamDuration(item) }}
                     </v-card>
                     <div class="badge-content">
                       <v-card
@@ -269,7 +288,10 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                           :icon="mdiBell"
                         />
                       </v-card>
-                      <v-card v-if="item.status === 'online' && favoriteEnabled" class="bg-background badge-item">
+                      <v-card
+                        v-if="(item.status === 'online' || item.status === 'upcoming') && favoriteEnabled"
+                        class="bg-background badge-item"
+                      >
                         <v-icon
                           aria-hidden="false"
                           :aria-label="t('common.favorite')"
@@ -316,7 +338,7 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
               </template>
               <template v-if="itemIntersected" #default>
                 <v-menu
-                  v-if="isLiveType(item) && item.type === 'twitch' && !!menuShow && equals(menuShow, item)"
+                  v-if="isLiveType(item) && !!menuShow && equals(menuShow, item)"
                   :model-value="!!menuShow && equals(menuShow, item)"
                   :target="[menu.x, menu.y]"
                   @close="closeMenu()"
@@ -367,7 +389,9 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                       "
                     />
                     <v-list-item
-                      v-if="system.notificationType !== 'none' && !props.disableNotificationMenu"
+                      v-if="
+                        system.notificationType !== 'none' && !props.disableNotificationMenu && item.type === 'twitch'
+                      "
                       :title="t('streamList.menu.categoryNotification')"
                       @click="categoryNotification(item)"
                     >
@@ -400,8 +424,14 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                       :title="t('streamList.menu.category')"
                       @click="system.setView('categories', { categoryId: item.gameId })"
                     />
-                    <v-list-item :prepend-icon="mdiVideo" :title="t('streamList.menu.videos')" @click="enableVideo()" />
                     <v-list-item
+                      v-if="item.type === 'twitch'"
+                      :prepend-icon="mdiVideo"
+                      :title="t('streamList.menu.videos')"
+                      @click="enableVideo()"
+                    />
+                    <v-list-item
+                      v-if="item.type === 'twitch'"
                       :prepend-icon="mdiMovieOpenStar"
                       :title="t('streamList.menu.clips')"
                       @click="enableClip()"
@@ -417,6 +447,12 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                       class="text-body-large"
                       :color="accountTypeColor('twitch')"
                       :icon="mdiTwitch"
+                    />
+                    <v-icon
+                      v-if="item.type === 'youtube'"
+                      class="text-body-large"
+                      :color="accountTypeColor('youtube')"
+                      :icon="mdiYoutube"
                     />
                     <span
                       class="mx-1 overflow-hidden text-body-medium font-weight-black line-height-normal text-truncate"
@@ -445,7 +481,21 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                     t('streamList.offline')
                   }}</v-list-item-subtitle>
                 </template>
-                <template v-if="item.status === 'online' || item.status === 'video' || item.status === 'clip'">
+                <v-list-item-subtitle
+                  v-if="item.status === 'upcoming'"
+                  class="text-body-small line-height-normal font-weight-bold"
+                  :title="item.scheduledAt.toDate().toLocaleString(locale)"
+                >
+                  {{ upcomingText }}
+                </v-list-item-subtitle>
+                <template
+                  v-if="
+                    item.status === 'online' ||
+                    item.status === 'upcoming' ||
+                    item.status === 'video' ||
+                    item.status === 'clip'
+                  "
+                >
                   <v-list-item-subtitle
                     v-if="item.status === 'online' && item.type === 'twitch' && item.game"
                     class="text-body-small line-height-normal font-weight-bold"

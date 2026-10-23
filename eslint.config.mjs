@@ -22,6 +22,13 @@ export default [
     },
   },
   {
+    // Tests define small host components to mount composables and plugins
+    files: ['tests/**/*'],
+    rules: {
+      'vue/one-component-per-file': 'off',
+    },
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parser: vueParser,

@@ -1,0 +1,143 @@
+import { describe, expect, it, vi } from 'vitest'
+import { AxiosError, AxiosHeaders, HttpStatusCode } from 'axios'
+import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { browser } from 'wxt/browser'
+import type { Browser } from 'wxt/browser'
+import type { Mock } from '@vitest/spy'
+import registerFetchStreamBackground from '@/background/fetchStreamBackground'
+import TwitchBusiness from '@/services/business/twitchBusiness'
+import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import { auth } from '@/background/authBackground'
+import countHandler from '@/background/handlers/countHandler'
+import notificationHandler from '@/background/handlers/notificationHandler'
+import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
+import type { AccountDataStore, AccountStore } from '@/store/system/types/systemStoreType'
+import type { StreamItemLiveUpcomingType } from '@/components/listStream/types/streamItemType'
+import { account, onlineItem, streamItem } from '@tests/__utils__/fixtures'
+import { youtubeAccount } from '@tests/__utils__/youtubeServer'
+import moment from 'moment'
+
+vi.mock('@/services/business/twitchBusiness', () => ({
+  default: { getStreamersOnlineFollowed: vi.fn() },
+}))
+vi.mock('@/services/business/youtubeBusiness', () => ({
+  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn() },
+  YOUTUBE_TOKEN_LIFETIME: 55 * 60 * 1000,
+}))
+vi.mock('@/background/authBackground', () => ({ auth: vi.fn() }))
+vi.mock('@/background/handlers/countHandler', () => ({
+  default: vi.fn(),
+  registerCountHandler: vi.fn(),
+}))
+vi.mock('@/background/handlers/notificationHandler', () => ({
+  default: vi.fn(),
+  registerNotificationHandler: vi.fn(),
+}))
+
+const twitchOnlinesMock = TwitchBusiness.getStreamersOnlineFollowed as Mock<
+  typeof TwitchBusiness.getStreamersOnlineFollowed
+>
+const subscriptionsMock = YoutubeBusiness.getStreamersFollowed as Mock<typeof YoutubeBusiness.getStreamersFollowed>
+const livesMock = YoutubeBusiness.getLivesFollowed as Mock<typeof YoutubeBusiness.getLivesFollowed>
+const authMock = auth as Mock<typeof auth>
+const countHandlerMock = countHandler as Mock<typeof countHandler>
+const notificationHandlerMock = notificationHandler as Mock<typeof notificationHandler>
+
+const twitchOnline = onlineItem()
+const youtubeOnline = onlineItem({ type: 'youtube', id: 'UCy', videoId: 'y1' })
+const youtubeStreams = [streamItem({ type: 'youtube', id: 'UCy' }), streamItem({ type: 'youtube', id: 'UCz' })]
+const youtubeUpcoming: StreamItemLiveUpcomingType = {
+  type: 'youtube',
+  status: 'upcoming',
+  id: 'UCz',
+  login: 'UCz',
+  name: 'Zulu',
+  scheduledAt: moment(),
+  verified: false,
+  videoId: 'z1',
+}
+
+function unauthorized() {
+  const config = { headers: new AxiosHeaders() }
+  return new AxiosError('Unauthorized', 'ERR_BAD_REQUEST', config, undefined, {
+    status: HttpStatusCode.Unauthorized,
+    statusText: '',
+    data: {},
+    headers: {},
+    config,
+  })
+}
+async function fetchWith(accounts: AccountDataStore) {
+  await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
+  for (const mock of [countHandlerMock, notificationHandlerMock, authMock]) mock.mockReset()
+  twitchOnlinesMock.mockReset().mockResolvedValue([twitchOnline])
+  subscriptionsMock.mockReset().mockResolvedValue(youtubeStreams)
+  livesMock
+    .mockReset()
+    .mockResolvedValue({ onlines: [youtubeOnline], upcomings: [youtubeUpcoming], missingPermission: false })
+}
+async function run() {
+  registerFetchStreamBackground()
+  await fakeBrowser.alarms.onAlarm.trigger({ name: 'fetchStream', scheduledTime: Date.now() } as Browser.alarms.Alarm)
+  await vi.waitFor(() => expect(countHandlerMock).toHaveBeenCalled())
+}
+async function storedAccounts(): Promise<AccountDataStore> {
+  return (await browser.storage.sync.get(STORAGE_KEY_ACCOUNTS))[STORAGE_KEY_ACCOUNTS] as AccountDataStore
+}
+
+describe('fetchStreamBackground with YouTube', () => {
+  it('Count and notify the lives of every account', async () => {
+    await fetchWith({ twitch: account(), youtube: youtubeAccount() })
+    await run()
+
+    expect(subscriptionsMock).toHaveBeenCalledWith('yt-token', 'UCme')
+    // Not forced, the cache keeps the quota low
+    expect(livesMock).toHaveBeenCalledWith('yt-token', 'UCme', ['UCy', 'UCz'])
+    expect(countHandlerMock).toHaveBeenLastCalledWith(expect.anything(), 2)
+    expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline, youtubeOnline], {
+      streams: youtubeStreams,
+      upcomings: [youtubeUpcoming],
+    })
+    expect(authMock).not.toHaveBeenCalled()
+  })
+  it('Renew the expired token before fetching', async () => {
+    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000 }) })
+    authMock.mockResolvedValue('renewed')
+    await run()
+
+    expect(authMock).toHaveBeenCalledWith({ type: 'auth', authType: 'youtube', interactive: false })
+    expect(livesMock).toHaveBeenCalledWith('renewed', 'UCme', ['UCy', 'UCz'])
+    const stored = (await storedAccounts()).youtube as AccountStore
+    expect(stored.token).toBe('renewed')
+    expect(stored.expiresAt).toBeGreaterThan(Date.now() + 50 * 60 * 1000)
+  })
+  it('Invalidate YouTube when the renew fails or the token is rejected', async () => {
+    await fetchWith({ twitch: account(), youtube: youtubeAccount({ expiresAt: Date.now() - 1000 }) })
+    authMock.mockRejectedValue(new Error('interaction_required'))
+    await run()
+
+    expect(livesMock).not.toHaveBeenCalled()
+    expect((await storedAccounts()).youtube!.invalid).toBe(true)
+    // Twitch still works, without YouTube data its history is kept
+    expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline])
+
+    await fetchWith({ youtube: youtubeAccount() })
+    livesMock.mockRejectedValue(unauthorized())
+    await run()
+    expect((await storedAccounts()).youtube!.invalid).toBe(true)
+  })
+  it('Skip YouTube on other errors or without the feed permission', async () => {
+    await fetchWith({ twitch: account(), youtube: youtubeAccount() })
+    livesMock.mockRejectedValue(new AxiosError('Quota exceeded', 'ERR_BAD_REQUEST'))
+    await run()
+
+    expect(countHandlerMock).toHaveBeenLastCalledWith(expect.anything(), 1)
+    expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline])
+    expect((await storedAccounts()).youtube).toStrictEqual(youtubeAccount({ expiresAt: expect.any(Number) }))
+
+    await fetchWith({ twitch: account(), youtube: youtubeAccount() })
+    livesMock.mockResolvedValue({ onlines: [], upcomings: [], missingPermission: true })
+    await run()
+    expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline])
+  })
+})

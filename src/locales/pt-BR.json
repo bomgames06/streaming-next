@@ -9,6 +9,10 @@
     "shortcuts": "Atalhos",
     "streamView": "Tela: Transmissão ao vivo"
   },
+  "accountTypes": {
+    "twitch": "Twitch",
+    "youtube": "YouTube"
+  },
   "appLayout": {
     "accounts": "Contas",
     "addAccount": "Adicionar",
@@ -30,7 +34,8 @@
     "remove": "Remover",
     "removeAccount": "Remover {name}",
     "twitchAuth": "Autenticar na Twitch",
-    "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias"
+    "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias",
+    "youtubeAuth": "Autenticar no YouTube"
   },
   "categoriesList": {
     "appBarView": {
@@ -87,7 +92,9 @@
     "refresh": "Atualizar",
     "sort": "Ordenar",
     "systemError": "Erro no sistema",
+    "twitchOnly": "Disponível apenas para a Twitch no momento",
     "unauthorizedAccount": "Conta não está mais autorizada",
+    "upcomings": "Agendadas",
     "value": "Valor"
   },
   "gameNotificationDialog": {
@@ -196,6 +203,7 @@
     "spectators": "Espectador | Espectadores",
     "streamerPreview": "Amostra da live de {name}",
     "streamerProfile": "Imagem de perfil de {name}",
+    "upcoming": "Agendada · {time}",
     "videos": "Vídeos"
   },
   "streamView": {
@@ -209,10 +217,12 @@
     "filter": "Filtro"
   },
   "streamsView": {
+    "allow": "Permitir",
     "category": "Categoria",
     "favorites": "Favoritos",
     "hideOfflines": "Esconder offlines",
-    "showOfflines": "Mostrar offlines"
+    "showOfflines": "Mostrar offlines",
+    "youtubePermission": "Permita o acesso aos feeds do YouTube para encontrar as lives"
   },
   "views": {
     "categories": "Categorias",

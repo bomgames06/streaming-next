@@ -7,6 +7,7 @@ import type {
 } from '@/store/system/types/systemStoreType'
 import type { User } from '@/types/userType'
 import TwitchBusiness from '@/services/business/twitchBusiness'
+import YoutubeBusiness from '@/services/business/youtubeBusiness'
 import type {
   CategorySearchItem,
   StreamItemClipType,
@@ -22,6 +23,7 @@ async function handlerAccounts<T>(
   handler: { [key in AccountStoreType]?: () => Promise<T> }
 ): Promise<T> {
   if (type === 'twitch' && handler.twitch) return handler.twitch()
+  else if (type === 'youtube' && handler.youtube) return handler.youtube()
   else throw new Error('Type is undefined')
 }
 
@@ -30,24 +32,28 @@ const AppBusiness = {
     type: AccountStoreType,
     forceVerify?: boolean,
     interactive?: boolean
-  ): Promise<{ token: string; user: User }> {
+  ): Promise<{ token: string; user: User; expiresAt?: number }> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.auth(forceVerify, interactive),
+      youtube: async () => YoutubeBusiness.auth(forceVerify, interactive),
     })
   },
   async revoke(type: AccountStoreType, token: string): Promise<void> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.revoke(token),
+      youtube: async () => YoutubeBusiness.revoke(token),
     })
   },
   async getSelfUser(token: string, type: AccountStoreType): Promise<User> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.getSelfUser(token),
+      youtube: async () => YoutubeBusiness.getSelfUser(token),
     })
   },
   async getStreamersFollowed(account: AccountStore): Promise<StreamItemLiveStreamType[]> {
     return handlerAccounts(account.type, {
       twitch: async () => TwitchBusiness.getStreamersFollowed(account.token, account.accountId),
+      youtube: async () => YoutubeBusiness.getStreamersFollowed(account.token, account.accountId),
     })
   },
   async getUserVideosArchive(

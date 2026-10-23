@@ -1,11 +1,12 @@
 import type { Plugin } from 'vue'
-import { onResponseError } from '@/services/api/twitch/events/twitchApiEvent'
+import { onResponseError as onTwitchResponseError } from '@/services/api/twitch/events/twitchApiEvent'
+import { onResponseError as onYoutubeResponseError } from '@/services/api/youtube/events/youtubeApiEvent'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import useSystemStore from '@/store/system/useSystemStore'
 
 const apiPlugin: Plugin = {
   install() {
-    onResponseError((error) => {
+    const invalidAccount = (error: unknown) => {
       if (isAxiosError(error)) {
         if (error.response?.status === HttpStatusCode.Unauthorized) {
           try {
@@ -17,7 +18,9 @@ const apiPlugin: Plugin = {
           }
         }
       }
-    })
+    }
+    onTwitchResponseError(invalidAccount)
+    onYoutubeResponseError(invalidAccount)
   },
 }
 
