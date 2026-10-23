@@ -4,6 +4,7 @@ import type {
   StreamItemLiveUpcomingType,
 } from '@/components/listStream/types/streamItemType'
 import { browser } from 'wxt/browser'
+import type { Browser } from 'wxt/browser'
 import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS,
@@ -46,6 +47,15 @@ const UPCOMING_HISTORY_LIMIT = 500
 // The type only has letters, so ids with dashes (like the YouTube video ids) are kept whole
 const NOTIFICATION_ID_REGEX = /^([a-zA-Z0-9]{10})-N-([a-z]+)-(.+)$/
 const FALLBACK_ICON_URL = '/icons/128.png'
+
+/** An icon that fails to download (blocked or removed) rejects the notification, it is shown with the app icon then */
+function createNotification(id: string, options: Browser.notifications.NotificationCreateOptions) {
+  const fallbackIconUrl = browser.runtime.getURL(FALLBACK_ICON_URL)
+  browser.notifications.create(id, options).catch(() => {
+    if (options.iconUrl === fallbackIconUrl) return
+    browser.notifications.create(id, { ...options, iconUrl: fallbackIconUrl }).catch(() => undefined)
+  })
+}
 
 /**
  * @param onlines online streams of every fetched account
@@ -129,7 +139,7 @@ export default async function notificationHandler(
         target = online.videoId
       }
 
-      void browser.notifications.create(`${generateState(10)}-N-${online.type}-${target}`, {
+      createNotification(`${generateState(10)}-N-${online.type}-${target}`, {
         type: 'basic',
         iconUrl: iconUrl || browser.runtime.getURL(FALLBACK_ICON_URL),
         title: online.name,
@@ -148,7 +158,7 @@ export default async function notificationHandler(
             notifications.some((value) => value.type === upcoming.type && value.id === upcoming.id))
       )
       for (const upcoming of upcomings) {
-        void browser.notifications.create(`${generateState(10)}-N-youtube-${upcoming.videoId}`, {
+        createNotification(`${generateState(10)}-N-youtube-${upcoming.videoId}`, {
           type: 'basic',
           iconUrl:
             youtubeStreams?.find((value) => value.id === upcoming.id)?.profileImage ||

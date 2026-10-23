@@ -37,6 +37,7 @@ declare module 'vue' {
     StreamOrderMenu: typeof import('./components/listStream/StreamOrderMenu.vue')['default']
     StreamsAppBarView: typeof import('./components/views/streams/StreamsAppBarView.vue')['default']
     StreamsView: typeof import('./components/views/streams/StreamsView.vue')['default']
+    StreamTypeFilters: typeof import('./components/listStream/StreamTypeFilters.vue')['default']
     ViewContainer: typeof import('./components/viewContainer/ViewContainer.vue')['default']
   }
 }

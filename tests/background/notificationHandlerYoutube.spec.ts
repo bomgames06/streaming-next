@@ -164,6 +164,24 @@ describe('notificationHandler with YouTube', () => {
     expect(notifications()).toStrictEqual({})
     expect(await history()).toBeUndefined()
   })
+  it('Use the app icon when the avatar fails to download', async () => {
+    await setup({ history: { youtube: [], youtubeUpcoming: [] } })
+    const original = browser.notifications.create.bind(browser.notifications)
+    const createSpy = vi
+      .spyOn(browser.notifications, 'create')
+      .mockRejectedValueOnce(new Error('Unable to download all specified images.'))
+      .mockImplementation(original as never)
+
+    await notificationHandler([live], youtube())
+    await vi.waitFor(() => expect(createSpy).toHaveBeenCalledTimes(2))
+
+    expect(createSpy.mock.calls[0][1]).toMatchObject({ iconUrl: 'https://yt3/UCy.jpg' })
+    expect(createSpy.mock.calls[1][0]).toBe(createSpy.mock.calls[0][0])
+    expect(createSpy.mock.calls[1][1]).toMatchObject({
+      iconUrl: browser.runtime.getURL('/icons/128.png'),
+      title: 'Yankee',
+    })
+  })
   it('Open the YouTube video of a clicked notification', async () => {
     registerNotificationHandler()
     const createSpy = vi.spyOn(browser.tabs, 'create')
