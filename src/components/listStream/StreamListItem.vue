@@ -277,7 +277,11 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                     </v-card>
                     <div class="badge-content">
                       <v-card
-                        v-if="item.status === 'online' && system.notificationType === 'partial' && notificationEnabled"
+                        v-if="
+                          (item.status === 'online' || item.status === 'upcoming') &&
+                          system.notificationType === 'partial' &&
+                          notificationEnabled
+                        "
                         class="bg-background badge-item"
                       >
                         <v-icon

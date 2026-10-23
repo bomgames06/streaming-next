@@ -135,6 +135,27 @@ describe('StreamsView.vue with YouTube', () => {
     expect(wrapper.find('[data-testid="stream-type-youtube"]').exists()).toBe(false)
     expect(names(wrapper)).toStrictEqual(['Yankee', 'Zulu'])
   })
+  it('Show the notification and favorite badges on the YouTube lives and scheduled ones', async () => {
+    const { wrapper } = await mountView({
+      state: {
+        notifications: [
+          { type: 'youtube', id: 'UCy' },
+          { type: 'youtube', id: 'UCz' },
+        ],
+        favorites: [{ type: 'youtube', id: 'UCz' }],
+      },
+    })
+    const badges = (name: string) =>
+      wrapper
+        .findAllComponents(StreamListItem)
+        .find((item) => item.props('item').name === name)!
+        .findAll('.badge-item .v-icon')
+        .map((icon) => icon.attributes('aria-label'))
+
+    expect(badges('Yankee')).toStrictEqual(['Notification'])
+    expect(badges('Zulu')).toStrictEqual(['Notification', 'Favorite'])
+    expect(badges('Alpha')).toStrictEqual([])
+  })
   it('Sort and favorite the YouTube items like the Twitch ones', async () => {
     const { wrapper, system } = await mountView({ state: { favorites: [{ type: 'youtube', id: 'UCz' }] } })
 
