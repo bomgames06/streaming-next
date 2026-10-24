@@ -13,9 +13,12 @@ export default function useAppInit(noAuth?: boolean) {
   const error = ref<boolean>(false)
 
   const timerInterval = setInterval(system.updateTimer, 1000)
+  // Tokens are renewed a few minutes before they expire, so checking every minute is enough
+  const renewInterval = setInterval(() => void system.renewAccountTokens(), 60 * 1000)
   onUnmounted(() => {
     browser.runtime.onMessage.removeListener(appMessage)
     clearInterval(timerInterval)
+    clearInterval(renewInterval)
   })
 
   void init()

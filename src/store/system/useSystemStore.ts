@@ -247,22 +247,32 @@ const useSystemStore = defineStore('System', () => {
 
   // Storage actions
   /**
-   * Tokens that expire quickly (YouTube lasts 1 hour) are renewed with the refresh token. The account is invalid only
-   * when it is rejected (or missing, like the accounts logged before it), a network failure tries again later.
+   * Expired tokens are renewed with the refresh token. The account is invalid only when it is rejected (or missing,
+   * like the accounts logged before it), a network failure tries again later. Concurrent calls share the renew.
    */
+  const accountRenews = new Map<AccountStoreType, Promise<void>>()
   async function renewAccountToken(account: AccountStore) {
     if (account.expiresAt === undefined || account.invalid || account.expiresAt > Date.now()) return
 
-    try {
-      const { token, expiresAt } = await AppBusiness.renewToken(account)
-      account.token = token
-      account.expiresAt = expiresAt
-    } catch (e) {
-      console.warn(`Failed to renew the ${account.type} token`, e)
-      if (!account.refreshToken || (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized))
-        account.invalid = true
-    }
-    saveAccounts()
+    const pending = accountRenews.get(account.type)
+    if (pending) return pending
+    const renew = (async () => {
+      try {
+        // Also the new refresh token, when the provider rotates it
+        Object.assign(account, await AppBusiness.renewToken(account))
+      } catch (e) {
+        console.warn(`Failed to renew the ${account.type} token`, e)
+        if (!account.refreshToken || (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized))
+          account.invalid = true
+      }
+      saveAccounts()
+    })().finally(() => accountRenews.delete(account.type))
+    accountRenews.set(account.type, renew)
+    return renew
+  }
+  /** Renews the tokens about to expire, the popup may stay open longer than a token lasts */
+  async function renewAccountTokens() {
+    for (const account of compact(Object.values(accounts.value))) await renewAccountToken(account)
   }
   async function fetchAccounts() {
     for (const account of compact(Object.values(accounts.value))) {
@@ -330,8 +340,9 @@ const useSystemStore = defineStore('System', () => {
     if (account) {
       delete accounts.value[accountType]
       setAccountCacheStreams(accountType, [])
-      // Revoking the refresh token revokes its access tokens too, the access token may be expired already
-      AppBusiness.revoke(account.type, account.refreshToken ?? account.token).catch((e: unknown) => {
+      // Revoking the Google refresh token revokes its access tokens too, the access token may be expired already
+      const token = account.type === 'youtube' ? (account.refreshToken ?? account.token) : account.token
+      AppBusiness.revoke(account.type, token).catch((e: unknown) => {
         console.error('Failed to revoke token', e)
       })
     }
@@ -339,9 +350,14 @@ const useSystemStore = defineStore('System', () => {
     if (!hasAccount.value || isEveryAccountInvalid.value) setScreen('auth')
     saveAccounts()
   }
-  function invalidAccountByToken(token: string) {
+  /** A rejected token is renewed when the account has a refresh token, it is invalid when that fails too */
+  async function invalidAccountByToken(token: string) {
     const value = Object.values(accounts.value).find((value) => value.token === token)
     if (!value) return
+    if (value.refreshToken && !value.invalid) {
+      value.expiresAt = 0
+      return renewAccountToken(value)
+    }
     value.invalid = true
     saveAccounts()
   }
@@ -677,6 +693,7 @@ const useSystemStore = defineStore('System', () => {
     setHeaderAppBarView,
     // actions storage
     renewAccountToken,
+    renewAccountTokens,
     fetchAccounts,
     addAccount,
     addAuthenticatedAccount,

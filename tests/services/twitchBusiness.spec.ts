@@ -3,6 +3,7 @@ import moment from 'moment'
 import { browser } from 'wxt/browser'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import { mockHttp, page } from '@tests/__utils__/http'
+import { twitchServer } from '@tests/__utils__/twitchServer'
 import {
   apiClip,
   apiFollowed,
@@ -21,10 +22,14 @@ describe('TwitchBusiness', () => {
 
   it('Authenticate through the background and fetch the user', async () => {
     mockHttp().get('/users', { data: { data: [apiUser()] } })
-    const sendMessageSpy = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue('access-token' as never)
+    const sendMessageSpy = vi
+      .spyOn(browser.runtime, 'sendMessage')
+      .mockResolvedValue({ token: 'access-token', expiresAt: 123, refreshToken: 'refresh-token' } as never)
 
     expect(await TwitchBusiness.auth(true, false)).toStrictEqual({
       token: 'access-token',
+      expiresAt: 123,
+      refreshToken: 'refresh-token',
       user: { type: 'twitch', id: 'me-id', name: 'Me', login: 'me', avatarUrl: 'https://cdn/me.png' },
     })
     expect(sendMessageSpy).toHaveBeenCalledWith({
@@ -33,6 +38,15 @@ describe('TwitchBusiness', () => {
       forceVerify: true,
       interactive: false,
     })
+  })
+  it('Validate the token on the Twitch OAuth server', async () => {
+    const { http, data } = twitchServer()
+
+    expect(await TwitchBusiness.validateToken('token')).toBe(true)
+    expect(http.requests.at(-1)!.headers.Authorization).toBe('OAuth token')
+
+    data.tokenInvalid = true
+    expect(await TwitchBusiness.validateToken('token')).toBe(false)
   })
   it('Revoke through the background', async () => {
     const sendMessageSpy = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(true as never)

@@ -26,7 +26,6 @@ async function authenticated(value: AuthenticatedType): Promise<void> {
       <div class="d-flex flex-column">
         <AuthActions @authenticated="authenticated" />
       </div>
-      <small class="d-block text-medium-emphasis">{{ t('auth.twitchExpireMessage') }}</small>
     </v-col>
   </v-row>
 </template>

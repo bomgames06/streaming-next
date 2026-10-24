@@ -39,23 +39,6 @@ describe('AuthContent.vue', () => {
       }
     )
   })
-  it('Show twitch authentication warning about token expiration', async () => {
-    await localesEnvironment(
-      (dictionary) => {
-        const wrapper = mount(AuthContent, { global: { plugins: getTestPlugins() } })
-
-        expect(wrapper.text()).toContain(dictionary.twitchExpireMessage)
-      },
-      {
-        en: {
-          twitchExpireMessage: '* Twitch authentication by default lasts 60 days',
-        },
-        'pt-BR': {
-          twitchExpireMessage: '* Autenticação da Twitch por padrão dura 60 dias',
-        },
-      }
-    )
-  })
   it('Click on authentication buttons', async () => {
     const buttonAuthTypes: {
       [key in AccountStoreType]?: {

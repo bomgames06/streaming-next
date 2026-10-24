@@ -10,9 +10,9 @@ export type AccountStore = {
   login: string
   avatarUrl?: string
   token: string
-  // Epoch in ms, only for tokens that expire quickly (YouTube)
+  // Epoch in ms, only for the tokens of the code flow (they expire in hours)
   expiresAt?: number
-  // Renews the expired token without the user (YouTube), through streaming-next-back
+  // Renews the expired token without the user, through streaming-next-back
   refreshToken?: string
   invalid: boolean
 }

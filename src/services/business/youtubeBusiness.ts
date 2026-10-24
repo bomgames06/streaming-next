@@ -1,5 +1,5 @@
 import YoutubeApi from '@/services/api/youtube/youtubeApi'
-import type { AuthenticatedType, User } from '@/types/userType'
+import type { AccountTokenType, AuthenticatedType, User } from '@/types/userType'
 import type { AuthBackgroundMessageType, RevokeBackgroundMessageType } from '@/background/types/backgroundMessageType'
 import { browser } from 'wxt/browser'
 import type {
@@ -23,8 +23,6 @@ import type {
 import { STORAGE_KEY_YOUTUBE_LIVES_CACHE, STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE } from '@/types/localStorageKeysTypes'
 
 const FEED_ORIGIN = 'https://www.youtube.com/*'
-// Google tokens last 1 hour, they are renewed a bit before that
-const TOKEN_RENEW_MARGIN = 5 * 60 * 1000
 // The YouTube API quota is small, so the data is reused for a while
 const SUBSCRIPTIONS_CACHE_TIME = 30 * 60 * 1000
 const LIVES_CACHE_TIME = 2 * 60 * 1000
@@ -33,8 +31,6 @@ const FEED_WINDOW = 7 * 24 * 60 * 60 * 1000
 const FEED_CONCURRENCY = 8
 // Upcoming lives this late are usually abandoned schedules or permanent waiting rooms
 const UPCOMING_LATE_LIMIT = 24 * 60 * 60 * 1000
-
-export type YoutubeToken = { token: string; expiresAt: number; refreshToken?: string }
 
 export type YoutubeLivesFollowed = {
   onlines: StreamItemLiveOnlineType[]
@@ -128,25 +124,10 @@ const YoutubeBusiness = {
     await this.requestFeedPermission()
 
     const message: AuthBackgroundMessageType = { type: 'auth', authType: 'youtube' }
-    const { token, expiresAt, refreshToken }: YoutubeToken = await browser.runtime.sendMessage(message)
+    const { token, expiresAt, refreshToken }: AccountTokenType = await browser.runtime.sendMessage(message)
     const user = await this.getSelfUser(token)
 
     return { token, user, expiresAt, refreshToken }
-  },
-  /** Code of the login flow, exchanged by streaming-next-back */
-  async exchangeCode(code: string, codeVerifier: string, redirectUri: string): Promise<YoutubeToken> {
-    const response = await YoutubeApi.tokens.exchange(code, codeVerifier, redirectUri)
-    if (!response.refreshToken) throw new Error('Refresh token not found')
-    return {
-      token: response.accessToken,
-      expiresAt: Date.now() + response.expiresIn * 1000 - TOKEN_RENEW_MARGIN,
-      refreshToken: response.refreshToken,
-    }
-  },
-  /** New access token without the user, rejected with 401 when the refresh token is no longer valid */
-  async renewToken(refreshToken: string): Promise<YoutubeToken> {
-    const response = await YoutubeApi.tokens.refresh(refreshToken)
-    return { token: response.accessToken, expiresAt: Date.now() + response.expiresIn * 1000 - TOKEN_RENEW_MARGIN }
   },
   async revoke(token: string) {
     const message: RevokeBackgroundMessageType = {

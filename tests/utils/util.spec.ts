@@ -110,7 +110,7 @@ describe('util.ts', () => {
       expect(Object.fromEntries(url.searchParams)).toStrictEqual({
         client_id: import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID,
         redirect_uri: 'https://ext.chromiumapp.org/',
-        response_type: 'token',
+        response_type: 'code',
         state: 'state-value',
         force_verify: 'true',
         scope: 'user:read:follows user:read:email',

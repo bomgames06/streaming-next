@@ -59,11 +59,3 @@ export type YoutubeFeedEntryType = {
   channelId: string
   published: string
 }
-
-export type YoutubeTokenType = {
-  accessToken: string
-  // Seconds
-  expiresIn: number
-  // Only on the login
-  refreshToken?: string
-}

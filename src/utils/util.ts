@@ -5,8 +5,9 @@ import { deburr, upperCase } from 'lodash'
 import type { Moment } from 'moment'
 import moment from 'moment'
 
+/** Authorization code flow, streaming-next-back exchanges the code with the client secret */
 export function twitchOAuthWebAuth(state: string, forceVerify?: boolean): string {
-  return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/authorize?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=${forceVerify ?? false}&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`
+  return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/authorize?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=code&state=${state}&force_verify=${forceVerify ?? false}&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`
 }
 export function twitchOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
   return {

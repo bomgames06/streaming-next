@@ -113,44 +113,6 @@ describe('YoutubeBusiness', () => {
       },
     })
   })
-  it('Exchange the code on streaming-next-back', async () => {
-    const { http } = youtubeServer()
-
-    const before = Date.now()
-    const result = await YoutubeBusiness.exchangeCode('code', 'verifier', 'https://ext.chromiumapp.org/')
-
-    expect(http.requests.at(-1)!.body).toStrictEqual({
-      code: 'code',
-      codeVerifier: 'verifier',
-      redirectUri: 'https://ext.chromiumapp.org/',
-    })
-    expect(result.token).toBe('access-token')
-    expect(result.refreshToken).toBe('refresh-token')
-    // Renewed 5 minutes before the token expires
-    expect(result.expiresAt - before).toBeGreaterThanOrEqual(3599 * 1000 - 5 * 60 * 1000)
-    expect(result.expiresAt - Date.now()).toBeLessThanOrEqual(3599 * 1000 - 5 * 60 * 1000)
-  })
-  it('Reject a login without the refresh token', async () => {
-    const { http } = youtubeServer()
-    http.on('post', `${import.meta.env.VITE_APP_API_BACK_URL}/youtube/token`, {
-      data: { accessToken: 'access-token', expiresIn: 3599 },
-    })
-
-    await expect(YoutubeBusiness.exchangeCode('code', 'verifier', 'https://ext/')).rejects.toThrow(
-      'Refresh token not found'
-    )
-  })
-  it('Renew the token with the refresh token', async () => {
-    const { data, refreshRequests } = youtubeServer()
-
-    const result = await YoutubeBusiness.renewToken('refresh-token')
-    expect(result.token).toBe('renewed-token')
-    expect(result.expiresAt).toBeGreaterThan(Date.now() + 50 * 60 * 1000)
-    expect(refreshRequests()[0].body).toStrictEqual({ refreshToken: 'refresh-token' })
-
-    data.refreshRejected = true
-    await expect(YoutubeBusiness.renewToken('refresh-token')).rejects.toMatchObject({ response: { status: 401 } })
-  })
   it('Use a fallback user for Google accounts without channel', async () => {
     youtubeServer({ me: undefined })
     expect(await YoutubeBusiness.getSelfUser('token')).toStrictEqual({

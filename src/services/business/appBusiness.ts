@@ -5,7 +5,8 @@ import type {
   LanguageCategoryStreamStore,
   VideoOrderStore,
 } from '@/store/system/types/systemStoreType'
-import type { AuthenticatedType, User } from '@/types/userType'
+import type { AccountTokenType, AuthenticatedType, User } from '@/types/userType'
+import TokenBusiness from '@/services/business/tokenBusiness'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
 import type {
@@ -34,16 +35,10 @@ const AppBusiness = {
       youtube: async () => YoutubeBusiness.auth(),
     })
   },
-  /** Only accounts with a refresh token (YouTube) renew their token */
-  async renewToken(account: AccountStore): Promise<{ token: string; expiresAt: number }> {
+  /** Only accounts with a refresh token renew their token, the Twitch ones logged before the code flow have none */
+  async renewToken(account: AccountStore): Promise<AccountTokenType> {
     if (!account.refreshToken) throw new Error('Refresh token not found')
-    const refreshToken = account.refreshToken
-    return handlerAccounts(account.type, {
-      twitch: async () => {
-        throw new Error('Twitch tokens are not renewed')
-      },
-      youtube: async () => YoutubeBusiness.renewToken(refreshToken),
-    })
+    return TokenBusiness.renewToken(account.type, account.refreshToken)
   },
   async revoke(type: AccountStoreType, token: string): Promise<void> {
     return handlerAccounts(type, {

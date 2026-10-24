@@ -64,7 +64,7 @@ describe('Popup page', () => {
     vi.spyOn(browser.identity, 'getRedirectURL').mockReturnValue('https://ext.chromiumapp.org/')
     const authFlow = vi.spyOn(browser.identity, 'launchWebAuthFlow').mockImplementation(async ({ url }) => {
       const state = new URL(url).searchParams.get('state')
-      return `https://ext.chromiumapp.org/#access_token=fresh-token&state=${state}`
+      return `https://ext.chromiumapp.org/?code=the-code&state=${state}`
     })
     // fake-browser only resolves sendMessage for listeners answering `true`, so the auth reply is forwarded here
     const sendMessage = browser.runtime.sendMessage
@@ -77,14 +77,18 @@ describe('Popup page', () => {
     const { system } = await mountPopup()
     expect(system.screen).toBe('auth')
     expect(text()).toContain('We need to authenticate to proceed')
-    expect(text()).toContain('* Twitch authentication by default lasts 60 days')
 
     bodyFind<HTMLElement>('button[data-testid="twitch-auth"]')!.click()
     await settle(60)
 
     expect(authFlow).toHaveBeenCalledOnce()
     expect(system.screen).toBe('home')
-    expect(system.accounts.twitch).toMatchObject({ token: 'fresh-token', name: 'Streamer Fan', invalid: false })
+    expect(system.accounts.twitch).toMatchObject({
+      token: 'fresh-token',
+      refreshToken: 'twitch-refresh-token',
+      name: 'Streamer Fan',
+      invalid: false,
+    })
     expect(http.requests.filter((request) => request.path === '/users')[0].headers.Authorization).toBe(
       'Bearer fresh-token'
     )

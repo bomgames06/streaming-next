@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError, AxiosHeaders, HttpStatusCode } from 'axios'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { browser } from 'wxt/browser'
@@ -6,14 +6,17 @@ import type { Browser } from 'wxt/browser'
 import type { Mock } from '@vitest/spy'
 import registerFetchStreamBackground from '@/background/fetchStreamBackground'
 import TwitchBusiness from '@/services/business/twitchBusiness'
+import AppBusiness from '@/services/business/appBusiness'
 import countHandler from '@/background/handlers/countHandler'
 import notificationHandler from '@/background/handlers/notificationHandler'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
+import type { AccountDataStore, AccountStore } from '@/store/system/types/systemStoreType'
 import { account, onlineItem } from '@tests/__utils__/fixtures'
 
 vi.mock('@/services/business/twitchBusiness', () => ({
-  default: { getStreamersOnlineFollowed: vi.fn() },
+  default: { getStreamersOnlineFollowed: vi.fn(), validateToken: vi.fn(async () => true) },
 }))
+vi.mock('@/services/business/appBusiness', () => ({ default: { renewToken: vi.fn() } }))
 vi.mock('@/background/handlers/countHandler', () => ({
   default: vi.fn(),
   registerCountHandler: vi.fn(),
@@ -26,6 +29,8 @@ vi.mock('@/background/handlers/notificationHandler', () => ({
 const getOnlinesMock = TwitchBusiness.getStreamersOnlineFollowed as Mock<
   typeof TwitchBusiness.getStreamersOnlineFollowed
 >
+const validateMock = TwitchBusiness.validateToken as Mock<typeof TwitchBusiness.validateToken>
+const renewMock = AppBusiness.renewToken as Mock<typeof AppBusiness.renewToken>
 const countHandlerMock = countHandler as Mock<typeof countHandler>
 const notificationHandlerMock = notificationHandler as Mock<typeof notificationHandler>
 
@@ -126,5 +131,95 @@ describe('fetchStreamBackground', () => {
     const sync = await browser.storage.sync.get(STORAGE_KEY_ACCOUNTS)
     expect(sync[STORAGE_KEY_ACCOUNTS]).toStrictEqual({ twitch: account() })
     expect(countHandlerMock).not.toHaveBeenCalled()
+  })
+  describe('Twitch token', () => {
+    const HOUR = 60 * 60 * 1000
+    // The last validation is kept in memory, the time goes forward so each test starts without a recent one
+    let now = Date.now() + 10 * HOUR
+    function advance(time: number) {
+      now += time
+      vi.setSystemTime(now)
+    }
+    async function fetchWith(twitch: AccountStore) {
+      await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: { twitch } })
+      countHandlerMock.mockClear()
+      notificationHandlerMock.mockClear()
+      await fakeBrowser.alarms.onAlarm.trigger(alarm('fetchStream'))
+    }
+    async function storedTwitch() {
+      return ((await browser.storage.sync.get(STORAGE_KEY_ACCOUNTS))[STORAGE_KEY_ACCOUNTS] as AccountDataStore).twitch!
+    }
+    beforeEach(async () => {
+      await register()
+      vi.useFakeTimers({ toFake: ['Date'] })
+      advance(10 * HOUR)
+      validateMock.mockReset().mockResolvedValue(true)
+      renewMock.mockReset()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('Validate the token on start and every hour', async () => {
+      await fetchWith(account())
+      expect(validateMock).toHaveBeenCalledExactlyOnceWith('token')
+
+      advance(HOUR - 1000)
+      await fetchWith(account())
+      expect(validateMock).toHaveBeenCalledOnce()
+
+      advance(1000)
+      await fetchWith(account())
+      expect(validateMock).toHaveBeenCalledTimes(2)
+    })
+    it('Invalidate the accounts logged before the code flow when the token is no longer valid', async () => {
+      validateMock.mockResolvedValue(false)
+      getOnlinesMock.mockClear()
+      await fetchWith(account())
+
+      expect(await storedTwitch()).toStrictEqual(account({ invalid: true }))
+      expect(getOnlinesMock).not.toHaveBeenCalled()
+    })
+    it('Renew the expired token, saving the rotated refresh token', async () => {
+      // The account is updated in place, so the sent refresh token is kept apart
+      const sent: string[] = []
+      renewMock.mockImplementation(async (value) => {
+        sent.push(value.refreshToken!)
+        return { token: 'renewed', expiresAt: now + 4 * HOUR, refreshToken: 'rotated' }
+      })
+      await fetchWith(account({ expiresAt: now - 1000, refreshToken: 'refresh' }))
+
+      expect(sent).toStrictEqual(['refresh'])
+      expect(getOnlinesMock).toHaveBeenLastCalledWith('renewed', 'me-id', true)
+      expect(await storedTwitch()).toStrictEqual(
+        account({ token: 'renewed', expiresAt: now + 4 * HOUR, refreshToken: 'rotated' })
+      )
+    })
+    it('Renew on the next fetch a token rejected by Twitch', async () => {
+      validateMock.mockResolvedValue(false)
+      renewMock.mockResolvedValue({ token: 'renewed', expiresAt: now + 4 * HOUR })
+      await fetchWith(account({ expiresAt: now + HOUR, refreshToken: 'refresh' }))
+      expect(getOnlinesMock).toHaveBeenLastCalledWith('renewed', 'me-id', true)
+
+      getOnlinesMock.mockRejectedValueOnce(unauthorized())
+      await fetchWith(account({ expiresAt: now + HOUR, refreshToken: 'refresh' }))
+      expect(await storedTwitch()).toMatchObject({ expiresAt: 0, invalid: false })
+    })
+    it('Wait the next fetch when the renew fails for other reasons', async () => {
+      renewMock.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'))
+      await fetchWith(account({ expiresAt: now - 1000, refreshToken: 'refresh' }))
+
+      expect((await storedTwitch()).invalid).toBe(false)
+      // Without the streams the notifications would take the lives as ended
+      expect(countHandlerMock).not.toHaveBeenCalled()
+      expect(notificationHandlerMock).not.toHaveBeenCalled()
+    })
+    it('Invalidate the account when the refresh token is rejected', async () => {
+      renewMock.mockRejectedValue(unauthorized())
+      await fetchWith(account({ expiresAt: now - 1000, refreshToken: 'refresh' }))
+
+      expect((await storedTwitch()).invalid).toBe(true)
+      expect(countHandlerMock).toHaveBeenCalledWith({ twitch: expect.objectContaining({ invalid: true }) }, 0)
+    })
   })
 })

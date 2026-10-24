@@ -7,6 +7,7 @@ import type { Mock } from '@vitest/spy'
 import registerFetchStreamBackground from '@/background/fetchStreamBackground'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import AppBusiness from '@/services/business/appBusiness'
 import countHandler from '@/background/handlers/countHandler'
 import notificationHandler from '@/background/handlers/notificationHandler'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
@@ -17,10 +18,11 @@ import { youtubeAccount } from '@tests/__utils__/youtubeServer'
 import moment from 'moment'
 
 vi.mock('@/services/business/twitchBusiness', () => ({
-  default: { getStreamersOnlineFollowed: vi.fn() },
+  default: { getStreamersOnlineFollowed: vi.fn(), validateToken: vi.fn(async () => true) },
 }))
+vi.mock('@/services/business/appBusiness', () => ({ default: { renewToken: vi.fn() } }))
 vi.mock('@/services/business/youtubeBusiness', () => ({
-  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn(), renewToken: vi.fn() },
+  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn() },
 }))
 vi.mock('@/background/handlers/countHandler', () => ({
   default: vi.fn(),
@@ -36,7 +38,7 @@ const twitchOnlinesMock = TwitchBusiness.getStreamersOnlineFollowed as Mock<
 >
 const subscriptionsMock = YoutubeBusiness.getStreamersFollowed as Mock<typeof YoutubeBusiness.getStreamersFollowed>
 const livesMock = YoutubeBusiness.getLivesFollowed as Mock<typeof YoutubeBusiness.getLivesFollowed>
-const renewMock = YoutubeBusiness.renewToken as Mock<typeof YoutubeBusiness.renewToken>
+const renewMock = AppBusiness.renewToken as Mock<typeof AppBusiness.renewToken>
 const countHandlerMock = countHandler as Mock<typeof countHandler>
 const notificationHandlerMock = notificationHandler as Mock<typeof notificationHandler>
 
@@ -101,7 +103,7 @@ describe('fetchStreamBackground with YouTube', () => {
     renewMock.mockResolvedValue({ token: 'renewed', expiresAt })
     await run()
 
-    expect(renewMock).toHaveBeenCalledWith('refresh-token')
+    expect(renewMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'youtube', refreshToken: 'refresh-token' }))
     expect(livesMock).toHaveBeenCalledWith('renewed', 'UCme', ['UCy', 'UCz'])
     const stored = (await storedAccounts()).youtube as AccountStore
     expect(stored.token).toBe('renewed')

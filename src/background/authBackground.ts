@@ -12,7 +12,8 @@ import {
   youtubeOAuthRevoke,
   youtubeOAuthWebAuth,
 } from '@/utils/util'
-import YoutubeBusiness, { type YoutubeToken } from '@/services/business/youtubeBusiness'
+import TokenBusiness from '@/services/business/tokenBusiness'
+import type { AccountTokenType } from '@/types/userType'
 
 export default function registerAuthBackground() {
   browser.runtime.onMessage.addListener((messageValue: unknown) => {
@@ -28,23 +29,28 @@ export default function registerAuthBackground() {
   })
 }
 
-/** Twitch answers its access token, YouTube its tokens (with the refresh one) */
-export async function auth(message: AuthBackgroundMessageType): Promise<string | YoutubeToken> {
+/**
+ * Code flow, streaming-next-back exchanges the code for the tokens (with the refresh one). The flow runs here, the popup
+ * may close (Firefox closes it when the auth window takes the focus).
+ */
+export async function auth(message: AuthBackgroundMessageType): Promise<AccountTokenType> {
+  const redirectUri = browser.identity.getRedirectURL()
   if (message.authType === 'twitch') {
     const params = await launchAuthFlow((state) => twitchOAuthWebAuth(state, message.forceVerify), message.interactive)
-    const accessToken = params.get('access_token')
-    if (!accessToken) throw new Error('Token not found')
-    return accessToken
+    return TokenBusiness.exchangeCode('twitch', { code: codeOf(params), redirectUri })
   } else if (message.authType === 'youtube') {
-    // The flow runs here, the popup may close (Firefox closes it when the auth window takes the focus)
     const codeVerifier = generateState(64)
     const challenge = await pkceChallenge(codeVerifier)
     const params = await launchAuthFlow((state) => youtubeOAuthWebAuth(state, challenge), message.interactive)
-    const code = params.get('code')
-    if (!code) throw new Error('Code not found')
-    return YoutubeBusiness.exchangeCode(code, codeVerifier, browser.identity.getRedirectURL())
+    return TokenBusiness.exchangeCode('youtube', { code: codeOf(params), codeVerifier, redirectUri })
   }
   throw new Error('Type is undefined')
+}
+
+function codeOf(params: URLSearchParams): string {
+  const code = params.get('code')
+  if (!code) throw new Error('Code not found')
+  return code
 }
 
 /** Parameters of the redirect, after checking the state and the OAuth error */

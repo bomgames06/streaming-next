@@ -144,6 +144,38 @@ describe('useSystemStore', () => {
     expect(revokeMock).toHaveBeenLastCalledWith('youtube', 'refreshToken')
   })
 
+  it('Renew a rejected token when there is a refresh token, invalid when it is rejected too', async () => {
+    const system = useSystemStore()
+    system.addAccount({ ...account, expiresAt: Date.now() + 1000, refreshToken: 'refreshToken' })
+
+    renewTokenMock.mockResolvedValueOnce({ token: 'renewed', expiresAt: Date.now() + 1000, refreshToken: 'rotated' })
+    await system.invalidAccountByToken('oldToken')
+    expect(system.accounts.twitch).toMatchObject({ token: 'renewed', refreshToken: 'rotated', invalid: false })
+
+    renewTokenMock.mockRejectedValueOnce(unauthorizedError())
+    await system.invalidAccountByToken('renewed')
+    expect(system.accounts.twitch!.invalid).toBe(true)
+
+    // Twitch revokes the access token
+    system.removeAccount('twitch')
+    expect(revokeMock).toHaveBeenLastCalledWith('twitch', 'renewed')
+  })
+
+  it('Share the renew between concurrent calls', async () => {
+    const system = useSystemStore()
+    system.addAccount({ ...account, expiresAt: Date.now() - 1000, refreshToken: 'refreshToken' })
+    renewTokenMock.mockReset()
+    let resolve!: (value: { token: string; expiresAt: number }) => void
+    renewTokenMock.mockReturnValueOnce(new Promise((value) => (resolve = value)))
+
+    const renews = Promise.all([system.renewAccountTokens(), system.renewAccountToken(system.accounts.twitch!)])
+    resolve({ token: 'renewed', expiresAt: Date.now() + 1000 })
+    await renews
+
+    expect(renewTokenMock).toHaveBeenCalledOnce()
+    expect(system.accounts.twitch!.token).toBe('renewed')
+  })
+
   it('Refresh login from the API', async () => {
     const system = useSystemStore()
     system.addAccount(account)

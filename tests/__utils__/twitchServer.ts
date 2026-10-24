@@ -25,7 +25,13 @@ export type TwitchServerData = {
   searchCategories?: TwitchApiSearchCategoryType[]
   // Cursor returned on the first page of the paginated lists
   cursor?: string
+  // streaming-next-back answers 401 to the refresh, like a revoked refresh token
+  refreshRejected?: boolean
+  // The OAuth validation answers 401
+  tokenInvalid?: boolean
 }
+
+export const TWITCH_BACK_URL = `${import.meta.env.VITE_APP_API_BACK_URL}/twitch`
 
 /**
  * In-memory Twitch Helix API on top of mockHttp. `/users` without ids answers the authenticated user,
@@ -37,6 +43,17 @@ export function twitchServer(initial?: TwitchServerData) {
     after ? page(items || []) : page(items || [], data.cursor)
 
   const http = mockHttp()
+    .on('post', `${TWITCH_BACK_URL}/token`, () => ({
+      data: { accessToken: 'fresh-token', expiresIn: 14124, refreshToken: 'twitch-refresh-token' },
+    }))
+    .on('post', `${TWITCH_BACK_URL}/refresh`, () =>
+      data.refreshRejected
+        ? { status: 401, data: { statusMessage: 'Unauthorized' } }
+        : { data: { accessToken: 'renewed-twitch-token', expiresIn: 14124, refreshToken: 'rotated-refresh-token' } }
+    )
+    .get(`${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/validate`, () =>
+      data.tokenInvalid ? { status: 401, data: { status: 401, message: 'invalid access token' } } : { data: {} }
+    )
     .get('/users', (request) => {
       const ids = request.query.getAll('id')
       if (!ids.length) return { data: { data: [data.me] } }

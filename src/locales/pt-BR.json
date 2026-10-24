@@ -34,7 +34,6 @@
     "remove": "Remover",
     "removeAccount": "Remover {name}",
     "twitchAuth": "Autenticar na Twitch",
-    "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias",
     "youtubeAuth": "Autenticar no YouTube"
   },
   "categoriesList": {

@@ -3,7 +3,8 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { browser } from 'wxt/browser'
 import registerAuthBackground from '@/background/authBackground'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
-import type { YoutubeToken } from '@/services/business/youtubeBusiness'
+import type { AccountTokenType } from '@/types/userType'
+import { twitchServer } from '@tests/__utils__/twitchServer'
 import { pkceChallenge } from '@/utils/util'
 import { youtubeServer } from '@tests/__utils__/youtubeServer'
 
@@ -17,20 +18,24 @@ async function send(message: unknown) {
 }
 
 describe('authBackground', () => {
-  it('Return the token of the OAuth flow', async () => {
+  it('Log in Twitch with the code, exchanged on streaming-next-back', async () => {
     registerAuthBackground()
+    const { http } = twitchServer()
     const launchSpy = launchWebAuthFlowWith((url) => {
       const state = new URL(url).searchParams.get('state')
-      return `https://ext.chromiumapp.org/#access_token=the-token&state=${state}`
+      return `https://ext.chromiumapp.org/?code=the-code&state=${state}`
     })
 
     const message: BackgroundMessageType = { type: 'auth', authType: 'twitch', forceVerify: true }
-    expect(await send(message)).toBe('the-token')
-    expect(launchSpy.mock.lastCall![0].interactive).toBe(true)
-    expect(new URL(launchSpy.mock.lastCall![0].url).searchParams.get('force_verify')).toBe('true')
+    const result = (await send(message)) as AccountTokenType
 
-    await send({ type: 'auth', authType: 'twitch', interactive: false })
-    expect(launchSpy.mock.lastCall![0].interactive).toBe(false)
+    expect(result).toMatchObject({ token: 'fresh-token', refreshToken: 'twitch-refresh-token' })
+    expect(result.expiresAt).toBeGreaterThan(Date.now() + 3 * 60 * 60 * 1000)
+    expect(launchSpy.mock.lastCall![0].interactive).toBe(true)
+    const params = new URL(launchSpy.mock.lastCall![0].url).searchParams
+    expect(params.get('response_type')).toBe('code')
+    expect(params.get('force_verify')).toBe('true')
+    expect(http.requests.at(-1)!.body).toStrictEqual({ code: 'the-code', redirectUri: 'https://ext.chromiumapp.org/' })
   })
   it('Reject invalid OAuth responses', async () => {
     registerAuthBackground()
@@ -38,11 +43,11 @@ describe('authBackground', () => {
     launchWebAuthFlowWith(() => undefined)
     await expect(send({ type: 'auth', authType: 'twitch' })).rejects.toThrow('Auth flow without response')
 
-    launchWebAuthFlowWith(() => 'https://ext.chromiumapp.org/#access_token=t&state=wrong')
+    launchWebAuthFlowWith(() => 'https://ext.chromiumapp.org/?code=c&state=wrong')
     await expect(send({ type: 'auth', authType: 'twitch' })).rejects.toThrow('State incorrect')
 
-    launchWebAuthFlowWith((url) => `https://ext.chromiumapp.org/#state=${new URL(url).searchParams.get('state')}`)
-    await expect(send({ type: 'auth', authType: 'twitch' })).rejects.toThrow('Token not found')
+    launchWebAuthFlowWith((url) => `https://ext.chromiumapp.org/?state=${new URL(url).searchParams.get('state')}`)
+    await expect(send({ type: 'auth', authType: 'twitch' })).rejects.toThrow('Code not found')
 
     await expect(send({ type: 'auth', authType: 'unknown' })).rejects.toThrow('Type is undefined')
   })
@@ -54,7 +59,7 @@ describe('authBackground', () => {
       return `https://ext.chromiumapp.org/?code=the-code&state=${state}`
     })
 
-    const result = (await send({ type: 'auth', authType: 'youtube' })) as YoutubeToken
+    const result = (await send({ type: 'auth', authType: 'youtube' })) as AccountTokenType
 
     expect(result).toMatchObject({ token: 'access-token', refreshToken: 'refresh-token' })
     expect(launchSpy.mock.lastCall![0].interactive).toBe(true)

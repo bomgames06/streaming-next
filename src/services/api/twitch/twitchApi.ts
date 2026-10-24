@@ -5,6 +5,7 @@ import TwitchApiVideosEndpoint from '@/services/api/twitch/endpoints/twitchApiVi
 import TwitchApiClipsEndpoint from '@/services/api/twitch/endpoints/twitchApiClipsEndpoint'
 import TwitchApiGamesEndpoint from '@/services/api/twitch/endpoints/twitchApiGamesEndpoint'
 import TwitchApiSearchEndpoint from '@/services/api/twitch/endpoints/twitchApiSearchEndpoint'
+import TwitchOAuthEndpoint from '@/services/api/twitch/endpoints/twitchOAuthEndpoint'
 
 const TwitchApi = {
   users: new TwitchApiUserEndpoint(),
@@ -14,6 +15,7 @@ const TwitchApi = {
   clips: new TwitchApiClipsEndpoint(),
   games: new TwitchApiGamesEndpoint(),
   search: new TwitchApiSearchEndpoint(),
+  oauth: new TwitchOAuthEndpoint(),
 }
 
 export default TwitchApi
