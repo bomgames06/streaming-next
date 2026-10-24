@@ -37,11 +37,13 @@ vi.mock('@/services/business/appBusiness', () => ({
     getSelfUser: vi.fn(),
     revoke: vi.fn(() => Promise.resolve()),
     getStreamersFollowed: vi.fn(),
+    renewToken: vi.fn(),
   },
 }))
 
 const getSelfUserMock = AppBusiness.getSelfUser as Mock<typeof AppBusiness.getSelfUser>
 const revokeMock = AppBusiness.revoke as Mock<typeof AppBusiness.revoke>
+const renewTokenMock = AppBusiness.renewToken as Mock<typeof AppBusiness.renewToken>
 const getStreamersFollowedMock = AppBusiness.getStreamersFollowed as Mock<typeof AppBusiness.getStreamersFollowed>
 
 function themeMock() {
@@ -109,6 +111,37 @@ describe('useSystemStore', () => {
     getSelfUserMock.mockRejectedValueOnce(unauthorizedError())
     await system.fetchAccounts()
     expect(system.accounts.twitch?.invalid).toBe(true)
+  })
+
+  it('Renew the expired YouTube token with the refresh token', async () => {
+    const system = useSystemStore()
+    const youtube = {
+      ...account,
+      type: 'youtube' as const,
+      expiresAt: Date.now() - 1000,
+      refreshToken: 'refreshToken',
+    }
+    system.addAccount(youtube)
+    getSelfUserMock.mockResolvedValue({ type: 'youtube', id: 'oldId', name: 'Old Name', login: 'oldlogin' })
+
+    renewTokenMock.mockResolvedValueOnce({ token: 'renewed', expiresAt: Date.now() + 1000 })
+    await system.fetchAccounts()
+    expect(renewTokenMock).toHaveBeenCalledWith(expect.objectContaining({ refreshToken: 'refreshToken' }))
+    expect(system.accounts.youtube).toMatchObject({ token: 'renewed', invalid: false })
+
+    // A network failure tries again later, a rejected refresh token logs out
+    system.accounts.youtube!.expiresAt = Date.now() - 1000
+    renewTokenMock.mockRejectedValueOnce(new AxiosError('Network Error', 'ERR_NETWORK'))
+    await system.fetchAccounts()
+    expect(system.accounts.youtube!.invalid).toBe(false)
+
+    renewTokenMock.mockRejectedValueOnce(unauthorizedError())
+    await system.fetchAccounts()
+    expect(system.accounts.youtube!.invalid).toBe(true)
+
+    // Revoking the refresh token revokes the access tokens too
+    system.removeAccount('youtube')
+    expect(revokeMock).toHaveBeenLastCalledWith('youtube', 'refreshToken')
   })
 
   it('Refresh login from the API', async () => {

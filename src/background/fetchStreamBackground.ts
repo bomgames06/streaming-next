@@ -10,8 +10,7 @@ import notificationHandler, {
   type YoutubeNotificationData,
 } from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
-import YoutubeBusiness, { YOUTUBE_TOKEN_LIFETIME } from '@/services/business/youtubeBusiness'
-import { auth } from '@/background/authBackground'
+import YoutubeBusiness from '@/services/business/youtubeBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
 
 const FETCH_STREAM_ALARM = 'fetchStream'
@@ -20,36 +19,22 @@ const FETCH_STREAM_PERIOD_IN_MINUTES = 0.5
 let isFetching = false
 
 /**
- * Online YouTube lives, or undefined when they could not be fetched. The account is invalidated when its token is
- * rejected or can't be renewed. Any error (like the quota exceeded) only skips YouTube, never the Twitch streams.
+ * Online YouTube lives, or undefined when they could not be fetched. The account is invalidated when its token or its
+ * refresh token is rejected. Any error (like the quota exceeded) only skips YouTube, never the Twitch streams.
  */
 async function fetchYoutube(
   account: AccountStore
 ): Promise<(YoutubeNotificationData & { onlines: StreamItemLiveOnlineType[] }) | undefined> {
   try {
     if (account.expiresAt !== undefined && account.expiresAt <= Date.now()) {
-      try {
-        account.token = await auth({
-          type: 'auth',
-          authType: 'youtube',
-          interactive: false,
-          ...(account.loginHint && { loginHint: account.loginHint }),
-        })
-        account.expiresAt = Date.now() + YOUTUBE_TOKEN_LIFETIME
-      } catch (e) {
-        console.warn('Failed to renew the youtube token', e)
+      // Accounts logged before the refresh token must log in again
+      if (!account.refreshToken) {
         account.invalid = true
         return undefined
       }
-    }
-    // Accounts logged before the hint existed, or just logged, get it while the token is valid
-    if (!account.loginHint) {
-      try {
-        const loginHint = await YoutubeBusiness.getLoginHint(account.token)
-        if (loginHint) account.loginHint = loginHint
-      } catch {
-        // Tried again on the next fetch
-      }
+      const { token, expiresAt } = await YoutubeBusiness.renewToken(account.refreshToken)
+      account.token = token
+      account.expiresAt = expiresAt
     }
 
     // Both are cached, so most alarms cost no quota

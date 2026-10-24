@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { AccountStore, AccountStoreType } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import { browser } from 'wxt/browser'
 import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
 import { mdiTwitch, mdiYoutube } from '@mdi/js'
@@ -17,22 +17,22 @@ const props = defineProps<{
 }>()
 const authenticating = defineModel<boolean>('authenticating')
 const emit = defineEmits<{
-  (e: 'authenticated', value: { token: string; user: User; expiresAt?: number }): void
+  (e: 'authenticated', value: AuthenticatedType): void
 }>()
 
 async function auth(type: AccountStoreType, forceVerify?: boolean): Promise<void> {
   authenticating.value = true
   system.loading()
   try {
-    const { token, user, expiresAt } = await AppBusiness.auth(type, forceVerify)
+    const authenticated = await AppBusiness.auth(type, forceVerify)
+    const { token, user } = authenticated
 
     if (type === 'twitch' && !forceVerify && system.accounts[type] && system.accounts[type]?.accountId !== user.id) {
       void AppBusiness.revoke(type, token)
       return await auth(type, true)
     }
 
-    // Only providers with short lived tokens have an expiration
-    emit('authenticated', expiresAt === undefined ? { token, user } : { token, user, expiresAt })
+    emit('authenticated', authenticated)
   } finally {
     authenticating.value = false
     system.loaded()

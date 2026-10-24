@@ -60,8 +60,10 @@ export type YoutubeFeedEntryType = {
   published: string
 }
 
-export type YoutubeOAuthTokenInfoType = {
-  // Google account id
-  sub?: string
-  expires_in?: string
+export type YoutubeTokenType = {
+  accessToken: string
+  // Seconds
+  expiresIn: number
+  // Only on the login
+  refreshToken?: string
 }

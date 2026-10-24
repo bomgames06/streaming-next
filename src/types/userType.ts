@@ -7,3 +7,11 @@ export type User = {
   login: string
   avatarUrl?: string
 }
+
+export type AuthenticatedType = {
+  token: string
+  user: User
+  // Only for tokens that expire quickly (YouTube), renewed with the refresh token
+  expiresAt?: number
+  refreshToken?: string
+}

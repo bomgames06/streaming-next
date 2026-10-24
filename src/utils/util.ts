@@ -15,27 +15,33 @@ export function twitchOAuthRevoke(token: string): { url: string; body: URLSearch
   }
 }
 
-export function youtubeOAuthWebAuth(
-  state: string,
-  forceVerify?: boolean,
-  interactive?: boolean,
-  loginHint?: string
-): string {
+/**
+ * Authorization code flow, streaming-next-back exchanges the code with the client secret. Google only returns the
+ * refresh token when the user consents, so the consent is always asked.
+ */
+export function youtubeOAuthWebAuth(state: string, codeChallenge: string): string {
   const params = new URLSearchParams({
     client_id: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID ?? '',
     redirect_uri: browser.identity.getRedirectURL(),
-    response_type: 'token',
+    response_type: 'code',
+    access_type: 'offline',
+    prompt: 'select_account consent',
     scope: 'https://www.googleapis.com/auth/youtube.readonly',
     include_granted_scopes: 'true',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
     state,
   })
-  // The silent renew must not show any page, otherwise the user picks the Google account (and so the channel)
-  if (interactive === false) params.set('prompt', 'none')
-  else params.set('prompt', forceVerify ? 'select_account consent' : 'select_account')
-  // Without it Google can't choose between the logged accounts and the silent renew fails
-  if (loginHint) params.set('login_hint', loginHint)
 
   return `${import.meta.env.VITE_APP_OAUTH2_YOUTUBE_URL}/auth?${params.toString()}`
+}
+/** PKCE challenge of the verifier, so an intercepted code is useless without it */
+export async function pkceChallenge(verifier: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 }
 export function youtubeOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
   return {

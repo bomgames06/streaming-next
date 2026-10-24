@@ -33,7 +33,7 @@ import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
 import { cloneDeep, compact } from 'lodash'
 import { HttpStatusCode, isAxiosError } from 'axios'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import { isSameCategoryName } from '@/utils/util'
 import type {
   AccountCacheStreamsDataStore,
@@ -247,19 +247,20 @@ const useSystemStore = defineStore('System', () => {
 
   // Storage actions
   /**
-   * Tokens that expire quickly (YouTube lasts 1 hour) are renewed without showing any page, it only works while the
-   * user is still logged in the provider. On failure the account is invalid and the user authenticates again.
+   * Tokens that expire quickly (YouTube lasts 1 hour) are renewed with the refresh token. The account is invalid only
+   * when it is rejected (or missing, like the accounts logged before it), a network failure tries again later.
    */
   async function renewAccountToken(account: AccountStore) {
     if (account.expiresAt === undefined || account.invalid || account.expiresAt > Date.now()) return
 
     try {
-      const { token, expiresAt } = await AppBusiness.auth(account.type, false, false, account.loginHint)
+      const { token, expiresAt } = await AppBusiness.renewToken(account)
       account.token = token
       account.expiresAt = expiresAt
     } catch (e) {
       console.warn(`Failed to renew the ${account.type} token`, e)
-      account.invalid = true
+      if (!account.refreshToken || (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized))
+        account.invalid = true
     }
     saveAccounts()
   }
@@ -292,7 +293,7 @@ const useSystemStore = defineStore('System', () => {
       accountItem.avatarUrl = account.avatarUrl
       accountItem.token = account.token
       accountItem.expiresAt = account.expiresAt
-      accountItem.loginHint = account.loginHint
+      accountItem.refreshToken = account.refreshToken
     } else {
       const id = uuidV4()
       accounts.value[account.type] = {
@@ -304,15 +305,7 @@ const useSystemStore = defineStore('System', () => {
     saveAccounts()
     setAccountCacheStreams(account.type, [])
   }
-  async function addAuthenticatedAccount({
-    token,
-    user,
-    expiresAt,
-  }: {
-    token: string
-    user: User
-    expiresAt?: number
-  }) {
+  async function addAuthenticatedAccount({ token, user, expiresAt, refreshToken }: AuthenticatedType) {
     loading()
     try {
       addAccount({
@@ -323,6 +316,7 @@ const useSystemStore = defineStore('System', () => {
         avatarUrl: user.avatarUrl,
         token,
         expiresAt,
+        refreshToken,
       })
 
       await fetchAccounts()
@@ -336,7 +330,8 @@ const useSystemStore = defineStore('System', () => {
     if (account) {
       delete accounts.value[accountType]
       setAccountCacheStreams(accountType, [])
-      AppBusiness.revoke(account.type, account.token).catch((e: unknown) => {
+      // Revoking the refresh token revokes its access tokens too, the access token may be expired already
+      AppBusiness.revoke(account.type, account.refreshToken ?? account.token).catch((e: unknown) => {
         console.error('Failed to revoke token', e)
       })
     }

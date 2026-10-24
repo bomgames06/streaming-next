@@ -9,7 +9,7 @@ import { account } from '@tests/__utils__/fixtures'
 
 export const YOUTUBE_API_URL = import.meta.env.VITE_APP_API_YOUTUBE_URL
 export const YOUTUBE_FEED_URL = `${import.meta.env.VITE_APP_FEED_YOUTUBE_URL}/videos.xml`
-export const YOUTUBE_TOKENINFO_URL = import.meta.env.VITE_APP_OAUTH2_YOUTUBE_TOKENINFO_URL
+export const YOUTUBE_BACK_URL = `${import.meta.env.VITE_APP_API_BACK_URL}/youtube`
 
 export function youtubeAccount(override?: Partial<AccountStore>): AccountStore {
   return account({
@@ -98,6 +98,8 @@ export type YoutubeServerData = {
   videos?: YoutubeApiVideoType[]
   // Page size of the subscriptions, to exercise the pagination
   subscriptionsPageSize?: number
+  // streaming-next-back answers 401, like a revoked refresh token
+  refreshRejected?: boolean
 }
 
 /**
@@ -120,7 +122,14 @@ export function youtubeServer(initial?: YoutubeServerData, http = mockHttp()) {
       const ids = (request.query.get('id') || '').split(',')
       return { data: { items: (data.videos || []).filter((video) => ids.includes(video.id)) } }
     })
-    .on('post', YOUTUBE_TOKENINFO_URL, () => ({ data: { sub: 'google-sub', expires_in: '3599' } }))
+    .on('post', `${YOUTUBE_BACK_URL}/token`, () => ({
+      data: { accessToken: 'access-token', expiresIn: 3599, refreshToken: 'refresh-token' },
+    }))
+    .on('post', `${YOUTUBE_BACK_URL}/refresh`, () =>
+      data.refreshRejected
+        ? { status: 401, data: { statusMessage: 'Unauthorized' } }
+        : { data: { accessToken: 'renewed-token', expiresIn: 3599 } }
+    )
     .get(YOUTUBE_FEED_URL, (request) => {
       const channelId = request.query.get('channel_id') || ''
       const entries = data.feeds?.[channelId]
@@ -135,5 +144,6 @@ export function youtubeServer(initial?: YoutubeServerData, http = mockHttp()) {
     videoRequests: () => requestsTo(`${YOUTUBE_API_URL}/videos`),
     feedRequests: () => requestsTo(YOUTUBE_FEED_URL),
     subscriptionRequests: () => requestsTo(`${YOUTUBE_API_URL}/subscriptions`),
+    refreshRequests: () => requestsTo(`${YOUTUBE_BACK_URL}/refresh`),
   }
 }

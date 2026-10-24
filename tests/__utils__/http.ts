@@ -7,6 +7,8 @@ export type HttpRequest = {
   path: string
   query: URLSearchParams
   headers: Record<string, unknown>
+  // Parsed when it is JSON
+  body?: unknown
 }
 // `text` is sent as is (like XML), `data` is sent as JSON
 export type HttpResponse = { status?: number; data?: unknown; text?: string }
@@ -27,6 +29,15 @@ function toQuery(params: unknown): URLSearchParams {
   return query
 }
 
+function parseBody(data: unknown): unknown {
+  if (typeof data !== 'string') return data
+  try {
+    return JSON.parse(data)
+  } catch {
+    return data
+  }
+}
+
 /**
  * Replace the axios network layer with in-memory routes, keeping every real request/response code path
  * (interceptors, transformResponse, validateStatus). Paths are relative to the Twitch API url.
@@ -43,6 +54,7 @@ export function mockHttp() {
       path: url.startsWith(TWITCH_API_URL) ? url.substring(TWITCH_API_URL.length) : url,
       query: toQuery(config.params),
       headers: AxiosHeaders.from(config.headers).toJSON(),
+      body: parseBody(config.data),
     }
     requests.push(request)
 

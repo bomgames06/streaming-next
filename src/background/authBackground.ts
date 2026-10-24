@@ -6,11 +6,13 @@ import type {
 } from '@/background/types/backgroundMessageType'
 import {
   generateState,
+  pkceChallenge,
   twitchOAuthRevoke,
   twitchOAuthWebAuth,
   youtubeOAuthRevoke,
   youtubeOAuthWebAuth,
 } from '@/utils/util'
+import YoutubeBusiness, { type YoutubeToken } from '@/services/business/youtubeBusiness'
 
 export default function registerAuthBackground() {
   browser.runtime.onMessage.addListener((messageValue: unknown) => {
@@ -26,18 +28,31 @@ export default function registerAuthBackground() {
   })
 }
 
-// Exported for the background itself, a runtime message never reaches the listeners of its own context
-export async function auth(message: AuthBackgroundMessageType) {
+/** Twitch answers its access token, YouTube its tokens (with the refresh one) */
+export async function auth(message: AuthBackgroundMessageType): Promise<string | YoutubeToken> {
+  if (message.authType === 'twitch') {
+    const params = await launchAuthFlow((state) => twitchOAuthWebAuth(state, message.forceVerify), message.interactive)
+    const accessToken = params.get('access_token')
+    if (!accessToken) throw new Error('Token not found')
+    return accessToken
+  } else if (message.authType === 'youtube') {
+    // The flow runs here, the popup may close (Firefox closes it when the auth window takes the focus)
+    const codeVerifier = generateState(64)
+    const challenge = await pkceChallenge(codeVerifier)
+    const params = await launchAuthFlow((state) => youtubeOAuthWebAuth(state, challenge), message.interactive)
+    const code = params.get('code')
+    if (!code) throw new Error('Code not found')
+    return YoutubeBusiness.exchangeCode(code, codeVerifier, browser.identity.getRedirectURL())
+  }
+  throw new Error('Type is undefined')
+}
+
+/** Parameters of the redirect, after checking the state and the OAuth error */
+async function launchAuthFlow(authUrl: (state: string) => string, interactiveOption?: boolean) {
   const state = generateState()
-  const interactive = message.interactive ?? true
+  const interactive = interactiveOption ?? true
 
-  let authUrl: string
-  if (message.authType === 'twitch') authUrl = twitchOAuthWebAuth(state, message.forceVerify)
-  else if (message.authType === 'youtube')
-    authUrl = youtubeOAuthWebAuth(state, message.forceVerify, interactive, message.loginHint)
-  else throw new Error('Type is undefined')
-
-  const details: Parameters<typeof browser.identity.launchWebAuthFlow>[0] = { url: authUrl, interactive }
+  const details: Parameters<typeof browser.identity.launchWebAuthFlow>[0] = { url: authUrl(state), interactive }
   // Chromium aborts a non interactive flow on the first page load, but Google redirects through some pages first.
   // Firefox rejects unknown properties, so they are only set on Chromium
   if (!interactive && !navigator.userAgent.includes('Firefox'))
@@ -47,15 +62,12 @@ export async function auth(message: AuthBackgroundMessageType) {
   if (!response) throw new Error('Auth flow without response')
 
   const urlObj = new URL(response.replace('#', '?'))
-  // Like interaction_required, when the silent renew needs the user
+  if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect')
+  // Like access_denied, when the user cancels
   const error = urlObj.searchParams.get('error')
   if (error) throw new Error(error)
-  if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect')
 
-  const accessToken = urlObj.searchParams.get('access_token')
-  if (!accessToken) throw new Error('Token not found')
-
-  return accessToken
+  return urlObj.searchParams
 }
 
 async function revoke(message: RevokeBackgroundMessageType): Promise<boolean> {

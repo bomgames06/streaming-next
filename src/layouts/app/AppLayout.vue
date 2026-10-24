@@ -3,7 +3,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import Mousetrap from 'mousetrap'
 import { mdiAccount, mdiAccountMultiple, mdiCog, mdiTranslate, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 
@@ -31,7 +31,7 @@ onUnmounted(() => {
   Mousetrap.unbind('alt+s')
 })
 
-async function authenticated(value: { token: string; user: User; expiresAt?: number }): Promise<void> {
+async function authenticated(value: AuthenticatedType): Promise<void> {
   authenticating.value = true
   try {
     await system.addAuthenticatedAccount(value)

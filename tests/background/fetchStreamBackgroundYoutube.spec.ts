@@ -7,7 +7,6 @@ import type { Mock } from '@vitest/spy'
 import registerFetchStreamBackground from '@/background/fetchStreamBackground'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
-import { auth } from '@/background/authBackground'
 import countHandler from '@/background/handlers/countHandler'
 import notificationHandler from '@/background/handlers/notificationHandler'
 import { STORAGE_KEY_ACCOUNTS } from '@/types/syncStorageKeysTypes'
@@ -21,10 +20,8 @@ vi.mock('@/services/business/twitchBusiness', () => ({
   default: { getStreamersOnlineFollowed: vi.fn() },
 }))
 vi.mock('@/services/business/youtubeBusiness', () => ({
-  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn(), getLoginHint: vi.fn() },
-  YOUTUBE_TOKEN_LIFETIME: 55 * 60 * 1000,
+  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn(), renewToken: vi.fn() },
 }))
-vi.mock('@/background/authBackground', () => ({ auth: vi.fn() }))
 vi.mock('@/background/handlers/countHandler', () => ({
   default: vi.fn(),
   registerCountHandler: vi.fn(),
@@ -39,8 +36,7 @@ const twitchOnlinesMock = TwitchBusiness.getStreamersOnlineFollowed as Mock<
 >
 const subscriptionsMock = YoutubeBusiness.getStreamersFollowed as Mock<typeof YoutubeBusiness.getStreamersFollowed>
 const livesMock = YoutubeBusiness.getLivesFollowed as Mock<typeof YoutubeBusiness.getLivesFollowed>
-const loginHintMock = YoutubeBusiness.getLoginHint as Mock<typeof YoutubeBusiness.getLoginHint>
-const authMock = auth as Mock<typeof auth>
+const renewMock = YoutubeBusiness.renewToken as Mock<typeof YoutubeBusiness.renewToken>
 const countHandlerMock = countHandler as Mock<typeof countHandler>
 const notificationHandlerMock = notificationHandler as Mock<typeof notificationHandler>
 
@@ -70,7 +66,7 @@ function unauthorized() {
 }
 async function fetchWith(accounts: AccountDataStore) {
   await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
-  for (const mock of [countHandlerMock, notificationHandlerMock, authMock, loginHintMock]) mock.mockReset()
+  for (const mock of [countHandlerMock, notificationHandlerMock, renewMock]) mock.mockReset()
   twitchOnlinesMock.mockReset().mockResolvedValue([twitchOnline])
   subscriptionsMock.mockReset().mockResolvedValue(youtubeStreams)
   livesMock
@@ -97,41 +93,27 @@ describe('fetchStreamBackground with YouTube', () => {
     expect(countHandlerMock).toHaveBeenLastCalledWith(expect.anything(), 2)
     // The scheduled lives don't notify, only when they start
     expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline, youtubeOnline], { streams: youtubeStreams })
-    expect(authMock).not.toHaveBeenCalled()
+    expect(renewMock).not.toHaveBeenCalled()
   })
-  it('Renew the expired token before fetching', async () => {
-    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000, loginHint: 'google-sub' }) })
-    authMock.mockResolvedValue('renewed')
+  it('Renew the expired token with the refresh token before fetching', async () => {
+    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }) })
+    const expiresAt = Date.now() + 55 * 60 * 1000
+    renewMock.mockResolvedValue({ token: 'renewed', expiresAt })
     await run()
 
-    expect(authMock).toHaveBeenCalledWith({
-      type: 'auth',
-      authType: 'youtube',
-      interactive: false,
-      loginHint: 'google-sub',
-    })
+    expect(renewMock).toHaveBeenCalledWith('refresh-token')
     expect(livesMock).toHaveBeenCalledWith('renewed', 'UCme', ['UCy', 'UCz'])
     const stored = (await storedAccounts()).youtube as AccountStore
     expect(stored.token).toBe('renewed')
-    expect(stored.expiresAt).toBeGreaterThan(Date.now() + 50 * 60 * 1000)
+    expect(stored.expiresAt).toBe(expiresAt)
+    expect(stored.refreshToken).toBe('refresh-token')
   })
-  it('Store the login hint of the accounts without one', async () => {
-    await fetchWith({ youtube: youtubeAccount() })
-    loginHintMock.mockRejectedValueOnce(new Error('Network Error'))
-    await run()
-    expect((await storedAccounts()).youtube!.loginHint).toBeUndefined()
-
-    loginHintMock.mockResolvedValue('google-sub')
-    await run()
-    expect(loginHintMock).toHaveBeenLastCalledWith('yt-token')
-    expect((await storedAccounts()).youtube!.loginHint).toBe('google-sub')
-
-    await run()
-    expect(loginHintMock).toHaveBeenCalledTimes(2)
-  })
-  it('Invalidate YouTube when the renew fails or the token is rejected', async () => {
-    await fetchWith({ twitch: account(), youtube: youtubeAccount({ expiresAt: Date.now() - 1000 }) })
-    authMock.mockRejectedValue(new Error('interaction_required'))
+  it('Invalidate YouTube when the refresh token or the token is rejected', async () => {
+    await fetchWith({
+      twitch: account(),
+      youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }),
+    })
+    renewMock.mockRejectedValue(unauthorized())
     await run()
 
     expect(livesMock).not.toHaveBeenCalled()
@@ -143,6 +125,24 @@ describe('fetchStreamBackground with YouTube', () => {
     livesMock.mockRejectedValue(unauthorized())
     await run()
     expect((await storedAccounts()).youtube!.invalid).toBe(true)
+  })
+  it('Invalidate the expired accounts logged before the refresh token', async () => {
+    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000 }) })
+    await run()
+
+    expect(renewMock).not.toHaveBeenCalled()
+    expect((await storedAccounts()).youtube!.invalid).toBe(true)
+  })
+  it('Keep the account when the renew fails for other reasons', async () => {
+    await fetchWith({
+      twitch: account(),
+      youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }),
+    })
+    renewMock.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'))
+    await run()
+
+    expect((await storedAccounts()).youtube!.invalid).toBe(false)
+    expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline])
   })
   it('Skip YouTube on other errors or without the feed permission', async () => {
     await fetchWith({ twitch: account(), youtube: youtubeAccount() })

@@ -12,6 +12,6 @@ export default defineConfig({
   webExt: {
     disabled: true,
   },
-  manifest: ({ command }: ConfigEnv) => manifestConfig(command),
+  manifest: ({ command, mode }: ConfigEnv) => manifestConfig(command, mode),
   vite: () => viteConfig(),
 })

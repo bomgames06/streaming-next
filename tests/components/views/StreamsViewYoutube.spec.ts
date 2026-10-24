@@ -252,28 +252,24 @@ describe('StreamsView.vue with YouTube', () => {
     expect(videoRequests()).toHaveLength(2)
     expect(names(second.wrapper)).toStrictEqual(['Alpha', 'Zulu'])
   })
-  it('Renew the expired token before fetching and clear YouTube when it fails', async () => {
-    const sendMessageSpy = vi
-      .spyOn(browser.runtime, 'sendMessage')
-      .mockImplementation(async (message: unknown) =>
-        (message as { type: string }).type === 'auth' ? 'renewed-token' : undefined
-      )
-    const { wrapper, system, videoRequests } = await mountView({
-      state: { accounts: { twitch: account(), youtube: youtubeAccount({ expiresAt: Date.now() - 1000 }) } },
+  it('Renew the expired token before fetching and clear YouTube when it is rejected', async () => {
+    const { wrapper, system, videoRequests, refreshRequests, data } = await mountView({
+      state: {
+        accounts: {
+          twitch: account(),
+          youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }),
+        },
+      },
     })
 
-    expect(sendMessageSpy).toHaveBeenCalledWith({
-      type: 'auth',
-      authType: 'youtube',
-      forceVerify: false,
-      interactive: false,
-    })
+    expect(refreshRequests()[0].body).toStrictEqual({ refreshToken: 'refresh-token' })
     expect(system.accounts.youtube!.token).toBe('renewed-token')
     expect(system.accounts.youtube!.expiresAt).toBeGreaterThan(Date.now())
     expect(videoRequests()[0].headers.Authorization).toBe('Bearer renewed-token')
     expect(names(wrapper)).toStrictEqual(['Alpha', 'Yankee', 'Zulu'])
 
-    sendMessageSpy.mockRejectedValue(new Error('interaction_required'))
+    // Revoked or expired refresh token
+    data.refreshRejected = true
     system.accounts.youtube!.expiresAt = Date.now() - 1000
     emitter.emit('refresh')
     await flushPromises()
