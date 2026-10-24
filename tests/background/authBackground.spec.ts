@@ -43,6 +43,33 @@ describe('authBackground', () => {
 
     await expect(send({ type: 'auth', authType: 'unknown' })).rejects.toThrow('Type is undefined')
   })
+  it('Renew the YouTube token silently on the hinted Google account', async () => {
+    registerAuthBackground()
+    const launchSpy = launchWebAuthFlowWith((url) => {
+      const state = new URL(url).searchParams.get('state')
+      return `https://ext.chromiumapp.org/#access_token=renewed&state=${state}`
+    })
+
+    expect(await send({ type: 'auth', authType: 'youtube', interactive: false, loginHint: 'google-sub' })).toBe(
+      'renewed'
+    )
+    const params = new URL(launchSpy.mock.lastCall![0].url).searchParams
+    expect(params.get('prompt')).toBe('none')
+    expect(params.get('login_hint')).toBe('google-sub')
+
+    await send({ type: 'auth', authType: 'youtube' })
+    expect(new URL(launchSpy.mock.lastCall![0].url).searchParams.has('login_hint')).toBe(false)
+  })
+  it('Reject with the OAuth error, like when the silent renew needs the user', async () => {
+    registerAuthBackground()
+    launchWebAuthFlowWith(
+      (url) => `https://ext.chromiumapp.org/#error=interaction_required&state=${new URL(url).searchParams.get('state')}`
+    )
+
+    await expect(send({ type: 'auth', authType: 'youtube', interactive: false })).rejects.toThrow(
+      'interaction_required'
+    )
+  })
   it('Revoke the token on Twitch', async () => {
     registerAuthBackground()
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null))

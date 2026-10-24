@@ -1,8 +1,4 @@
-import type {
-  StreamItemLiveOnlineType,
-  StreamItemLiveStreamType,
-  StreamItemLiveUpcomingType,
-} from '@/components/listStream/types/streamItemType'
+import type { StreamItemLiveOnlineType, StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 import { browser } from 'wxt/browser'
 import type { Browser } from 'wxt/browser'
 import type { StorageSyncTypes } from '@/types/syncStorageKeysTypes'
@@ -28,22 +24,17 @@ import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
 import { generateState, isSameCategoryName, twitchUrl, youtubeVideoUrl } from '@/utils/util'
 import countHandler from '@/background/handlers/countHandler'
-import { uniq, uniqBy } from 'lodash'
+import { uniqBy } from 'lodash'
 
 export type OnlineHistory = {
   [key in AccountStoreType]?: { id: string; category: string }[]
-} & {
-  // Video ids of the scheduled YouTube lives already seen
-  youtubeUpcoming?: string[]
 }
+// Only the lives notify, the scheduled ones are notified when they start
 export type YoutubeNotificationData = {
   // Followed channels, for the notification icons
   streams: StreamItemLiveStreamType[]
-  upcomings: StreamItemLiveUpcomingType[]
 }
 
-// A channel live hides its upcoming lives, they must not notify again when it ends, so the history keeps old ids
-const UPCOMING_HISTORY_LIMIT = 500
 // The type only has letters, so ids with dashes (like the YouTube video ids) are kept whole
 const NOTIFICATION_ID_REGEX = /^([a-zA-Z0-9]{10})-N-([a-z]+)-(.+)$/
 const FALLBACK_ICON_URL = '/icons/128.png'
@@ -147,39 +138,11 @@ export default async function notificationHandler(
         contextMessage: online.game || undefined,
       })
     }
-
-    // New scheduled lives, the history only exists after the first YouTube fetch
-    if (hasYoutube && onlineHistory.youtubeUpcoming) {
-      const upcomingHistory = onlineHistory.youtubeUpcoming
-      const upcomings = youtube!.upcomings.filter(
-        (upcoming) =>
-          !upcomingHistory.includes(upcoming.videoId) &&
-          (notificationType === 'all' ||
-            notifications.some((value) => value.type === upcoming.type && value.id === upcoming.id))
-      )
-      for (const upcoming of upcomings) {
-        createNotification(`${generateState(10)}-N-youtube-${upcoming.videoId}`, {
-          type: 'basic',
-          iconUrl:
-            youtubeStreams?.find((value) => value.id === upcoming.id)?.profileImage ||
-            browser.runtime.getURL(FALLBACK_ICON_URL),
-          title: upcoming.name,
-          message: upcoming.title || '',
-          contextMessage: `${browser.i18n.getMessage('upcomingNotification')} · ${upcoming.scheduledAt.toDate().toLocaleString()}`,
-        })
-      }
-    }
   }
 
   // Only the fetched accounts update their history, the others keep it until they are fetched again
   if (hasTwitch) onlineHistory.twitch = historyOf(onlines, 'twitch')
-  if (hasYoutube) {
-    onlineHistory.youtube = historyOf(onlines, 'youtube')
-    onlineHistory.youtubeUpcoming = uniq([
-      ...youtube!.upcomings.map((value) => value.videoId),
-      ...(onlineHistory.youtubeUpcoming ?? []),
-    ]).slice(0, UPCOMING_HISTORY_LIMIT)
-  }
+  if (hasYoutube) onlineHistory.youtube = historyOf(onlines, 'youtube')
   await browser.storage.session.set({ [STORAGE_KEY_ONLINE_HISTORY]: onlineHistory, [STORAGE_KEY_STARTED]: true })
 }
 

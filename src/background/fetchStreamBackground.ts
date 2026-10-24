@@ -29,11 +29,26 @@ async function fetchYoutube(
   try {
     if (account.expiresAt !== undefined && account.expiresAt <= Date.now()) {
       try {
-        account.token = await auth({ type: 'auth', authType: 'youtube', interactive: false })
+        account.token = await auth({
+          type: 'auth',
+          authType: 'youtube',
+          interactive: false,
+          ...(account.loginHint && { loginHint: account.loginHint }),
+        })
         account.expiresAt = Date.now() + YOUTUBE_TOKEN_LIFETIME
-      } catch {
+      } catch (e) {
+        console.warn('Failed to renew the youtube token', e)
         account.invalid = true
         return undefined
+      }
+    }
+    // Accounts logged before the hint existed, or just logged, get it while the token is valid
+    if (!account.loginHint) {
+      try {
+        const loginHint = await YoutubeBusiness.getLoginHint(account.token)
+        if (loginHint) account.loginHint = loginHint
+      } catch {
+        // Tried again on the next fetch
       }
     }
 
@@ -46,7 +61,7 @@ async function fetchYoutube(
     )
     if (lives.missingPermission) return undefined
 
-    return { onlines: lives.onlines, upcomings: lives.upcomings, streams }
+    return { onlines: lives.onlines, streams }
   } catch (e) {
     if (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) account.invalid = true
     return undefined
@@ -83,7 +98,7 @@ async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
     if (youtube) onlines.push(...youtube.onlines)
 
     await countHandler(accounts, onlines.length)
-    if (youtube) await notificationHandler(onlines, { streams: youtube.streams, upcomings: youtube.upcomings })
+    if (youtube) await notificationHandler(onlines, { streams: youtube.streams })
     else await notificationHandler(onlines)
   } catch (e) {
     if (accounts.twitch && isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) {

@@ -17,6 +17,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_FEED_YOUTUBE_URL: string
   readonly VITE_APP_OAUTH2_YOUTUBE_URL: string
   readonly VITE_APP_OAUTH2_YOUTUBE_REVOKE_URL: string
+  readonly VITE_APP_OAUTH2_YOUTUBE_TOKENINFO_URL: string
   readonly VITE_APP_OAUTH2_YOUTUBE_CLIENTID?: string
 
   readonly VITE_I18N_LOCALE?: Locales

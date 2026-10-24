@@ -121,7 +121,11 @@ async function readLivesCache(accountId: string): Promise<YoutubeLivesCacheStore
 }
 
 const YoutubeBusiness = {
-  async auth(forceVerify?: boolean, interactive?: boolean): Promise<{ token: string; user: User; expiresAt: number }> {
+  async auth(
+    forceVerify?: boolean,
+    interactive?: boolean,
+    loginHint?: string
+  ): Promise<{ token: string; user: User; expiresAt: number }> {
     // Must be the first call, the browser only shows the permission prompt while handling the user click
     if (interactive !== false) await this.requestFeedPermission()
 
@@ -130,6 +134,7 @@ const YoutubeBusiness = {
       authType: 'youtube',
       forceVerify,
       interactive,
+      ...(loginHint && { loginHint }),
     }
     const accessToken: string = await browser.runtime.sendMessage(message)
     const expiresAt = Date.now() + YOUTUBE_TOKEN_LIFETIME
@@ -145,6 +150,10 @@ const YoutubeBusiness = {
     }
     await browser.runtime.sendMessage(message)
     await browser.storage.local.remove([STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE, STORAGE_KEY_YOUTUBE_LIVES_CACHE])
+  },
+  /** Google account id of the token, used as the login hint of the silent renew */
+  async getLoginHint(token: string): Promise<string | undefined> {
+    return (await YoutubeApi.oauth.tokenInfo(token)).sub
   },
   async requestFeedPermission(): Promise<boolean> {
     return browser.permissions.request({ origins: [FEED_ORIGIN] })

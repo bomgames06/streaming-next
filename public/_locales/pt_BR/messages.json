@@ -7,8 +7,5 @@
   },
   "quickDialogCommand": {
     "message": "Abrir a lista rápida de streams na página atual"
-  },
-  "upcomingNotification": {
-    "message": "Live agendada"
   }
 }

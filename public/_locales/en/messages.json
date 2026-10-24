@@ -7,8 +7,5 @@
   },
   "quickDialogCommand": {
     "message": "Open the quick stream list on the current page"
-  },
-  "upcomingNotification": {
-    "message": "Scheduled live"
   }
 }

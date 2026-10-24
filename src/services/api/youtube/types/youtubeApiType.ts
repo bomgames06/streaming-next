@@ -59,3 +59,9 @@ export type YoutubeFeedEntryType = {
   channelId: string
   published: string
 }
+
+export type YoutubeOAuthTokenInfoType = {
+  // Google account id
+  sub?: string
+  expires_in?: string
+}

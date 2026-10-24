@@ -9,6 +9,7 @@ import { account } from '@tests/__utils__/fixtures'
 
 export const YOUTUBE_API_URL = import.meta.env.VITE_APP_API_YOUTUBE_URL
 export const YOUTUBE_FEED_URL = `${import.meta.env.VITE_APP_FEED_YOUTUBE_URL}/videos.xml`
+export const YOUTUBE_TOKENINFO_URL = import.meta.env.VITE_APP_OAUTH2_YOUTUBE_TOKENINFO_URL
 
 export function youtubeAccount(override?: Partial<AccountStore>): AccountStore {
   return account({
@@ -119,6 +120,7 @@ export function youtubeServer(initial?: YoutubeServerData, http = mockHttp()) {
       const ids = (request.query.get('id') || '').split(',')
       return { data: { items: (data.videos || []).filter((video) => ids.includes(video.id)) } }
     })
+    .on('post', YOUTUBE_TOKENINFO_URL, () => ({ data: { sub: 'google-sub', expires_in: '3599' } }))
     .get(YOUTUBE_FEED_URL, (request) => {
       const channelId = request.query.get('channel_id') || ''
       const entries = data.feeds?.[channelId]

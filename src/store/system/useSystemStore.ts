@@ -254,10 +254,11 @@ const useSystemStore = defineStore('System', () => {
     if (account.expiresAt === undefined || account.invalid || account.expiresAt > Date.now()) return
 
     try {
-      const { token, expiresAt } = await AppBusiness.auth(account.type, false, false)
+      const { token, expiresAt } = await AppBusiness.auth(account.type, false, false, account.loginHint)
       account.token = token
       account.expiresAt = expiresAt
-    } catch {
+    } catch (e) {
+      console.warn(`Failed to renew the ${account.type} token`, e)
       account.invalid = true
     }
     saveAccounts()
@@ -291,6 +292,7 @@ const useSystemStore = defineStore('System', () => {
       accountItem.avatarUrl = account.avatarUrl
       accountItem.token = account.token
       accountItem.expiresAt = account.expiresAt
+      accountItem.loginHint = account.loginHint
     } else {
       const id = uuidV4()
       accounts.value[account.type] = {

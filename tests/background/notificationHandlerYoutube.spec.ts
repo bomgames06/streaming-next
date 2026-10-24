@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import moment from 'moment'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { browser } from 'wxt/browser'
 import notificationHandler, {
@@ -14,7 +13,6 @@ import {
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
 import type { OnlineHistory } from '@/background/handlers/notificationHandler'
-import type { StreamItemLiveUpcomingType } from '@/components/listStream/types/streamItemType'
 import { onlineItem, streamItem } from '@tests/__utils__/fixtures'
 import { youtubeAccount } from '@tests/__utils__/youtubeServer'
 
@@ -32,26 +30,22 @@ const live = onlineItem({
   gameId: undefined,
   videoId: 'a-b_c',
 })
-function upcoming(videoId: string, id = 'UCz'): StreamItemLiveUpcomingType {
-  return {
-    type: 'youtube',
-    status: 'upcoming',
-    id,
-    login: id,
-    name: 'Zulu',
-    title: `Zulu ${videoId}`,
-    scheduledAt: moment('2026-10-24T20:00:00Z'),
-    verified: false,
-    videoId,
-  }
-}
-function youtube(upcomings: StreamItemLiveUpcomingType[] = []): YoutubeNotificationData {
+const zuluLive = onlineItem({
+  type: 'youtube',
+  id: 'UCz',
+  login: 'UCz',
+  name: 'Zulu',
+  title: 'Zulu live',
+  game: undefined,
+  gameId: undefined,
+  videoId: 'z1',
+})
+function youtube(): YoutubeNotificationData {
   return {
     streams: [
       streamItem({ type: 'youtube', id: 'UCy', profileImage: 'https://yt3/UCy.jpg' }),
       streamItem({ type: 'youtube', id: 'UCz', profileImage: 'https://yt3/UCz.jpg' }),
     ],
-    upcomings,
   }
 }
 async function setup(options: { sync?: Record<string, unknown>; history?: OnlineHistory; started?: boolean }) {
@@ -64,7 +58,6 @@ async function setup(options: { sync?: Record<string, unknown>; history?: Online
     [STORAGE_KEY_STARTED]: options.started ?? true,
     ...(options.history && { [STORAGE_KEY_ONLINE_HISTORY]: options.history }),
   })
-  vi.spyOn(browser.i18n, 'getMessage').mockReturnValue('Scheduled live')
 }
 function notifications() {
   return fakeBrowser.notifications.getAllCreateOptions()
@@ -75,7 +68,7 @@ async function history(): Promise<OnlineHistory> {
 
 describe('notificationHandler with YouTube', () => {
   it('Notify the YouTube lives with the channel avatar', async () => {
-    await setup({ history: { youtube: [], youtubeUpcoming: [] } })
+    await setup({ history: { youtube: [] } })
 
     await notificationHandler([live], youtube())
 
@@ -92,29 +85,16 @@ describe('notificationHandler with YouTube', () => {
     })
     expect((await history()).youtube).toStrictEqual([{ id: 'UCy', category: '' }])
   })
-  it('Notify the new scheduled lives once', async () => {
-    await setup({ history: { youtube: [], youtubeUpcoming: ['old'] } })
+  it('Notify the scheduled lives only when they start', async () => {
+    await setup({ history: { youtube: [] } })
 
-    await notificationHandler([], youtube([upcoming('old'), upcoming('new')]))
-
-    expect(Object.values(notifications())).toStrictEqual([
-      {
-        type: 'basic',
-        iconUrl: 'https://yt3/UCz.jpg',
-        title: 'Zulu',
-        message: 'Zulu new',
-        contextMessage: `Scheduled live · ${moment('2026-10-24T20:00:00Z').toDate().toLocaleString()}`,
-      },
-    ])
-    expect(Object.keys(notifications())[0]).toMatch(/-N-youtube-new$/)
-
-    // Hidden while the channel is live, it does not notify again when the live ends
-    fakeBrowser.notifications.resetState()
-    await notificationHandler([live], youtube([]))
-    fakeBrowser.notifications.resetState()
-    await notificationHandler([], youtube([upcoming('new')]))
+    // Scheduled, it is not online yet
+    await notificationHandler([], youtube())
     expect(notifications()).toStrictEqual({})
-    expect((await history()).youtubeUpcoming).toStrictEqual(['new', 'old'])
+
+    await notificationHandler([zuluLive], youtube())
+    expect(Object.values(notifications()).map((value) => value.message)).toStrictEqual(['Zulu live'])
+    expect(Object.keys(notifications())[0]).toMatch(/-N-youtube-z1$/)
   })
   it('Notify only the selected channels on partial', async () => {
     await setup({
@@ -122,30 +102,29 @@ describe('notificationHandler with YouTube', () => {
         [STORAGE_KEY_NOTIFICATION_TYPE]: 'partial',
         [STORAGE_KEY_NOTIFICATIONS]: [{ type: 'youtube', id: 'UCz' }],
       },
-      history: { youtube: [], youtubeUpcoming: [] },
+      history: { youtube: [] },
     })
 
-    await notificationHandler([live], youtube([upcoming('z1'), upcoming('x1', 'UCx')]))
+    await notificationHandler([live, zuluLive], youtube())
 
-    expect(Object.values(notifications()).map((value) => value.message)).toStrictEqual(['Zulu z1'])
+    expect(Object.values(notifications()).map((value) => value.message)).toStrictEqual(['Zulu live'])
   })
   it('Only record the first YouTube fetch, even after the session start', async () => {
     // Started by Twitch, YouTube added later has no history yet
     await setup({ history: { twitch: [] } })
 
-    await notificationHandler([live], youtube([upcoming('z1')]))
+    await notificationHandler([live], youtube())
 
     expect(notifications()).toStrictEqual({})
     expect(await history()).toStrictEqual({
       twitch: [],
       youtube: [{ id: 'UCy', category: '' }],
-      youtubeUpcoming: ['z1'],
     })
   })
   it('Keep the YouTube history when it was not fetched', async () => {
     await setup({
       sync: { [STORAGE_KEY_ACCOUNTS]: { youtube: youtubeAccount(), twitch: youtubeAccount({ type: 'twitch' }) } },
-      history: { twitch: [], youtube: [{ id: 'UCy', category: '' }], youtubeUpcoming: ['z1'] },
+      history: { twitch: [], youtube: [{ id: 'UCy', category: '' }] },
     })
 
     await notificationHandler([])
@@ -153,19 +132,18 @@ describe('notificationHandler with YouTube', () => {
     expect(await history()).toStrictEqual({
       twitch: [],
       youtube: [{ id: 'UCy', category: '' }],
-      youtubeUpcoming: ['z1'],
     })
   })
   it('Do nothing with an invalid YouTube account', async () => {
     await setup({ sync: { [STORAGE_KEY_ACCOUNTS]: { youtube: youtubeAccount({ invalid: true }) } } })
 
-    await notificationHandler([live], youtube([upcoming('z1')]))
+    await notificationHandler([live], youtube())
 
     expect(notifications()).toStrictEqual({})
     expect(await history()).toBeUndefined()
   })
   it('Use the app icon when the avatar fails to download', async () => {
-    await setup({ history: { youtube: [], youtubeUpcoming: [] } })
+    await setup({ history: { youtube: [] } })
     const original = browser.notifications.create.bind(browser.notifications)
     const createSpy = vi
       .spyOn(browser.notifications, 'create')

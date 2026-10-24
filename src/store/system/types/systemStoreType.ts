@@ -12,6 +12,8 @@ export type AccountStore = {
   token: string
   // Epoch in ms, only for tokens that expire quickly (YouTube)
   expiresAt?: number
+  // Google account id (sub), the silent renew needs it to pick the account when the browser has more than one logged
+  loginHint?: string
   invalid: boolean
 }
 export type AccountDataStore = {

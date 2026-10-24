@@ -31,11 +31,12 @@ const AppBusiness = {
   async auth(
     type: AccountStoreType,
     forceVerify?: boolean,
-    interactive?: boolean
+    interactive?: boolean,
+    loginHint?: string
   ): Promise<{ token: string; user: User; expiresAt?: number }> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.auth(forceVerify, interactive),
-      youtube: async () => YoutubeBusiness.auth(forceVerify, interactive),
+      youtube: async () => YoutubeBusiness.auth(forceVerify, interactive, loginHint),
     })
   },
   async revoke(type: AccountStoreType, token: string): Promise<void> {

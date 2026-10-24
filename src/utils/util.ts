@@ -15,7 +15,12 @@ export function twitchOAuthRevoke(token: string): { url: string; body: URLSearch
   }
 }
 
-export function youtubeOAuthWebAuth(state: string, forceVerify?: boolean, interactive?: boolean): string {
+export function youtubeOAuthWebAuth(
+  state: string,
+  forceVerify?: boolean,
+  interactive?: boolean,
+  loginHint?: string
+): string {
   const params = new URLSearchParams({
     client_id: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID ?? '',
     redirect_uri: browser.identity.getRedirectURL(),
@@ -27,6 +32,8 @@ export function youtubeOAuthWebAuth(state: string, forceVerify?: boolean, intera
   // The silent renew must not show any page, otherwise the user picks the Google account (and so the channel)
   if (interactive === false) params.set('prompt', 'none')
   else params.set('prompt', forceVerify ? 'select_account consent' : 'select_account')
+  // Without it Google can't choose between the logged accounts and the silent renew fails
+  if (loginHint) params.set('login_hint', loginHint)
 
   return `${import.meta.env.VITE_APP_OAUTH2_YOUTUBE_URL}/auth?${params.toString()}`
 }

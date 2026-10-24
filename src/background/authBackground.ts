@@ -33,7 +33,8 @@ export async function auth(message: AuthBackgroundMessageType) {
 
   let authUrl: string
   if (message.authType === 'twitch') authUrl = twitchOAuthWebAuth(state, message.forceVerify)
-  else if (message.authType === 'youtube') authUrl = youtubeOAuthWebAuth(state, message.forceVerify, interactive)
+  else if (message.authType === 'youtube')
+    authUrl = youtubeOAuthWebAuth(state, message.forceVerify, interactive, message.loginHint)
   else throw new Error('Type is undefined')
 
   const details: Parameters<typeof browser.identity.launchWebAuthFlow>[0] = { url: authUrl, interactive }
@@ -46,6 +47,9 @@ export async function auth(message: AuthBackgroundMessageType) {
   if (!response) throw new Error('Auth flow without response')
 
   const urlObj = new URL(response.replace('#', '?'))
+  // Like interaction_required, when the silent renew needs the user
+  const error = urlObj.searchParams.get('error')
+  if (error) throw new Error(error)
   if (urlObj.searchParams.get('state') !== state) throw new Error('State incorrect')
 
   const accessToken = urlObj.searchParams.get('access_token')

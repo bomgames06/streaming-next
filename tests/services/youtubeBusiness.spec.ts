@@ -116,6 +116,30 @@ describe('YoutubeBusiness', () => {
     expect(result.expiresAt - before).toBeGreaterThanOrEqual(55 * 60 * 1000)
     expect(result.expiresAt - Date.now()).toBeLessThanOrEqual(55 * 60 * 1000)
   })
+  it('Get the Google account id of the token as the login hint', async () => {
+    const { http } = youtubeServer()
+
+    expect(await YoutubeBusiness.getLoginHint('yt-token')).toBe('google-sub')
+    // On the body, not on the url
+    expect(http.requests.at(-1)).toMatchObject({
+      method: 'post',
+      url: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_TOKENINFO_URL,
+    })
+    expect(http.requests.at(-1)!.query.has('access_token')).toBe(false)
+  })
+  it('Send the login hint on the silent renew', async () => {
+    youtubeServer()
+    const sendMessageSpy = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue('renewed' as never)
+
+    await YoutubeBusiness.auth(false, false, 'google-sub')
+    expect(sendMessageSpy).toHaveBeenCalledWith({
+      type: 'auth',
+      authType: 'youtube',
+      forceVerify: false,
+      interactive: false,
+      loginHint: 'google-sub',
+    })
+  })
   it('Renew silently without asking the permission', async () => {
     youtubeServer()
     const requestSpy = vi.spyOn(browser.permissions, 'request').mockResolvedValue(true as never)
