@@ -3,7 +3,7 @@ import type { BackTokenType } from '@/services/api/back/types/backApiType'
 import type { AccountStoreType } from '@/store/system/types/systemStoreType'
 import type { AccountTokenType } from '@/types/userType'
 
-// Renewed a bit before they expire (YouTube tokens last 1 hour, Twitch ones about 4 hours)
+// Renewed a bit before they expire (YouTube tokens last 1 hour, Twitch ones about 4 hours, Kick ones some hours)
 const TOKEN_RENEW_MARGIN = 5 * 60 * 1000
 
 function accountToken(response: BackTokenType): AccountTokenType {

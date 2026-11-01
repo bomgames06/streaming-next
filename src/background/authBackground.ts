@@ -6,6 +6,8 @@ import type {
 } from '@/background/types/backgroundMessageType'
 import {
   generateState,
+  kickOAuthRevoke,
+  kickOAuthWebAuth,
   pkceChallenge,
   twitchOAuthRevoke,
   twitchOAuthWebAuth,
@@ -43,6 +45,11 @@ export async function auth(message: AuthBackgroundMessageType): Promise<AccountT
     const challenge = await pkceChallenge(codeVerifier)
     const params = await launchAuthFlow((state) => youtubeOAuthWebAuth(state, challenge), message.interactive)
     return TokenBusiness.exchangeCode('youtube', { code: codeOf(params), codeVerifier, redirectUri })
+  } else if (message.authType === 'kick') {
+    const codeVerifier = generateState(64)
+    const challenge = await pkceChallenge(codeVerifier)
+    const params = await launchAuthFlow((state) => kickOAuthWebAuth(state, challenge), message.interactive)
+    return TokenBusiness.exchangeCode('kick', { code: codeOf(params), codeVerifier, redirectUri })
   }
   throw new Error('Type is undefined')
 }
@@ -80,6 +87,7 @@ async function revoke(message: RevokeBackgroundMessageType): Promise<boolean> {
   let request: { url: string; body: URLSearchParams }
   if (message.authType === 'twitch') request = twitchOAuthRevoke(message.token)
   else if (message.authType === 'youtube') request = youtubeOAuthRevoke(message.token)
+  else if (message.authType === 'kick') request = kickOAuthRevoke(message.token)
   else throw new Error('Type is undefined')
 
   await fetch(request.url, { method: 'POST', body: request.body })

@@ -1,6 +1,7 @@
 import type { Plugin } from 'vue'
 import { onResponseError as onTwitchResponseError } from '@/services/api/twitch/events/twitchApiEvent'
 import { onResponseError as onYoutubeResponseError } from '@/services/api/youtube/events/youtubeApiEvent'
+import { onResponseError as onKickResponseError } from '@/services/api/kick/events/kickApiEvent'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import useSystemStore from '@/store/system/useSystemStore'
 
@@ -21,6 +22,7 @@ const apiPlugin: Plugin = {
     }
     onTwitchResponseError(invalidAccount)
     onYoutubeResponseError(invalidAccount)
+    onKickResponseError(invalidAccount)
   },
 }
 

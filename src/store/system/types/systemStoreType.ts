@@ -1,7 +1,7 @@
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 
-export type AccountStoreType = 'twitch' | 'youtube'
-export const ACCOUNT_STORE_TYPES: AccountStoreType[] = ['twitch', 'youtube']
+export type AccountStoreType = 'twitch' | 'youtube' | 'kick'
+export const ACCOUNT_STORE_TYPES: AccountStoreType[] = ['twitch', 'youtube', 'kick']
 export type AccountStore = {
   id: string
   type: AccountStoreType

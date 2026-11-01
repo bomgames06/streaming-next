@@ -32,6 +32,8 @@ export const STORAGE_KEY_CATEGORY_NOTIFICATIONS = 'categoryNotifications' as con
 export const STORAGE_KEY_GROUP_STREAMS = 'groupStreams' as const
 export const STORAGE_KEY_GROUP_EXPANDED = 'groupExpanded' as const
 export const STORAGE_KEY_CATEGORY_FAVORITES = 'categoryFavorites' as const
+// Kick has no list of the followed channels, the user adds them by slug
+export const STORAGE_KEY_KICK_CHANNELS = 'kickChannels' as const
 
 export type StorageSyncTypes = {
   [STORAGE_KEY_ACCOUNTS]: AccountDataStore
@@ -55,4 +57,5 @@ export type StorageSyncTypes = {
   [STORAGE_KEY_GROUP_STREAMS]: GroupStreamStore[]
   [STORAGE_KEY_GROUP_EXPANDED]: string[]
   [STORAGE_KEY_CATEGORY_FAVORITES]: FavoriteGroup[]
+  [STORAGE_KEY_KICK_CHANNELS]: string[]
 }

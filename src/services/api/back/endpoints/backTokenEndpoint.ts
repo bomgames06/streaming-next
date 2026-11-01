@@ -8,7 +8,7 @@ export default class BackTokenEndpoint extends AxiosBase {
     super(`${import.meta.env.VITE_APP_API_BACK_URL}/${provider}`)
   }
 
-  /** Code of the login flow, YouTube also sends its PKCE verifier */
+  /** Code of the login flow, YouTube and Kick also send their PKCE verifier */
   async exchange(body: { code: string; redirectUri: string; codeVerifier?: string }): Promise<BackTokenType> {
     const response = await this.axios().post<BackTokenType>('/token', JSON.stringify(body), {
       headers: { 'Content-Type': 'application/json' },

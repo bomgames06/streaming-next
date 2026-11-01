@@ -54,6 +54,31 @@ export function isYoutubeEnabled(): boolean {
   return !!import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID
 }
 
+/** Authorization code flow with PKCE, streaming-next-back exchanges the code with the client secret */
+export function kickOAuthWebAuth(state: string, codeChallenge: string): string {
+  const params = new URLSearchParams({
+    client_id: import.meta.env.VITE_APP_OAUTH2_KICK_CLIENTID ?? '',
+    redirect_uri: browser.identity.getRedirectURL(),
+    response_type: 'code',
+    scope: 'user:read channel:read',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    state,
+  })
+
+  return `${import.meta.env.VITE_APP_OAUTH2_KICK_URL}/authorize?${params.toString()}`
+}
+/** Kick takes the token on the query */
+export function kickOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
+  return {
+    url: `${import.meta.env.VITE_APP_OAUTH2_KICK_URL}/revoke?${new URLSearchParams({ token }).toString()}`,
+    body: new URLSearchParams(),
+  }
+}
+export function isKickEnabled(): boolean {
+  return !!import.meta.env.VITE_APP_OAUTH2_KICK_CLIENTID
+}
+
 export function generateState(size?: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   // Used as the OAuth state, so it must come from a cryptographically secure source
@@ -64,6 +89,7 @@ export function generateState(size?: number): string {
 export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, text?: boolean): string {
   if (accountType === 'twitch') return `${bg ? 'bg-' : text ? 'text-' : ''}twitch`
   else if (accountType === 'youtube') return `${bg ? 'bg-' : text ? 'text-' : ''}youtube`
+  else if (accountType === 'kick') return `${bg ? 'bg-' : text ? 'text-' : ''}kick`
   else throw new Error('accountType is undefined')
 }
 
@@ -76,9 +102,13 @@ export function youtubeChannelUrl(channelId: string): string {
 export function youtubeVideoUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`
 }
+export function kickUrl(slug: string): string {
+  return `https://kick.com/${slug}`
+}
 export function accountProfileUrl(account: AccountStore): string {
   if (account.type === 'twitch') return twitchUrl(account.login)
   else if (account.type === 'youtube') return youtubeChannelUrl(account.accountId)
+  else if (account.type === 'kick') return kickUrl(account.login)
   else throw new Error('accountType is undefined')
 }
 export function streamItemProfileUrl(item: StreamItemType): string {
@@ -87,7 +117,8 @@ export function streamItemProfileUrl(item: StreamItemType): string {
     // Live and upcoming items open the video itself, the channel page would only show it after some clicks
     if ((item.status === 'online' || item.status === 'upcoming') && item.videoId) return youtubeVideoUrl(item.videoId)
     return youtubeChannelUrl(item.id)
-  } else throw new Error('accountType is undefined')
+  } else if (item.type === 'kick') return kickUrl(item.login)
+  else throw new Error('accountType is undefined')
 }
 
 export function partition<T>(collection: T[], amount: number): T[][] {

@@ -4,6 +4,7 @@ const BackApi = {
   tokens: {
     twitch: new BackTokenEndpoint('twitch'),
     youtube: new BackTokenEndpoint('youtube'),
+    kick: new BackTokenEndpoint('kick'),
   },
 }
 

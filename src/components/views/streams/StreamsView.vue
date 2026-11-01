@@ -11,14 +11,17 @@ import { isOfflineStream, isOnlineStream } from '@/components/listStream/types/s
 import { debounce, uniqBy } from 'lodash'
 import useStreamOrder from '@/composables/useStreamOrder'
 import emitter from '@/events'
-import { includeUtil, isSameCategoryName } from '@/utils/util'
+import { accountTypeColor, includeUtil, isSameCategoryName } from '@/utils/util'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import useYoutubeLives from '@/composables/useYoutubeLives'
+import useKickLives from '@/composables/useKickLives'
 import useStreamTypeFilter from '@/composables/useStreamTypeFilter'
 import StreamTypeFilters from '@/components/listStream/StreamTypeFilters.vue'
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import { browser } from 'wxt/browser'
 import StreamGroupList from '@/components/listStream/StreamGroupList.vue'
+import KickChannelsDialog from '@/components/kickChannelsDialog/KickChannelsDialog.vue'
+import { mdiKick } from '@/utils/icons'
 import {
   mdiBell,
   mdiBellOutline,
@@ -41,6 +44,7 @@ const twitchOnlines = ref<StreamItemLiveOnlineType[]>([])
 const twitchStreams = ref<StreamItemLiveStreamType[]>([])
 const { youtubeStreams, youtubeOnlines, upcomings, youtubeMissingPermission, fetchYoutube, allowYoutubeFeeds } =
   useYoutubeLives()
+const { kickStreams, kickOnlines, fetchKick } = useKickLives()
 const { isHiddenByType } = useStreamTypeFilter()
 const fetchTimeout = ref<ReturnType<typeof setTimeout>>()
 const detailItem = ref<StreamItemType>()
@@ -48,8 +52,8 @@ const dump = ref<string>(Date.now().toString())
 
 const filter = ref<string>(system.streamFilter)
 
-const onlines = computed(() => [...twitchOnlines.value, ...youtubeOnlines.value])
-const streams = computed(() => [...twitchStreams.value, ...youtubeStreams.value])
+const onlines = computed(() => [...twitchOnlines.value, ...youtubeOnlines.value, ...kickOnlines.value])
+const streams = computed(() => [...twitchStreams.value, ...youtubeStreams.value, ...kickStreams.value])
 const offlines = computed(() =>
   streams.value.filter(
     (value) =>
@@ -138,7 +142,7 @@ function filterItem(value: StreamItemLiveType): boolean {
     if (['name', 'view'].includes(system.streamOrder) && !includeUtil(value.name, filter.value)) show = false
     if (
       ['game'].includes(system.streamOrder) &&
-      (isOfflineStream(value) || value.type !== 'twitch' || !value.game || !includeUtil(value.game, filter.value))
+      (isOfflineStream(value) || value.type === 'youtube' || !value.game || !includeUtil(value.game, filter.value))
     )
       show = false
   }
@@ -169,6 +173,11 @@ watch(
   () => system.validAccounts,
   () => fetchData()
 )
+// Kick channels added or removed by slug
+watch(
+  () => system.kickChannels,
+  () => void fetchKick()
+)
 
 // Calls made while a fetch is running are coalesced into a single extra fetch at the end
 let fetching = false
@@ -191,7 +200,7 @@ async function fetchData(force?: boolean) {
       fetchTimeout.value = undefined
     }
 
-    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch(), fetchYoutube(force)])
+    await Promise.all([fetchOnlineTwitch(), fetchStreamsTwitch(), fetchYoutube(force), fetchKick()])
 
     // Counts the lives of every account, like the background does
     const message: BackgroundMessageType = {
@@ -336,6 +345,23 @@ async function fetchStreamsTwitch(): Promise<void> {
             </v-row>
           </v-col>
           <v-spacer />
+          <v-col v-if="system.accounts.kick && !system.accounts.kick.invalid" cols="auto">
+            <KickChannelsDialog :streams="kickStreams">
+              <template #activator="{ props }">
+                <v-btn
+                  v-tooltip:start="t('kickChannelsDialog.title')"
+                  v-bind="props"
+                  :aria-label="t('kickChannelsDialog.title')"
+                  class="rounded-lg"
+                  data-testid="kick-channels"
+                  :icon="true"
+                  size="24"
+                >
+                  <v-icon :color="accountTypeColor('kick')" size="18" :icon="mdiKick" />
+                </v-btn>
+              </template>
+            </KickChannelsDialog>
+          </v-col>
           <v-col
             v-if="system.notificationType !== 'none'"
             class="role"

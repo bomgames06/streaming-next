@@ -7,6 +7,7 @@ import StreamOrderMenu from '@/components/listStream/StreamOrderMenu.vue'
 import useSystemStore from '@/store/system/useSystemStore'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import useYoutubeLives from '@/composables/useYoutubeLives'
+import useKickLives from '@/composables/useKickLives'
 import useStreamTypeFilter from '@/composables/useStreamTypeFilter'
 import StreamTypeFilters from '@/components/listStream/StreamTypeFilters.vue'
 import type {
@@ -31,13 +32,14 @@ const twitchOnlines = ref<StreamItemLiveOnlineType[]>([])
 const twitchStreams = ref<StreamItemLiveStreamType[]>(system.accountsCacheStreams?.twitch || [])
 const { youtubeStreams, youtubeOnlines, upcomings, youtubeMissingPermission, fetchYoutube, allowYoutubeFeeds } =
   useYoutubeLives()
+const { kickStreams, kickOnlines, fetchKick } = useKickLives()
 youtubeStreams.value = system.accountsCacheStreams?.youtube || []
 const { isHiddenByType } = useStreamTypeFilter()
 const dump = Date.now().toString()
 const listRef = ref<HTMLElement>()
 
-const onlines = computed(() => [...twitchOnlines.value, ...youtubeOnlines.value])
-const streams = computed(() => [...twitchStreams.value, ...youtubeStreams.value])
+const onlines = computed(() => [...twitchOnlines.value, ...youtubeOnlines.value, ...kickOnlines.value])
+const streams = computed(() => [...twitchStreams.value, ...youtubeStreams.value, ...kickStreams.value])
 const offlines = computed(() =>
   streams.value.filter(
     (value) =>
@@ -76,7 +78,7 @@ onUnmounted(() => window.removeEventListener('focus', focusFilter))
 
 async function fetchData() {
   try {
-    await Promise.all([fetchTwitch(), fetchYoutube()])
+    await Promise.all([fetchTwitch(), fetchYoutube(), fetchKick()])
   } finally {
     loading.value = false
   }

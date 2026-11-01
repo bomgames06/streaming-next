@@ -4,7 +4,7 @@ import { flushPromises } from '@vue/test-utils'
 import { browser } from 'wxt/browser'
 import QuickDialogView from '@/components/views/quickDialog/QuickDialogView.vue'
 import StreamListItem from '@/components/listStream/StreamListItem.vue'
-import { mountWithStore } from '@tests/__utils__/util'
+import { bodyFind, mountWithStore } from '@tests/__utils__/util'
 import { twitchServer } from '@tests/__utils__/twitchServer'
 import { account, apiFollowed, apiStream, apiUser } from '@tests/__utils__/fixtures'
 import {
@@ -78,7 +78,10 @@ describe('QuickDialogView.vue with YouTube', () => {
     expect(system.showUpcomings).toBe(false)
     expect(names(wrapper)).toStrictEqual(['Alpha', 'Yankee'])
 
-    await wrapper.find('[data-testid="stream-type-twitch"]').trigger('click')
+    await wrapper.find('[data-testid="stream-types"]').trigger('click')
+    await flushPromises()
+    bodyFind('[data-testid="stream-type-twitch"]')!.click()
+    await flushPromises()
     expect(system.hiddenStreamTypes).toStrictEqual(['twitch'])
     expect(names(wrapper)).toStrictEqual(['Yankee'])
   })
@@ -87,7 +90,7 @@ describe('QuickDialogView.vue with YouTube', () => {
 
     expect(names(wrapper)).toStrictEqual(['Alpha'])
     expect(wrapper.find('button[aria-label="Scheduled"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="stream-type-youtube"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="stream-types"]').exists()).toBe(false)
   })
   it('Focus the filter once the frame receives the focus', async () => {
     // Inside the page iframe the autofocus attribute is blocked, the page focuses the frame on load

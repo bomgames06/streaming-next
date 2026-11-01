@@ -23,6 +23,7 @@ import {
   STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS,
   STORAGE_KEY_SHOW_UPCOMINGS,
   STORAGE_KEY_HIDDEN_STREAM_TYPES,
+  STORAGE_KEY_KICK_CHANNELS,
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
@@ -83,6 +84,7 @@ const useSystemStore = defineStore('System', () => {
   const accountsCacheStreams = ref<AccountCacheStreamsDataStore>({})
   const groupStreams = ref<GroupStreamStore[]>([])
   const categoryFavorites = ref<FavoriteGroup[]>([])
+  const kickChannels = ref<string[]>([])
 
   // View
   const streamFilter = ref<string>('')
@@ -119,7 +121,7 @@ const useSystemStore = defineStore('System', () => {
     return compact(Object.values(accounts.value)).length
   })
   const mainAccount = computed(() => {
-    return accounts.value.twitch ?? accounts.value.youtube
+    return accounts.value.twitch ?? accounts.value.youtube ?? accounts.value.kick
   })
   const validAccounts = computed(() => {
     return compact(Object.values(accounts.value)).filter((value) => !value.invalid)
@@ -198,6 +200,7 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_CATEGORY_FAVORITES,
       STORAGE_KEY_SHOW_UPCOMINGS,
       STORAGE_KEY_HIDDEN_STREAM_TYPES,
+      STORAGE_KEY_KICK_CHANNELS,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -223,6 +226,7 @@ const useSystemStore = defineStore('System', () => {
     categoryFavorites.value = syncStorage[STORAGE_KEY_CATEGORY_FAVORITES] ?? []
     showUpcomings.value = syncStorage[STORAGE_KEY_SHOW_UPCOMINGS] ?? true
     hiddenStreamTypes.value = syncStorage[STORAGE_KEY_HIDDEN_STREAM_TYPES] ?? []
+    kickChannels.value = syncStorage[STORAGE_KEY_KICK_CHANNELS] ?? []
 
     // Only apply the stored values here, writing them back would waste the sync storage write quota
     applyDark(theme)
@@ -340,8 +344,9 @@ const useSystemStore = defineStore('System', () => {
     if (account) {
       delete accounts.value[accountType]
       setAccountCacheStreams(accountType, [])
-      // Revoking the Google refresh token revokes its access tokens too, the access token may be expired already
-      const token = account.type === 'youtube' ? (account.refreshToken ?? account.token) : account.token
+      // Revoking the Google (and Kick) refresh token revokes its access tokens too, the access token may be expired
+      // already
+      const token = account.type !== 'twitch' ? (account.refreshToken ?? account.token) : account.token
       AppBusiness.revoke(account.type, token).catch((e: unknown) => {
         console.error('Failed to revoke token', e)
       })
@@ -484,6 +489,23 @@ const useSystemStore = defineStore('System', () => {
     const streamers = await AppBusiness.getStreamersFollowed(account)
     setAccountCacheStreams(account.type, streamers)
     return streamers
+  }
+  /** Kick has no list of the followed channels, the user adds them by slug. False when it was added already */
+  function addKickChannel(slug: string): boolean {
+    if (kickChannels.value.includes(slug)) return false
+    kickChannels.value = [...kickChannels.value, slug]
+    saveSync(STORAGE_KEY_KICK_CHANNELS, kickChannels.value)
+    return true
+  }
+  function removeKickChannel(slug: string) {
+    kickChannels.value = kickChannels.value.filter((value) => value !== slug)
+    saveSync(STORAGE_KEY_KICK_CHANNELS, kickChannels.value)
+    const streams = accountsCacheStreams.value.kick
+    if (streams)
+      setAccountCacheStreams(
+        'kick',
+        streams.filter((value) => value.login !== slug)
+      )
   }
   function addGroupStream(name: string): string {
     const id = crypto.randomUUID()
@@ -648,6 +670,7 @@ const useSystemStore = defineStore('System', () => {
     accountsCacheStreams,
     groupStreams,
     categoryFavorites,
+    kickChannels,
     // view
     streamFilter,
     streamOrder,
@@ -719,6 +742,8 @@ const useSystemStore = defineStore('System', () => {
     setShowNoGroup,
     setAccountCacheStreams,
     fetchStreamersFollowed,
+    addKickChannel,
+    removeKickChannel,
     addGroupStream,
     removeGroupStream,
     editGroupStream,

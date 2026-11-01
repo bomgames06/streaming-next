@@ -7,10 +7,12 @@ import countHandler, { registerCountHandler } from '@/background/handlers/countH
 import type { BackgroundMessageType } from '@/background/types/backgroundMessageType'
 import notificationHandler, {
   registerNotificationHandler,
+  type KickNotificationData,
   type YoutubeNotificationData,
 } from '@/background/handlers/notificationHandler'
 import TwitchBusiness from '@/services/business/twitchBusiness'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import KickBusiness from '@/services/business/kickBusiness'
 import AppBusiness from '@/services/business/appBusiness'
 import { HttpStatusCode, isAxiosError } from 'axios'
 
@@ -85,6 +87,18 @@ async function fetchYoutube(
   }
 }
 
+/** Online Kick lives of the channels added by slug, or undefined when they could not be fetched */
+async function fetchKick(
+  account: AccountStore
+): Promise<(KickNotificationData & { onlines: StreamItemLiveOnlineType[] }) | undefined> {
+  try {
+    return await KickBusiness.getLivesFollowed(account.token)
+  } catch (e) {
+    if (isUnauthorized(e)) rejectToken(account)
+    return undefined
+  }
+}
+
 async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
   if (alarm && alarm.name !== FETCH_STREAM_ALARM) return
   if (isFetching) return
@@ -105,6 +119,9 @@ async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
     let youtube: Awaited<ReturnType<typeof fetchYoutube>>
     if (accounts.youtube && !accounts.youtube.invalid && (await ensureToken(accounts.youtube)))
       youtube = await fetchYoutube(accounts.youtube)
+    let kick: Awaited<ReturnType<typeof fetchKick>>
+    if (accounts.kick && !accounts.kick.invalid && (await ensureToken(accounts.kick)))
+      kick = await fetchKick(accounts.kick)
 
     // Renewed tokens or invalidated accounts, saved before the handlers read them
     if (JSON.stringify(accounts) !== before) await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
@@ -113,9 +130,12 @@ async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
 
     if (twitch) onlines.push(...(await TwitchBusiness.getStreamersOnlineFollowed(twitch.token, twitch.accountId, true)))
     if (youtube) onlines.push(...youtube.onlines)
+    if (kick) onlines.push(...kick.onlines)
 
     await countHandler(accounts, onlines.length)
-    if (youtube) await notificationHandler(onlines, { streams: youtube.streams })
+    const youtubeData = youtube && { streams: youtube.streams }
+    if (kick) await notificationHandler(onlines, youtubeData, { streams: kick.streams })
+    else if (youtubeData) await notificationHandler(onlines, youtubeData)
     else await notificationHandler(onlines)
   } catch (e) {
     if (accounts.twitch && isUnauthorized(e)) {

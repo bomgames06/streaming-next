@@ -10,6 +10,7 @@
     "streamView": "View: Streams"
   },
   "accountTypes": {
+    "kick": "Kick",
     "twitch": "Twitch",
     "youtube": "YouTube"
   },
@@ -29,6 +30,7 @@
     "differentAccountError": "Different account",
     "favorite": "Favorite",
     "invalidAccounts": "Invalid accounts",
+    "kickAuth": "Authenticate on Kick",
     "mandatoryMessage": "We need to authenticate to proceed",
     "notFavorite": "Not favorite",
     "remove": "Remove",
@@ -87,6 +89,7 @@
     "notification": "Notification | Notifications",
     "offlines": "Offlines",
     "onlines": "Onlines",
+    "platforms": "Platforms",
     "projectName": "Streaming Next",
     "refresh": "Refresh",
     "sort": "Sort",
@@ -106,6 +109,14 @@
     "stream": "Stream",
     "streamCount": "Stream: None | Stream: {count} | Streams: {count}",
     "title": "Stream groups"
+  },
+  "kickChannelsDialog": {
+    "alreadyAdded": "Channel already added",
+    "hint": "Kick does not share the channels you follow, add them here by the slug (kick.com/slug) or the URL",
+    "noChannels": "No channels",
+    "notFound": "Channel \"{slug}\" not found on Kick",
+    "slug": "Channel slug or URL",
+    "title": "Kick channels"
   },
   "languages": {
     "en": "English",

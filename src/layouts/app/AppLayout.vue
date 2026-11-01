@@ -99,7 +99,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
             </template>
             <template #default="{ isActive }">
               <v-list class="py-0" @keydown.esc.prevent="isActive.value = false">
-                <v-list-group class="group-indent" color="primary">
+                <v-list-group class="account-group-indent" color="primary">
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.accounts')">
                       <template #prepend>
@@ -178,8 +178,9 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
 .account-group-indent {
   @extend .group-indent;
 
+  // One item for each platform (Twitch, YouTube and Kick) without scrolling
   ::v-deep(.v-list-group__items) {
-    max-height: 140px;
+    max-height: 150px;
   }
 }
 

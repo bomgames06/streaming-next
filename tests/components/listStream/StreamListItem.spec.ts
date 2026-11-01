@@ -68,6 +68,22 @@ describe('StreamListItem.vue', () => {
       expect(wrapper.find('[aria-label="1 Viewer"]').exists()).toBe(true)
       expect(wrapper.findAll('.v-list-item-subtitle')).toHaveLength(0)
     })
+    it('Render the category of a Kick live, without the Twitch category menu', async () => {
+      const { wrapper } = mountItem(
+        onlineItem({ type: 'kick', login: 'alpha', gameId: undefined, game: 'Just Chatting' }),
+        {},
+        { categoryNotifications: [{ id: 'n1', name: 'just chatting', streams: [] }] }
+      )
+      await flushPromises()
+
+      const game = wrapper.find('.v-list-item-subtitle')
+      expect(game.text()).toBe('Just Chatting')
+      // The game notifications match the category by name, on any platform
+      expect(game.html()).toContain(mdiBell)
+
+      await openMenu(wrapper)
+      expect(menuTitles()).not.toContain('Category')
+    })
     it('Hide the viewer count and keep zero viewers silent', async () => {
       const hidden = mountItem(onlineItem(), { disableViewCount: true })
       await flushPromises()

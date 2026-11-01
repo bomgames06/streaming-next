@@ -22,7 +22,7 @@ import TwitchBusiness from '@/services/business/twitchBusiness'
 import type { User } from '@/types/userType'
 import { HttpStatusCode, isAxiosError } from 'axios'
 import type { FetchAccountsApplicationMessageType } from '@/background/types/backgroundMessageType'
-import { generateState, isSameCategoryName, twitchUrl, youtubeVideoUrl } from '@/utils/util'
+import { generateState, isSameCategoryName, kickUrl, twitchUrl, youtubeVideoUrl } from '@/utils/util'
 import countHandler from '@/background/handlers/countHandler'
 import { uniqBy } from 'lodash'
 
@@ -32,6 +32,10 @@ export type OnlineHistory = {
 // Only the lives notify, the scheduled ones are notified when they start
 export type YoutubeNotificationData = {
   // Followed channels, for the notification icons
+  streams: StreamItemLiveStreamType[]
+}
+export type KickNotificationData = {
+  // Channels added by slug, for the notification icons
   streams: StreamItemLiveStreamType[]
 }
 
@@ -51,12 +55,15 @@ function createNotification(id: string, options: Browser.notifications.Notificat
 /**
  * @param onlines online streams of every fetched account
  * @param youtube only when YouTube was fetched (its history is kept otherwise)
+ * @param kick only when Kick was fetched (its history is kept otherwise)
  */
 export default async function notificationHandler(
   onlines: StreamItemLiveOnlineType[],
-  youtube?: YoutubeNotificationData
+  youtube?: YoutubeNotificationData,
+  kick?: KickNotificationData
 ) {
   const youtubeStreams = youtube?.streams
+  const kickStreams = kick?.streams
   const syncStorage = (await browser.storage.sync.get([
     STORAGE_KEY_NOTIFICATION_TYPE,
     STORAGE_KEY_NOTIFICATIONS,
@@ -67,7 +74,8 @@ export default async function notificationHandler(
   const accounts: AccountDataStore = syncStorage[STORAGE_KEY_ACCOUNTS] ?? {}
   const hasTwitch = !!accounts.twitch && !accounts.twitch.invalid
   const hasYoutube = !!youtubeStreams && !!accounts.youtube && !accounts.youtube.invalid
-  if (!hasTwitch && !hasYoutube) return
+  const hasKick = !!kickStreams && !!accounts.kick && !accounts.kick.invalid
+  if (!hasTwitch && !hasYoutube && !hasKick) return
 
   const sessionStorage = (await browser.storage.session.get([
     STORAGE_KEY_ONLINE_HISTORY,
@@ -85,7 +93,8 @@ export default async function notificationHandler(
     const onlinesFiltered = uniqBy(
       onlines.filter(
         (online) =>
-          // A YouTube account added after the session start has no history yet, its first fetch is only recorded
+          // A YouTube or Kick account added after the session start has no history yet, its first fetch is only
+          // recorded
           (online.type === 'twitch' || !!onlineHistory[online.type]) &&
           (checkOnlineNotification(notificationType, notifications, online, onlineHistory) ||
             checkCategoryNotification(categoryNotifications, online, onlineHistory))
@@ -123,6 +132,9 @@ export default async function notificationHandler(
         if (!user) continue
         iconUrl = user.avatarUrl
         target = online.login
+      } else if (online.type === 'kick') {
+        iconUrl = kickStreams?.find((value) => value.id === online.id)?.profileImage
+        target = online.login
       } else {
         // A YouTube live is a video, the notification opens it
         if (!online.videoId) continue
@@ -143,6 +155,7 @@ export default async function notificationHandler(
   // Only the fetched accounts update their history, the others keep it until they are fetched again
   if (hasTwitch) onlineHistory.twitch = historyOf(onlines, 'twitch')
   if (hasYoutube) onlineHistory.youtube = historyOf(onlines, 'youtube')
+  if (hasKick) onlineHistory.kick = historyOf(onlines, 'kick')
   await browser.storage.session.set({ [STORAGE_KEY_ONLINE_HISTORY]: onlineHistory, [STORAGE_KEY_STARTED]: true })
 }
 
@@ -157,6 +170,7 @@ export function registerNotificationHandler() {
       const type = match[2] as AccountStoreType
       if (type === 'twitch') void browser.tabs.create({ url: twitchUrl(match[3]) })
       else if (type === 'youtube') void browser.tabs.create({ url: youtubeVideoUrl(match[3]) })
+      else if (type === 'kick') void browser.tabs.create({ url: kickUrl(match[3]) })
     }
     void browser.notifications.clear(notificationId)
   })

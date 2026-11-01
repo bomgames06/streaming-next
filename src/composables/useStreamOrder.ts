@@ -17,7 +17,7 @@ function orderView(value: StreamItemLiveType) {
   return value.status === 'online' && value.viewerCount ? value.viewerCount : orderName(value)
 }
 function orderGame(value: StreamItemLiveType) {
-  return value.status === 'online' && value.type === 'twitch'
+  return value.status === 'online' && value.type !== 'youtube'
     ? deburr(value.game).toLowerCase() || ''
     : orderName(value)
 }

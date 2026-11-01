@@ -8,7 +8,7 @@ export type StreamItemLiveOnlineType = {
   name: string
   title?: string
   viewerCount?: number
-  type: Extract<AccountStoreType, 'twitch' | 'youtube'>
+  type: Extract<AccountStoreType, 'twitch' | 'youtube' | 'kick'>
   previewImage?: ((width: number, height: number, dump?: string) => string) | string
   gameId?: string
   game?: string

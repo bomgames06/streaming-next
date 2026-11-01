@@ -10,6 +10,7 @@
     "streamView": "Tela: Transmissão ao vivo"
   },
   "accountTypes": {
+    "kick": "Kick",
     "twitch": "Twitch",
     "youtube": "YouTube"
   },
@@ -29,6 +30,7 @@
     "differentAccountError": "Conta diferente",
     "favorite": "Favorito",
     "invalidAccounts": "Contas inválidas",
+    "kickAuth": "Autenticar na Kick",
     "mandatoryMessage": "Precisamos autenticar para prosseguir",
     "notFavorite": "Não favorito",
     "remove": "Remover",
@@ -87,6 +89,7 @@
     "notification": "Notificação | Notificações",
     "offlines": "Offlines",
     "onlines": "Onlines",
+    "platforms": "Plataformas",
     "projectName": "Streaming Next",
     "refresh": "Atualizar",
     "sort": "Ordenar",
@@ -106,6 +109,14 @@
     "stream": "Stream",
     "streamCount": "Stream: Nenhuma | Stream: {count} | Streams: {count}",
     "title": "Grupos de stream"
+  },
+  "kickChannelsDialog": {
+    "alreadyAdded": "Canal já adicionado",
+    "hint": "A Kick não compartilha os canais que você segue, adicione-os aqui pelo slug (kick.com/slug) ou pela URL",
+    "noChannels": "Nenhum canal",
+    "notFound": "Canal \"{slug}\" não encontrado na Kick",
+    "slug": "Slug ou URL do canal",
+    "title": "Canais da Kick"
   },
   "languages": {
     "en": "Inglês",

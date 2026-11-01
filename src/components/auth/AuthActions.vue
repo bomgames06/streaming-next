@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { accountProfileUrl, accountTypeColor, isYoutubeEnabled } from '@/utils/util'
+import { accountProfileUrl, accountTypeColor, isKickEnabled, isYoutubeEnabled } from '@/utils/util'
 import { useI18n } from 'vue-i18n'
 import type { AccountStore, AccountStoreType } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
@@ -8,6 +8,7 @@ import type { AuthenticatedType } from '@/types/userType'
 import { browser } from 'wxt/browser'
 import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
 import { mdiTwitch, mdiYoutube } from '@mdi/js'
+import { mdiKick } from '@/utils/icons'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -76,6 +77,20 @@ function openProfile(account: AccountStore, middle?: boolean): void {
     @auth="auth('youtube', $event)"
     @click="clickAccount"
     @delete="system.removeAccount('youtube')"
+  />
+  <AuthActionsButton
+    v-if="isKickEnabled()"
+    :account="system.accounts.kick"
+    :authenticating="authenticating"
+    :color-auth="accountTypeColor('kick')"
+    :color-class="accountTypeColor('kick', true)"
+    :icon-auth="mdiKick"
+    :list-item="props.listItem"
+    :text-auth="t('auth.kickAuth')"
+    data-testid="kick-auth"
+    @auth="auth('kick', $event)"
+    @click="clickAccount"
+    @delete="system.removeAccount('kick')"
   />
 </template>
 

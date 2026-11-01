@@ -7,7 +7,7 @@ import StreamsView from '@/components/views/streams/StreamsView.vue'
 import StreamListItem from '@/components/listStream/StreamListItem.vue'
 import StreamList from '@/components/listStream/StreamList.vue'
 import emitter from '@/events'
-import { mountWithStore, settle } from '@tests/__utils__/util'
+import { bodyFind, mountWithStore, settle } from '@tests/__utils__/util'
 import { twitchServer } from '@tests/__utils__/twitchServer'
 import { account, apiFollowed, apiStream, apiUser } from '@tests/__utils__/fixtures'
 import {
@@ -120,19 +120,25 @@ describe('StreamsView.vue with YouTube', () => {
   it('Filter by platform only with more than one platform', async () => {
     const { wrapper, system } = await mountView()
 
-    await wrapper.find('[data-testid="stream-type-twitch"]').trigger('click')
+    // The platforms are on the menu of a single button
+    await wrapper.find('[data-testid="stream-types"]').trigger('click')
+    await flushPromises()
+    bodyFind('[data-testid="stream-type-twitch"]')!.click()
+    await flushPromises()
     expect(system.hiddenStreamTypes).toStrictEqual(['twitch'])
     expect(names(wrapper)).toStrictEqual(['Yankee', 'Zulu'])
 
-    await wrapper.find('[data-testid="stream-type-youtube"]').trigger('click')
+    bodyFind('[data-testid="stream-type-youtube"]')!.click()
+    await flushPromises()
     expect(names(wrapper)).toStrictEqual([])
-    await wrapper.find('[data-testid="stream-type-twitch"]').trigger('click')
+    bodyFind('[data-testid="stream-type-twitch"]')!.click()
+    await flushPromises()
     expect(names(wrapper)).toStrictEqual(['Alpha'])
 
     // With a single platform the filter disappears and the hidden types are ignored
     system.accounts.twitch!.invalid = true
     await flushPromises()
-    expect(wrapper.find('[data-testid="stream-type-youtube"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="stream-types"]').exists()).toBe(false)
     expect(names(wrapper)).toStrictEqual(['Yankee', 'Zulu'])
   })
   it('Show the notification and favorite badges on the YouTube lives and scheduled ones', async () => {

@@ -28,6 +28,7 @@ import {
   mdiVideo,
   mdiYoutube,
 } from '@mdi/js'
+import { mdiKick } from '@/utils/icons'
 
 const aspectRatio = 16 / 9
 const imageWidth = 290
@@ -458,6 +459,12 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                       :color="accountTypeColor('youtube')"
                       :icon="mdiYoutube"
                     />
+                    <v-icon
+                      v-if="item.type === 'kick'"
+                      class="text-body-large"
+                      :color="accountTypeColor('kick')"
+                      :icon="mdiKick"
+                    />
                     <span
                       class="mx-1 overflow-hidden text-body-medium font-weight-black line-height-normal text-truncate"
                     >
@@ -501,7 +508,7 @@ function notificationCategoryHasStreams(item: StreamItemLiveOnlineType): boolean
                   "
                 >
                   <v-list-item-subtitle
-                    v-if="item.status === 'online' && item.type === 'twitch' && item.game"
+                    v-if="item.status === 'online' && item.type !== 'youtube' && item.game"
                     class="text-body-small line-height-normal font-weight-bold"
                     :title="item.game"
                   >
