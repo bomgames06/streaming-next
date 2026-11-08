@@ -291,6 +291,33 @@ describe('YoutubeBusiness', () => {
     await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A'], true)
     expect(Object.keys((await livesCache())!.finished)).toStrictEqual(['a1'])
   })
+  it('Keep checking the lives missing from the feeds until they end', async () => {
+    const { videoRequests, data } = youtubeServer({
+      feeds: { A: [{ videoId: 'a1', published: hoursAgo(1) }], B: [{ videoId: 'b1', published: hoursAgo(1) }] },
+      videos: [
+        apiYoutubeVideo('a1', 'A', { liveBroadcastContent: 'live' }),
+        apiYoutubeVideo('b1', 'B', { liveBroadcastContent: 'live' }),
+      ],
+    })
+    allowFeeds()
+
+    const first = await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A', 'B'])
+    expect(first.onlines.map((item) => item.videoId)).toStrictEqual(['a1', 'b1'])
+
+    // The feed of A fails and B was unsubscribed, the live of A is still online
+    data.feeds = {}
+    const failed = await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A'], true)
+    expect(failed.onlines.map((item) => item.videoId)).toStrictEqual(['a1'])
+    expect(videoRequests()[1].query.get('id')).toBe('a1')
+
+    // The live ended, it is finished and not checked again
+    data.videos = [apiYoutubeVideo('a1', 'A')]
+    const ended = await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A'], true)
+    expect(ended.onlines).toStrictEqual([])
+    expect(Object.keys((await livesCache())!.finished)).toStrictEqual(['a1'])
+    await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A'], true)
+    expect(videoRequests()).toHaveLength(3)
+  })
   it('Check the videos in requests of 50 ids', async () => {
     const entries = Array.from({ length: 15 }, (_, index) => ({ videoId: `v${index}`, published: hoursAgo(1) }))
     const feeds = Object.fromEntries(

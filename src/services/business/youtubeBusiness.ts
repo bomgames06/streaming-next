@@ -200,14 +200,27 @@ const YoutubeBusiness = {
     const entries = feeds.flat().filter((value) => now - Date.parse(value.published) < FEED_WINDOW)
 
     const finished = pickBy(cache.finished, (published) => now - published < FEED_WINDOW)
-    const ids = uniq(entries.map((value) => value.videoId)).filter((id) => !(id in finished))
+    const entryIds = uniq(entries.map((value) => value.videoId))
+    // A feed that fails for a moment, or a live pushed out of the feed by new uploads, would end the live and notify it
+    // again when it comes back, so the lives of the last fetch are checked until they end
+    const carried = cache.videos.filter(
+      (value) =>
+        value.snippet.liveBroadcastContent === 'live' &&
+        channelIds.includes(value.snippet.channelId) &&
+        !entryIds.includes(value.id)
+    )
+    const ids = [...entryIds, ...carried.map((value) => value.id)].filter((id) => !(id in finished))
     const videos = ids.length ? await YoutubeApi.videos.videosByIds(token, ids) : []
 
-    for (const entry of entries) {
-      if (entry.videoId in finished) continue
-      const video = videos.find((value) => value.id === entry.videoId)
+    const published = [
+      ...entries.map((value) => ({ id: value.videoId, published: Date.parse(value.published) })),
+      ...carried.map((value) => ({ id: value.id, published: Date.parse(value.snippet.publishedAt) })),
+    ]
+    for (const item of published) {
+      if (item.id in finished) continue
+      const video = videos.find((value) => value.id === item.id)
       // Missing videos are private or deleted
-      if (!video || video.snippet.liveBroadcastContent === 'none') finished[entry.videoId] = Date.parse(entry.published)
+      if (!video || video.snippet.liveBroadcastContent === 'none') finished[item.id] = item.published
     }
 
     const lives = videos.filter((value) => value.snippet.liveBroadcastContent !== 'none')
