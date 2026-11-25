@@ -109,7 +109,7 @@ Platform differences that must be respected:
 | Platform | Followed list                                                          | Lives                                                        | Notes                                                                       |
 | -------- | ---------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | Twitch   | API (`channels/followed`)                                              | `streams/followed`                                           | Token validated every hour (Twitch rule). Videos, clips, categories, search |
-| YouTube  | Subscriptions (cached 30 min)                                          | RSS feeds + `videos` endpoint (cached 2 min), never `search` | Tiny API quota: cache everything, `youtube.com` optional host permission    |
+| YouTube  | Subscriptions (cached 30 min)                                          | RSS feeds (15 min) + `videos` (cached 2 min), never `search` | Tiny API quota: cache everything, `youtube.com` optional host permission    |
 | Kick     | **None in the API**: slugs added by the user (`kickChannels` sync key) | `channels?slug=` (same request as the channels)              | Only the category name, no `gameId` (the categories view is Twitch only)    |
 
 Only Twitch has categories (`gameId`), videos and clips. Game notifications match categories **by name**
@@ -191,6 +191,11 @@ returned object (grouped by the existing comments).
 - The CSP is built in `manifest.config.ts`. A new API or image host must be added there (`connect-src`, `img-src`).
 - New permissions break existing installs (Chrome disables the extension until accepted): prefer
   `optional_host_permissions` requested on a user click, like the YouTube feeds.
+- The privacy policy and the terms are on the BomLabs site ([bomlabs](../bomlabs), `app/data/products/streaming-next`),
+  linked by `LegalNotice` and `LegalLinks`. A change in the data the extension accesses, stores or sends must update
+  them.
+- The YouTube API requires its data to be deleted after the access is revoked: a new YouTube cache must be removed in
+  `YoutubeBusiness.clearCache`.
 - Never log tokens, never put tokens or user data in URLs other than the provider's own API.
 
 ## Tests

@@ -6,6 +6,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useTheme } from 'vuetify'
 import { browser } from 'wxt/browser'
 import { mdiBroom, mdiGithub, mdiHeart, mdiKeyboard } from '@mdi/js'
+import LegalLinks from '@/components/legal/LegalLinks.vue'
 import { QUICK_DIALOG_COMMAND } from '@/types/quickDialogTypes'
 
 const system = useSystemStore()
@@ -188,6 +189,7 @@ function openShortcutSettings() {
             </template>
           </v-hover>
         </div>
+        <LegalLinks />
       </div>
     </div>
   </ViewContainer>

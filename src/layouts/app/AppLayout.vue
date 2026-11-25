@@ -5,6 +5,7 @@ import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
 import type { AuthenticatedType } from '@/types/userType'
 import Mousetrap from 'mousetrap'
+import LegalNotice from '@/components/legal/LegalNotice.vue'
 import { mdiAccount, mdiAccountMultiple, mdiCog, mdiTranslate, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 
 const system = useSystemStore()
@@ -108,6 +109,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
                     </v-list-item>
                   </template>
                   <AuthActions v-model:authenticating="authenticating" list-item @authenticated="authenticated" />
+                  <LegalNotice class="my-0 px-4 py-2" />
                 </v-list-group>
                 <v-list-group class="group-indent" color="primary">
                   <template #activator="{ props }">
@@ -178,9 +180,9 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
 .account-group-indent {
   @extend .group-indent;
 
-  // One item for each platform (Twitch, YouTube and Kick) without scrolling
+  // One item for each platform (Twitch, YouTube and Kick) and the legal notice without scrolling
   ::v-deep(.v-list-group__items) {
-    max-height: 150px;
+    max-height: 240px;
   }
 }
 

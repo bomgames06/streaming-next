@@ -122,6 +122,12 @@
     "en": "English",
     "pt-BR": "Portuguese - Brazil"
   },
+  "legal": {
+    "authNotice": "By authenticating, you agree to the {terms} and the {privacy}. To use YouTube, you also agree to the {youtubeTerms}.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "youtubeTerms": "YouTube Terms of Service"
+  },
   "menuExpansion": {
     "hideMenu": "Hide menu",
     "menuContent": "Menu content",

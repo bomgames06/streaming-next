@@ -119,6 +119,8 @@ async function fetchStreams(alarm?: Browser.alarms.Alarm): Promise<void> {
     let youtube: Awaited<ReturnType<typeof fetchYoutube>>
     if (accounts.youtube && !accounts.youtube.invalid && (await ensureToken(accounts.youtube)))
       youtube = await fetchYoutube(accounts.youtube)
+    // The YouTube API requires deleting its data after the access is revoked, also when revoked on the Google account
+    if (!accounts.youtube || accounts.youtube.invalid) await YoutubeBusiness.clearCache()
     let kick: Awaited<ReturnType<typeof fetchKick>>
     if (accounts.kick && !accounts.kick.invalid && (await ensureToken(accounts.kick)))
       kick = await fetchKick(accounts.kick)

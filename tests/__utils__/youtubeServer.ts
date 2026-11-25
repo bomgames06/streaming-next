@@ -95,6 +95,8 @@ export type YoutubeServerData = {
   subscriptions?: YoutubeApiSubscriptionType[]
   // Feed entries by channel id, a channel without an entry answers 404 like a deleted channel
   feeds?: Record<string, YoutubeFeedEntry[]>
+  // Expires header of the feeds, always fetched again without it
+  feedsExpireAt?: number
   videos?: YoutubeApiVideoType[]
   // Page size of the subscriptions, to exercise the pagination
   subscriptionsPageSize?: number
@@ -134,7 +136,8 @@ export function youtubeServer(initial?: YoutubeServerData, http = mockHttp()) {
       const channelId = request.query.get('channel_id') || ''
       const entries = data.feeds?.[channelId]
       if (!entries) return { status: 404, text: 'Not found' }
-      return { text: youtubeFeedXml(channelId, entries) }
+      const headers = data.feedsExpireAt ? { expires: new Date(data.feedsExpireAt).toUTCString() } : undefined
+      return { text: youtubeFeedXml(channelId, entries), headers }
     })
 
   const requestsTo = (url: string) => http.requests.filter((request) => request.url === url)
