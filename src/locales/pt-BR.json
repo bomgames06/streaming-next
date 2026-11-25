@@ -9,6 +9,11 @@
     "shortcuts": "Atalhos",
     "streamView": "Tela: Transmissão ao vivo"
   },
+  "accountTypes": {
+    "kick": "Kick",
+    "twitch": "Twitch",
+    "youtube": "YouTube"
+  },
   "appLayout": {
     "accounts": "Contas",
     "addAccount": "Adicionar",
@@ -25,12 +30,13 @@
     "differentAccountError": "Conta diferente",
     "favorite": "Favorito",
     "invalidAccounts": "Contas inválidas",
+    "kickAuth": "Autenticar na Kick",
     "mandatoryMessage": "Precisamos autenticar para prosseguir",
     "notFavorite": "Não favorito",
     "remove": "Remover",
     "removeAccount": "Remover {name}",
     "twitchAuth": "Autenticar na Twitch",
-    "twitchExpireMessage": "* Autenticação da Twitch por padrão dura 60 dias"
+    "youtubeAuth": "Autenticar no YouTube"
   },
   "categoriesList": {
     "appBarView": {
@@ -83,11 +89,14 @@
     "notification": "Notificação | Notificações",
     "offlines": "Offlines",
     "onlines": "Onlines",
+    "platforms": "Plataformas",
     "projectName": "Streaming Next",
     "refresh": "Atualizar",
     "sort": "Ordenar",
     "systemError": "Erro no sistema",
+    "twitchOnly": "Disponível apenas para a Twitch no momento",
     "unauthorizedAccount": "Conta não está mais autorizada",
+    "upcomings": "Agendadas",
     "value": "Valor"
   },
   "gameNotificationDialog": {
@@ -100,6 +109,14 @@
     "stream": "Stream",
     "streamCount": "Stream: Nenhuma | Stream: {count} | Streams: {count}",
     "title": "Grupos de stream"
+  },
+  "kickChannelsDialog": {
+    "alreadyAdded": "Canal já adicionado",
+    "hint": "A Kick não compartilha os canais que você segue, adicione-os aqui pelo slug (kick.com/slug) ou pela URL",
+    "noChannels": "Nenhum canal",
+    "notFound": "Canal \"{slug}\" não encontrado na Kick",
+    "slug": "Slug ou URL do canal",
+    "title": "Canais da Kick"
   },
   "languages": {
     "en": "Inglês",
@@ -196,6 +213,7 @@
     "spectators": "Espectador | Espectadores",
     "streamerPreview": "Amostra da live de {name}",
     "streamerProfile": "Imagem de perfil de {name}",
+    "upcoming": "Agendada · {time}",
     "videos": "Vídeos"
   },
   "streamView": {
@@ -209,10 +227,12 @@
     "filter": "Filtro"
   },
   "streamsView": {
+    "allow": "Permitir",
     "category": "Categoria",
     "favorites": "Favoritos",
     "hideOfflines": "Esconder offlines",
-    "showOfflines": "Mostrar offlines"
+    "showOfflines": "Mostrar offlines",
+    "youtubePermission": "Permita o acesso aos feeds do YouTube para encontrar as lives"
   },
   "views": {
     "categories": "Categorias",

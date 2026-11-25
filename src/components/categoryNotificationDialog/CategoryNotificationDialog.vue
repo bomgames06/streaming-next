@@ -5,7 +5,7 @@ import AppBusiness from '@/services/business/appBusiness'
 import type { CategorySearchItem, StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 import { compact, debounce, orderBy, trim, uniqBy, upperCase } from 'lodash'
 import type { CategoryNotificationStore } from '@/store/system/types/systemStoreType'
-import { mdiClose, mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiClose, mdiDelete, mdiPlus, mdiTwitch } from '@mdi/js'
 import type { CategoryItemType } from '@/components/listCategories/types/categoryItemType.ts'
 import { isSameCategoryName } from '@/utils/util'
 
@@ -113,7 +113,10 @@ async function fetchCategories() {
     fetching.value = true
 
     const responses = await Promise.all(
-      system.validAccounts.map((account) => AppBusiness.searchCategories(account, search.value, undefined, 100))
+      system.validAccounts
+        // Only Twitch has categories
+        .filter((account) => account.type === 'twitch')
+        .map((account) => AppBusiness.searchCategories(account, search.value, undefined, 100))
     )
 
     const items: CategorySearchItem[] = []
@@ -375,6 +378,16 @@ function toggleAllStreams(value: boolean | null): void {
                   @keydown.esc.prevent="menu ? (menu = false) : (isActive.value = false)"
                   @keydown.enter="addCategory()"
                 >
+                  <template v-if="system.accounts.youtube" #prepend-inner>
+                    <v-icon
+                      v-tooltip="t('common.twitchOnly')"
+                      aria-hidden="false"
+                      :aria-label="t('common.twitchOnly')"
+                      color="twitch"
+                      data-testid="twitch-only"
+                      :icon="mdiTwitch"
+                    />
+                  </template>
                   <template #item="{ internalItem: item, props: itemComboboxProps }">
                     <v-list-item v-bind="itemComboboxProps" @keydown.esc.prevent="menu = false">
                       <template #prepend>

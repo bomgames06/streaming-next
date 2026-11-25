@@ -46,6 +46,9 @@ const keyListItem = uuidV4()
 const streamCategoryNotification = ref<StreamItemLiveStreamType>()
 const streamGroupStream = ref<StreamItemLiveStreamType>()
 
+// Category notifications only exist for Twitch
+const twitchStreams = computed(() => props.streams?.filter((value) => value.type === 'twitch'))
+
 const hasMoreItems = computed(() => {
   if (detailType.value === 'video') return !!videos.cursor
   if (detailType.value === 'clip') return !!clips.cursor
@@ -58,17 +61,17 @@ function equals(a: StreamItemType, b: StreamItemType) {
 
 function itemClick(value: { item: StreamItemType; middle?: boolean }): void {
   if (detailItem.value) return void (detailItem.value = undefined)
-  if (value.item.type === 'twitch') {
-    if (isStream(value.item))
-      return void browser.tabs.create({ url: streamItemProfileUrl(value.item), active: !value.middle })
-    if (isContentStream(value.item)) return void browser.tabs.create({ url: value.item.url, active: !value.middle })
-  }
+  if (isStream(value.item))
+    return void browser.tabs.create({ url: streamItemProfileUrl(value.item), active: !value.middle })
+  if (isContentStream(value.item)) return void browser.tabs.create({ url: value.item.url, active: !value.middle })
 }
 
 watch(
   () => props.items,
-  (items) => {
-    if (detailItem.value) detailItem.value = items.find((value) => equals(value, detailItem.value!))
+  (items, oldItems) => {
+    // Only the list that shows the detail item follows it, the other lists (like other groups) leave it alone
+    if (!detailItem.value || !oldItems.some((value) => equals(value, detailItem.value!))) return
+    detailItem.value = items.find((value) => equals(value, detailItem.value!))
   }
 )
 
@@ -210,9 +213,9 @@ function showGroupStreamDialog(item: StreamItemLiveType) {
       </v-col>
     </v-row>
     <CategoryNotificationDialog
-      v-if="streamCategoryNotification && !!props.streams?.length"
+      v-if="streamCategoryNotification && !!twitchStreams?.length"
       :model-value="!!streamCategoryNotification"
-      :streams="props.streams"
+      :streams="twitchStreams"
       :stream-item="streamCategoryNotification"
       @update:model-value="streamCategoryNotification = $event ? streamCategoryNotification : undefined"
     />

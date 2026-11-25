@@ -5,8 +5,11 @@ import type {
   LanguageCategoryStreamStore,
   VideoOrderStore,
 } from '@/store/system/types/systemStoreType'
-import type { User } from '@/types/userType'
+import type { AccountTokenType, AuthenticatedType, User } from '@/types/userType'
+import TokenBusiness from '@/services/business/tokenBusiness'
 import TwitchBusiness from '@/services/business/twitchBusiness'
+import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import KickBusiness from '@/services/business/kickBusiness'
 import type {
   CategorySearchItem,
   StreamItemClipType,
@@ -22,32 +25,43 @@ async function handlerAccounts<T>(
   handler: { [key in AccountStoreType]?: () => Promise<T> }
 ): Promise<T> {
   if (type === 'twitch' && handler.twitch) return handler.twitch()
+  else if (type === 'youtube' && handler.youtube) return handler.youtube()
+  else if (type === 'kick' && handler.kick) return handler.kick()
   else throw new Error('Type is undefined')
 }
 
 const AppBusiness = {
-  async auth(
-    type: AccountStoreType,
-    forceVerify?: boolean,
-    interactive?: boolean
-  ): Promise<{ token: string; user: User }> {
+  async auth(type: AccountStoreType, forceVerify?: boolean, interactive?: boolean): Promise<AuthenticatedType> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.auth(forceVerify, interactive),
+      youtube: async () => YoutubeBusiness.auth(),
+      kick: async () => KickBusiness.auth(),
     })
+  },
+  /** Only accounts with a refresh token renew their token, the Twitch ones logged before the code flow have none */
+  async renewToken(account: AccountStore): Promise<AccountTokenType> {
+    if (!account.refreshToken) throw new Error('Refresh token not found')
+    return TokenBusiness.renewToken(account.type, account.refreshToken)
   },
   async revoke(type: AccountStoreType, token: string): Promise<void> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.revoke(token),
+      youtube: async () => YoutubeBusiness.revoke(token),
+      kick: async () => KickBusiness.revoke(token),
     })
   },
   async getSelfUser(token: string, type: AccountStoreType): Promise<User> {
     return handlerAccounts(type, {
       twitch: async () => TwitchBusiness.getSelfUser(token),
+      youtube: async () => YoutubeBusiness.getSelfUser(token),
+      kick: async () => KickBusiness.getSelfUser(token),
     })
   },
   async getStreamersFollowed(account: AccountStore): Promise<StreamItemLiveStreamType[]> {
     return handlerAccounts(account.type, {
       twitch: async () => TwitchBusiness.getStreamersFollowed(account.token, account.accountId),
+      youtube: async () => YoutubeBusiness.getStreamersFollowed(account.token, account.accountId),
+      kick: async () => KickBusiness.getStreamersFollowed(account.token),
     })
   },
   async getUserVideosArchive(

@@ -2,7 +2,7 @@
 import useSystemStore from '@/store/system/useSystemStore'
 import emitter from '@/events'
 import { useI18n } from 'vue-i18n'
-import { mdiRefresh } from '@mdi/js'
+import { mdiRefresh, mdiTwitch } from '@mdi/js'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -19,7 +19,18 @@ const { t } = useI18n()
     :label="t('categoriesView.appBarView.filter')"
     persistent-clear
     variant="outlined"
-  />
+  >
+    <template v-if="system.accounts.youtube" #prepend-inner>
+      <v-icon
+        v-tooltip="t('common.twitchOnly')"
+        aria-hidden="false"
+        :aria-label="t('common.twitchOnly')"
+        color="twitch"
+        data-testid="twitch-only"
+        :icon="mdiTwitch"
+      />
+    </template>
+  </v-text-field>
   <v-btn
     :aria-label="t('common.refresh')"
     class="rounded-lg"

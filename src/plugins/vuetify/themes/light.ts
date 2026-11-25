@@ -5,6 +5,8 @@ const light: ThemeDefinition = {
   colors: {
     primary: '#660099',
     twitch: '#673ab7',
+    youtube: '#cc0000',
+    kick: '#1f8a00',
   },
 }
 

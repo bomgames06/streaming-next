@@ -25,6 +25,7 @@ declare module 'vue' {
     CategoryNotificationListItem: typeof import('./components/categoryNotificationDialog/CategoryNotificationListItem.vue')['default']
     GroupStreamDialog: typeof import('./components/groupStreamDialog/GroupStreamDialog.vue')['default']
     GroupStreamListItem: typeof import('./components/groupStreamDialog/GroupStreamListItem.vue')['default']
+    KickChannelsDialog: typeof import('./components/kickChannelsDialog/KickChannelsDialog.vue')['default']
     QuickDialogView: typeof import('./components/views/quickDialog/QuickDialogView.vue')['default']
     SearchAppBarView: typeof import('./components/views/search/SearchAppBarView.vue')['default']
     SearchView: typeof import('./components/views/search/SearchView.vue')['default']
@@ -37,6 +38,7 @@ declare module 'vue' {
     StreamOrderMenu: typeof import('./components/listStream/StreamOrderMenu.vue')['default']
     StreamsAppBarView: typeof import('./components/views/streams/StreamsAppBarView.vue')['default']
     StreamsView: typeof import('./components/views/streams/StreamsView.vue')['default']
+    StreamTypeFilters: typeof import('./components/listStream/StreamTypeFilters.vue')['default']
     ViewContainer: typeof import('./components/viewContainer/ViewContainer.vue')['default']
   }
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import AuthActions from '@/components/auth/AuthActions.vue'
 
 const system = useSystemStore()
@@ -9,7 +9,7 @@ const { t } = useI18n()
 
 const authenticating = ref(false)
 
-async function authenticated(value: { token: string; user: User }): Promise<void> {
+async function authenticated(value: AuthenticatedType): Promise<void> {
   authenticating.value = true
   try {
     await system.addAuthenticatedAccount(value)
@@ -26,7 +26,6 @@ async function authenticated(value: { token: string; user: User }): Promise<void
       <div class="d-flex flex-column">
         <AuthActions @authenticated="authenticated" />
       </div>
-      <small class="d-block text-medium-emphasis">{{ t('auth.twitchExpireMessage') }}</small>
     </v-col>
   </v-row>
 </template>

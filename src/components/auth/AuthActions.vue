@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { accountProfileUrl, accountTypeColor } from '@/utils/util'
+import { accountProfileUrl, accountTypeColor, isKickEnabled, isYoutubeEnabled } from '@/utils/util'
 import { useI18n } from 'vue-i18n'
 import type { AccountStore, AccountStoreType } from '@/store/system/types/systemStoreType'
 import useSystemStore from '@/store/system/useSystemStore'
 import AppBusiness from '@/services/business/appBusiness'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import { browser } from 'wxt/browser'
 import AuthActionsButton from '@/components/auth/AuthActionsButton.vue'
-import { mdiTwitch } from '@mdi/js'
+import { mdiTwitch, mdiYoutube } from '@mdi/js'
+import { mdiKick } from '@/utils/icons'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -17,21 +18,22 @@ const props = defineProps<{
 }>()
 const authenticating = defineModel<boolean>('authenticating')
 const emit = defineEmits<{
-  (e: 'authenticated', value: { token: string; user: User }): void
+  (e: 'authenticated', value: AuthenticatedType): void
 }>()
 
 async function auth(type: AccountStoreType, forceVerify?: boolean): Promise<void> {
   authenticating.value = true
   system.loading()
   try {
-    const { token, user } = await AppBusiness.auth(type, forceVerify)
+    const authenticated = await AppBusiness.auth(type, forceVerify)
+    const { token, user } = authenticated
 
     if (type === 'twitch' && !forceVerify && system.accounts[type] && system.accounts[type]?.accountId !== user.id) {
       void AppBusiness.revoke(type, token)
       return await auth(type, true)
     }
 
-    emit('authenticated', { token, user })
+    emit('authenticated', authenticated)
   } finally {
     authenticating.value = false
     system.loaded()
@@ -61,6 +63,34 @@ function openProfile(account: AccountStore, middle?: boolean): void {
     @auth="auth('twitch', $event)"
     @click="clickAccount"
     @delete="system.removeAccount('twitch')"
+  />
+  <AuthActionsButton
+    v-if="isYoutubeEnabled()"
+    :account="system.accounts.youtube"
+    :authenticating="authenticating"
+    :color-auth="accountTypeColor('youtube')"
+    :color-class="accountTypeColor('youtube', true)"
+    :icon-auth="mdiYoutube"
+    :list-item="props.listItem"
+    :text-auth="t('auth.youtubeAuth')"
+    data-testid="youtube-auth"
+    @auth="auth('youtube', $event)"
+    @click="clickAccount"
+    @delete="system.removeAccount('youtube')"
+  />
+  <AuthActionsButton
+    v-if="isKickEnabled()"
+    :account="system.accounts.kick"
+    :authenticating="authenticating"
+    :color-auth="accountTypeColor('kick')"
+    :color-class="accountTypeColor('kick', true)"
+    :icon-auth="mdiKick"
+    :list-item="props.listItem"
+    :text-auth="t('auth.kickAuth')"
+    data-testid="kick-auth"
+    @auth="auth('kick', $event)"
+    @click="clickAccount"
+    @delete="system.removeAccount('kick')"
   />
 </template>
 

@@ -1,6 +1,7 @@
 import type { StreamItemLiveStreamType } from '@/components/listStream/types/streamItemType'
 
-export type AccountStoreType = 'twitch'
+export type AccountStoreType = 'twitch' | 'youtube' | 'kick'
+export const ACCOUNT_STORE_TYPES: AccountStoreType[] = ['twitch', 'youtube', 'kick']
 export type AccountStore = {
   id: string
   type: AccountStoreType
@@ -9,6 +10,10 @@ export type AccountStore = {
   login: string
   avatarUrl?: string
   token: string
+  // Epoch in ms, only for the tokens of the code flow (they expire in hours)
+  expiresAt?: number
+  // Renews the expired token without the user, through streaming-next-back
+  refreshToken?: string
   invalid: boolean
 }
 export type AccountDataStore = {

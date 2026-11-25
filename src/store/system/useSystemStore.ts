@@ -21,6 +21,9 @@ import {
   STORAGE_KEY_STREAM_ORDER_SORT,
   type StorageSyncTypes,
   STORAGE_KEY_SHOW_CATEGORY_NOTIFICATIONS,
+  STORAGE_KEY_SHOW_UPCOMINGS,
+  STORAGE_KEY_HIDDEN_STREAM_TYPES,
+  STORAGE_KEY_KICK_CHANNELS,
 } from '@/types/syncStorageKeysTypes'
 import { STORAGE_KEY_ACCOUNTS_CACHE_STREAMS } from '@/types/localStorageKeysTypes'
 import type { ThemeInstance } from 'vuetify'
@@ -31,7 +34,7 @@ import { v4 as uuidV4 } from 'uuid'
 import AppBusiness from '@/services/business/appBusiness'
 import { cloneDeep, compact } from 'lodash'
 import { HttpStatusCode, isAxiosError } from 'axios'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import { isSameCategoryName } from '@/utils/util'
 import type {
   AccountCacheStreamsDataStore,
@@ -81,6 +84,7 @@ const useSystemStore = defineStore('System', () => {
   const accountsCacheStreams = ref<AccountCacheStreamsDataStore>({})
   const groupStreams = ref<GroupStreamStore[]>([])
   const categoryFavorites = ref<FavoriteGroup[]>([])
+  const kickChannels = ref<string[]>([])
 
   // View
   const streamFilter = ref<string>('')
@@ -94,6 +98,8 @@ const useSystemStore = defineStore('System', () => {
   const showCategoryNotifications = ref<boolean>(false)
   const showNotifications = ref<boolean>(false)
   const groupExpanded = ref<string[]>([])
+  const showUpcomings = ref<boolean>(true)
+  const hiddenStreamTypes = ref<AccountStoreType[]>([])
 
   // Video view
   const videoOrder = ref<VideoOrderStore>('time')
@@ -115,7 +121,7 @@ const useSystemStore = defineStore('System', () => {
     return compact(Object.values(accounts.value)).length
   })
   const mainAccount = computed(() => {
-    return accounts.value.twitch
+    return accounts.value.twitch ?? accounts.value.youtube ?? accounts.value.kick
   })
   const validAccounts = computed(() => {
     return compact(Object.values(accounts.value)).filter((value) => !value.invalid)
@@ -139,6 +145,7 @@ const useSystemStore = defineStore('System', () => {
   })
   const showNotificationsComp = computed({ get: () => showNotifications.value, set: setShowNotifications })
   const groupExpandedComp = computed({ get: () => groupExpanded.value, set: setGroupExpanded })
+  const showUpcomingsComp = computed({ get: () => showUpcomings.value, set: setShowUpcomings })
 
   // System actions
   function setScreen(value: ScreenStore) {
@@ -191,6 +198,9 @@ const useSystemStore = defineStore('System', () => {
       STORAGE_KEY_GROUP_STREAMS,
       STORAGE_KEY_GROUP_EXPANDED,
       STORAGE_KEY_CATEGORY_FAVORITES,
+      STORAGE_KEY_SHOW_UPCOMINGS,
+      STORAGE_KEY_HIDDEN_STREAM_TYPES,
+      STORAGE_KEY_KICK_CHANNELS,
     ])) as StorageSyncTypes
     const localStorage = await browser.storage.local.get([STORAGE_KEY_ACCOUNTS_CACHE_STREAMS])
 
@@ -214,6 +224,9 @@ const useSystemStore = defineStore('System', () => {
     groupStreams.value = syncStorage[STORAGE_KEY_GROUP_STREAMS] ?? []
     groupExpanded.value = syncStorage[STORAGE_KEY_GROUP_EXPANDED] ?? []
     categoryFavorites.value = syncStorage[STORAGE_KEY_CATEGORY_FAVORITES] ?? []
+    showUpcomings.value = syncStorage[STORAGE_KEY_SHOW_UPCOMINGS] ?? true
+    hiddenStreamTypes.value = syncStorage[STORAGE_KEY_HIDDEN_STREAM_TYPES] ?? []
+    kickChannels.value = syncStorage[STORAGE_KEY_KICK_CHANNELS] ?? []
 
     // Only apply the stored values here, writing them back would waste the sync storage write quota
     applyDark(theme)
@@ -237,8 +250,39 @@ const useSystemStore = defineStore('System', () => {
   }
 
   // Storage actions
+  /**
+   * Expired tokens are renewed with the refresh token. The account is invalid only when it is rejected (or missing,
+   * like the accounts logged before it), a network failure tries again later. Concurrent calls share the renew.
+   */
+  const accountRenews = new Map<AccountStoreType, Promise<void>>()
+  async function renewAccountToken(account: AccountStore) {
+    if (account.expiresAt === undefined || account.invalid || account.expiresAt > Date.now()) return
+
+    const pending = accountRenews.get(account.type)
+    if (pending) return pending
+    const renew = (async () => {
+      try {
+        // Also the new refresh token, when the provider rotates it
+        Object.assign(account, await AppBusiness.renewToken(account))
+      } catch (e) {
+        console.warn(`Failed to renew the ${account.type} token`, e)
+        if (!account.refreshToken || (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized))
+          account.invalid = true
+      }
+      saveAccounts()
+    })().finally(() => accountRenews.delete(account.type))
+    accountRenews.set(account.type, renew)
+    return renew
+  }
+  /** Renews the tokens about to expire, the popup may stay open longer than a token lasts */
+  async function renewAccountTokens() {
+    for (const account of compact(Object.values(accounts.value))) await renewAccountToken(account)
+  }
   async function fetchAccounts() {
     for (const account of compact(Object.values(accounts.value))) {
+      await renewAccountToken(account)
+      if (account.invalid && account.expiresAt !== undefined) continue
+
       try {
         const user = await AppBusiness.getSelfUser(account.token, account.type)
         account.name = user.name
@@ -262,6 +306,8 @@ const useSystemStore = defineStore('System', () => {
       accountItem.login = account.login
       accountItem.avatarUrl = account.avatarUrl
       accountItem.token = account.token
+      accountItem.expiresAt = account.expiresAt
+      accountItem.refreshToken = account.refreshToken
     } else {
       const id = uuidV4()
       accounts.value[account.type] = {
@@ -273,7 +319,7 @@ const useSystemStore = defineStore('System', () => {
     saveAccounts()
     setAccountCacheStreams(account.type, [])
   }
-  async function addAuthenticatedAccount({ token, user }: { token: string; user: User }) {
+  async function addAuthenticatedAccount({ token, user, expiresAt, refreshToken }: AuthenticatedType) {
     loading()
     try {
       addAccount({
@@ -283,6 +329,8 @@ const useSystemStore = defineStore('System', () => {
         login: user.login,
         avatarUrl: user.avatarUrl,
         token,
+        expiresAt,
+        refreshToken,
       })
 
       await fetchAccounts()
@@ -296,7 +344,10 @@ const useSystemStore = defineStore('System', () => {
     if (account) {
       delete accounts.value[accountType]
       setAccountCacheStreams(accountType, [])
-      AppBusiness.revoke(account.type, account.token).catch((e: unknown) => {
+      // Revoking the Google (and Kick) refresh token revokes its access tokens too, the access token may be expired
+      // already
+      const token = account.type !== 'twitch' ? (account.refreshToken ?? account.token) : account.token
+      AppBusiness.revoke(account.type, token).catch((e: unknown) => {
         console.error('Failed to revoke token', e)
       })
     }
@@ -304,9 +355,14 @@ const useSystemStore = defineStore('System', () => {
     if (!hasAccount.value || isEveryAccountInvalid.value) setScreen('auth')
     saveAccounts()
   }
-  function invalidAccountByToken(token: string) {
+  /** A rejected token is renewed when the account has a refresh token, it is invalid when that fails too */
+  async function invalidAccountByToken(token: string) {
     const value = Object.values(accounts.value).find((value) => value.token === token)
     if (!value) return
+    if (value.refreshToken && !value.invalid) {
+      value.expiresAt = 0
+      return renewAccountToken(value)
+    }
     value.invalid = true
     saveAccounts()
   }
@@ -434,6 +490,23 @@ const useSystemStore = defineStore('System', () => {
     setAccountCacheStreams(account.type, streamers)
     return streamers
   }
+  /** Kick has no list of the followed channels, the user adds them by slug. False when it was added already */
+  function addKickChannel(slug: string): boolean {
+    if (kickChannels.value.includes(slug)) return false
+    kickChannels.value = [...kickChannels.value, slug]
+    saveSync(STORAGE_KEY_KICK_CHANNELS, kickChannels.value)
+    return true
+  }
+  function removeKickChannel(slug: string) {
+    kickChannels.value = kickChannels.value.filter((value) => value !== slug)
+    saveSync(STORAGE_KEY_KICK_CHANNELS, kickChannels.value)
+    const streams = accountsCacheStreams.value.kick
+    if (streams)
+      setAccountCacheStreams(
+        'kick',
+        streams.filter((value) => value.login !== slug)
+      )
+  }
   function addGroupStream(name: string): string {
     const id = crypto.randomUUID()
     groupStreams.value.push({
@@ -549,6 +622,16 @@ const useSystemStore = defineStore('System', () => {
     groupExpanded.value = value
     saveSync(STORAGE_KEY_GROUP_EXPANDED, groupExpanded.value)
   }
+  function setShowUpcomings(value: boolean) {
+    showUpcomings.value = value
+    saveSync(STORAGE_KEY_SHOW_UPCOMINGS, showUpcomings.value)
+  }
+  function toggleHiddenStreamType(value: AccountStoreType) {
+    hiddenStreamTypes.value = hiddenStreamTypes.value.includes(value)
+      ? hiddenStreamTypes.value.filter((type) => type !== value)
+      : [...hiddenStreamTypes.value, value]
+    saveSync(STORAGE_KEY_HIDDEN_STREAM_TYPES, hiddenStreamTypes.value)
+  }
 
   // Video view actions
   function setVideoOrder(value: VideoOrderStore) {
@@ -587,11 +670,14 @@ const useSystemStore = defineStore('System', () => {
     accountsCacheStreams,
     groupStreams,
     categoryFavorites,
+    kickChannels,
     // view
     streamFilter,
     streamOrder,
     streamOrderSort,
     streamNameFilter,
+    showUpcomings,
+    hiddenStreamTypes,
     // video view
     videoOrder,
     // clip view
@@ -616,6 +702,7 @@ const useSystemStore = defineStore('System', () => {
     showCategoryNotificationsComp,
     showNotificationsComp,
     groupExpandedComp,
+    showUpcomingsComp,
     // utils
     getAccountByType,
     // actions system
@@ -628,6 +715,8 @@ const useSystemStore = defineStore('System', () => {
     updateTimer,
     setHeaderAppBarView,
     // actions storage
+    renewAccountToken,
+    renewAccountTokens,
     fetchAccounts,
     addAccount,
     addAuthenticatedAccount,
@@ -653,6 +742,8 @@ const useSystemStore = defineStore('System', () => {
     setShowNoGroup,
     setAccountCacheStreams,
     fetchStreamersFollowed,
+    addKickChannel,
+    removeKickChannel,
     addGroupStream,
     removeGroupStream,
     editGroupStream,
@@ -662,6 +753,7 @@ const useSystemStore = defineStore('System', () => {
     removeFavoriteCategory,
     // view action
     setStreamOrder,
+    toggleHiddenStreamType,
     // video view action,
     setVideoOrder,
     // clip view action,

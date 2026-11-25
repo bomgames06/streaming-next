@@ -1,0 +1,171 @@
+import { describe, expect, it, vi } from 'vitest'
+import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { browser } from 'wxt/browser'
+import notificationHandler, {
+  registerNotificationHandler,
+  type YoutubeNotificationData,
+} from '@/background/handlers/notificationHandler'
+import TwitchBusiness from '@/services/business/twitchBusiness'
+import {
+  STORAGE_KEY_ACCOUNTS,
+  STORAGE_KEY_NOTIFICATION_TYPE,
+  STORAGE_KEY_NOTIFICATIONS,
+} from '@/types/syncStorageKeysTypes'
+import { STORAGE_KEY_ONLINE_HISTORY, STORAGE_KEY_STARTED } from '@/types/sessionStorageKeysTypes'
+import type { OnlineHistory } from '@/background/handlers/notificationHandler'
+import { onlineItem, streamItem } from '@tests/__utils__/fixtures'
+import { youtubeAccount } from '@tests/__utils__/youtubeServer'
+
+vi.mock('@/services/business/twitchBusiness', () => ({
+  default: { getUsersByIds: vi.fn() },
+}))
+
+const live = onlineItem({
+  type: 'youtube',
+  id: 'UCy',
+  login: 'UCy',
+  name: 'Yankee',
+  title: 'Yankee live',
+  game: undefined,
+  gameId: undefined,
+  videoId: 'a-b_c',
+})
+const zuluLive = onlineItem({
+  type: 'youtube',
+  id: 'UCz',
+  login: 'UCz',
+  name: 'Zulu',
+  title: 'Zulu live',
+  game: undefined,
+  gameId: undefined,
+  videoId: 'z1',
+})
+function youtube(): YoutubeNotificationData {
+  return {
+    streams: [
+      streamItem({ type: 'youtube', id: 'UCy', profileImage: 'https://yt3/UCy.jpg' }),
+      streamItem({ type: 'youtube', id: 'UCz', profileImage: 'https://yt3/UCz.jpg' }),
+    ],
+  }
+}
+async function setup(options: { sync?: Record<string, unknown>; history?: OnlineHistory; started?: boolean }) {
+  await browser.storage.sync.set({
+    [STORAGE_KEY_ACCOUNTS]: { youtube: youtubeAccount() },
+    [STORAGE_KEY_NOTIFICATION_TYPE]: 'all',
+    ...options.sync,
+  })
+  await browser.storage.session.set({
+    [STORAGE_KEY_STARTED]: options.started ?? true,
+    ...(options.history && { [STORAGE_KEY_ONLINE_HISTORY]: options.history }),
+  })
+}
+function notifications() {
+  return fakeBrowser.notifications.getAllCreateOptions()
+}
+async function history(): Promise<OnlineHistory> {
+  return (await browser.storage.session.get(STORAGE_KEY_ONLINE_HISTORY))[STORAGE_KEY_ONLINE_HISTORY] as OnlineHistory
+}
+
+describe('notificationHandler with YouTube', () => {
+  it('Notify the YouTube lives with the channel avatar', async () => {
+    await setup({ history: { youtube: [] } })
+
+    await notificationHandler([live], youtube())
+
+    expect(TwitchBusiness.getUsersByIds).not.toHaveBeenCalled()
+    const [[id, options]] = Object.entries(notifications())
+    // The video id has dashes and underscores
+    expect(id).toMatch(/^[a-zA-Z0-9]{10}-N-youtube-a-b_c$/)
+    expect(options).toStrictEqual({
+      type: 'basic',
+      iconUrl: 'https://yt3/UCy.jpg',
+      title: 'Yankee',
+      message: 'Yankee live',
+      contextMessage: undefined,
+    })
+    expect((await history()).youtube).toStrictEqual([{ id: 'UCy', category: '' }])
+  })
+  it('Notify the scheduled lives only when they start', async () => {
+    await setup({ history: { youtube: [] } })
+
+    // Scheduled, it is not online yet
+    await notificationHandler([], youtube())
+    expect(notifications()).toStrictEqual({})
+
+    await notificationHandler([zuluLive], youtube())
+    expect(Object.values(notifications()).map((value) => value.message)).toStrictEqual(['Zulu live'])
+    expect(Object.keys(notifications())[0]).toMatch(/-N-youtube-z1$/)
+  })
+  it('Notify only the selected channels on partial', async () => {
+    await setup({
+      sync: {
+        [STORAGE_KEY_NOTIFICATION_TYPE]: 'partial',
+        [STORAGE_KEY_NOTIFICATIONS]: [{ type: 'youtube', id: 'UCz' }],
+      },
+      history: { youtube: [] },
+    })
+
+    await notificationHandler([live, zuluLive], youtube())
+
+    expect(Object.values(notifications()).map((value) => value.message)).toStrictEqual(['Zulu live'])
+  })
+  it('Only record the first YouTube fetch, even after the session start', async () => {
+    // Started by Twitch, YouTube added later has no history yet
+    await setup({ history: { twitch: [] } })
+
+    await notificationHandler([live], youtube())
+
+    expect(notifications()).toStrictEqual({})
+    expect(await history()).toStrictEqual({
+      twitch: [],
+      youtube: [{ id: 'UCy', category: '' }],
+    })
+  })
+  it('Keep the YouTube history when it was not fetched', async () => {
+    await setup({
+      sync: { [STORAGE_KEY_ACCOUNTS]: { youtube: youtubeAccount(), twitch: youtubeAccount({ type: 'twitch' }) } },
+      history: { twitch: [], youtube: [{ id: 'UCy', category: '' }] },
+    })
+
+    await notificationHandler([])
+
+    expect(await history()).toStrictEqual({
+      twitch: [],
+      youtube: [{ id: 'UCy', category: '' }],
+    })
+  })
+  it('Do nothing with an invalid YouTube account', async () => {
+    await setup({ sync: { [STORAGE_KEY_ACCOUNTS]: { youtube: youtubeAccount({ invalid: true }) } } })
+
+    await notificationHandler([live], youtube())
+
+    expect(notifications()).toStrictEqual({})
+    expect(await history()).toBeUndefined()
+  })
+  it('Use the app icon when the avatar fails to download', async () => {
+    await setup({ history: { youtube: [] } })
+    const original = browser.notifications.create.bind(browser.notifications)
+    const createSpy = vi
+      .spyOn(browser.notifications, 'create')
+      .mockRejectedValueOnce(new Error('Unable to download all specified images.'))
+      .mockImplementation(original as never)
+
+    await notificationHandler([live], youtube())
+    await vi.waitFor(() => expect(createSpy).toHaveBeenCalledTimes(2))
+
+    expect(createSpy.mock.calls[0][1]).toMatchObject({ iconUrl: 'https://yt3/UCy.jpg' })
+    expect(createSpy.mock.calls[1][0]).toBe(createSpy.mock.calls[0][0])
+    expect(createSpy.mock.calls[1][1]).toMatchObject({
+      iconUrl: browser.runtime.getURL('/icons/128.png'),
+      title: 'Yankee',
+    })
+  })
+  it('Open the YouTube video of a clicked notification', async () => {
+    registerNotificationHandler()
+    const createSpy = vi.spyOn(browser.tabs, 'create')
+
+    await fakeBrowser.notifications.onClicked.trigger('abcdefghij-N-youtube-a-b_c')
+
+    expect(createSpy).toHaveBeenCalledWith({ url: 'https://www.youtube.com/watch?v=a-b_c' })
+  })
+})

@@ -1,5 +1,5 @@
 import TwitchApi from '@/services/api/twitch/twitchApi'
-import type { User } from '@/types/userType'
+import type { AccountTokenType, AuthenticatedType, User } from '@/types/userType'
 import type { AuthBackgroundMessageType, RevokeBackgroundMessageType } from '@/background/types/backgroundMessageType'
 import { browser } from 'wxt/browser'
 import type {
@@ -12,6 +12,7 @@ import type {
   StreamItemVideoType,
 } from '@/components/listStream/types/streamItemType'
 import moment from 'moment'
+import { HttpStatusCode, isAxiosError } from 'axios'
 import { getTimeByClipPeriod, partition, twitchDurationToSeconds } from '@/utils/util'
 import type {
   ClipPeriodStore,
@@ -63,17 +64,27 @@ function twitchGameToCategoryItem(): (value: TwitchApiGameType) => CategoryItemT
 }
 
 const TwitchBusiness = {
-  async auth(forceVerify?: boolean, interactive?: boolean): Promise<{ token: string; user: User }> {
+  async auth(forceVerify?: boolean, interactive?: boolean): Promise<AuthenticatedType> {
     const message: AuthBackgroundMessageType = {
       type: 'auth',
       authType: 'twitch',
       forceVerify,
       interactive,
     }
-    const accessToken: string = await browser.runtime.sendMessage(message)
-    const user = await this.getSelfUser(accessToken)
+    const { token, expiresAt, refreshToken }: AccountTokenType = await browser.runtime.sendMessage(message)
+    const user = await this.getSelfUser(token)
 
-    return { token: accessToken, user }
+    return { token, user, expiresAt, refreshToken }
+  },
+  /** Twitch requires the apps to validate the user tokens on start and every hour. False when it is no longer valid */
+  async validateToken(token: string): Promise<boolean> {
+    try {
+      await TwitchApi.oauth.validate(token)
+      return true
+    } catch (e) {
+      if (isAxiosError(e) && e.response?.status === HttpStatusCode.Unauthorized) return false
+      throw e
+    }
   },
   async revoke(token: string) {
     const message: RevokeBackgroundMessageType = {

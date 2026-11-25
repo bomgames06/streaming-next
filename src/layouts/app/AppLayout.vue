@@ -3,7 +3,7 @@ import useSystemStore from '@/store/system/useSystemStore'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import { locales } from '@/plugins/i18n'
-import type { User } from '@/types/userType'
+import type { AuthenticatedType } from '@/types/userType'
 import Mousetrap from 'mousetrap'
 import { mdiAccount, mdiAccountMultiple, mdiCog, mdiTranslate, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 
@@ -31,7 +31,7 @@ onUnmounted(() => {
   Mousetrap.unbind('alt+s')
 })
 
-async function authenticated(value: { token: string; user: User }): Promise<void> {
+async function authenticated(value: AuthenticatedType): Promise<void> {
   authenticating.value = true
   try {
     await system.addAuthenticatedAccount(value)
@@ -99,7 +99,7 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
             </template>
             <template #default="{ isActive }">
               <v-list class="py-0" @keydown.esc.prevent="isActive.value = false">
-                <v-list-group class="group-indent" color="primary">
+                <v-list-group class="account-group-indent" color="primary">
                   <template #activator="{ props }">
                     <v-list-item v-bind="props" :title="i18n.t('appLayout.accounts')">
                       <template #prepend>
@@ -178,8 +178,9 @@ const accesskey = navigator.userAgent.toUpperCase().includes('MAC') ? 'option' :
 .account-group-indent {
   @extend .group-indent;
 
+  // One item for each platform (Twitch, YouTube and Kick) without scrolling
   ::v-deep(.v-list-group__items) {
-    max-height: 140px;
+    max-height: 150px;
   }
 }
 

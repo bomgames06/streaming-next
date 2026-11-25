@@ -5,14 +5,78 @@ import { deburr, upperCase } from 'lodash'
 import type { Moment } from 'moment'
 import moment from 'moment'
 
+/** Authorization code flow, streaming-next-back exchanges the code with the client secret */
 export function twitchOAuthWebAuth(state: string, forceVerify?: boolean): string {
-  return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/authorize?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=token&state=${state}&force_verify=${forceVerify ?? false}&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`
+  return `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/authorize?client_id=${import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID}&redirect_uri=${encodeURIComponent(browser.identity.getRedirectURL())}&response_type=code&state=${state}&force_verify=${forceVerify ?? false}&scope=user%3Aread%3Afollows%20user%3Aread%3Aemail`
 }
 export function twitchOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
   return {
     url: `${import.meta.env.VITE_APP_OAUTH2_TWITCH_URL}/revoke`,
     body: new URLSearchParams({ client_id: import.meta.env.VITE_APP_OAUTH2_TWITCH_CLIENTID, token }),
   }
+}
+
+/**
+ * Authorization code flow, streaming-next-back exchanges the code with the client secret. Google only returns the
+ * refresh token when the user consents, so the consent is always asked.
+ */
+export function youtubeOAuthWebAuth(state: string, codeChallenge: string): string {
+  const params = new URLSearchParams({
+    client_id: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID ?? '',
+    redirect_uri: browser.identity.getRedirectURL(),
+    response_type: 'code',
+    access_type: 'offline',
+    prompt: 'select_account consent',
+    scope: 'https://www.googleapis.com/auth/youtube.readonly',
+    include_granted_scopes: 'true',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    state,
+  })
+
+  return `${import.meta.env.VITE_APP_OAUTH2_YOUTUBE_URL}/auth?${params.toString()}`
+}
+/** PKCE challenge of the verifier, so an intercepted code is useless without it */
+export async function pkceChallenge(verifier: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
+export function youtubeOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
+  return {
+    url: import.meta.env.VITE_APP_OAUTH2_YOUTUBE_REVOKE_URL,
+    body: new URLSearchParams({ token }),
+  }
+}
+export function isYoutubeEnabled(): boolean {
+  return !!import.meta.env.VITE_APP_OAUTH2_YOUTUBE_CLIENTID
+}
+
+/** Authorization code flow with PKCE, streaming-next-back exchanges the code with the client secret */
+export function kickOAuthWebAuth(state: string, codeChallenge: string): string {
+  const params = new URLSearchParams({
+    client_id: import.meta.env.VITE_APP_OAUTH2_KICK_CLIENTID ?? '',
+    redirect_uri: browser.identity.getRedirectURL(),
+    response_type: 'code',
+    scope: 'user:read channel:read',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    state,
+  })
+
+  return `${import.meta.env.VITE_APP_OAUTH2_KICK_URL}/authorize?${params.toString()}`
+}
+/** Kick takes the token on the query */
+export function kickOAuthRevoke(token: string): { url: string; body: URLSearchParams } {
+  return {
+    url: `${import.meta.env.VITE_APP_OAUTH2_KICK_URL}/revoke?${new URLSearchParams({ token }).toString()}`,
+    body: new URLSearchParams(),
+  }
+}
+export function isKickEnabled(): boolean {
+  return !!import.meta.env.VITE_APP_OAUTH2_KICK_CLIENTID
 }
 
 export function generateState(size?: number): string {
@@ -24,18 +88,36 @@ export function generateState(size?: number): string {
 
 export function accountTypeColor(accountType: AccountStoreType, bg?: boolean, text?: boolean): string {
   if (accountType === 'twitch') return `${bg ? 'bg-' : text ? 'text-' : ''}twitch`
+  else if (accountType === 'youtube') return `${bg ? 'bg-' : text ? 'text-' : ''}youtube`
+  else if (accountType === 'kick') return `${bg ? 'bg-' : text ? 'text-' : ''}kick`
   else throw new Error('accountType is undefined')
 }
 
 export function twitchUrl(name: string): string {
   return `https://twitch.tv/${name}`
 }
+export function youtubeChannelUrl(channelId: string): string {
+  return `https://www.youtube.com/channel/${channelId}`
+}
+export function youtubeVideoUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`
+}
+export function kickUrl(slug: string): string {
+  return `https://kick.com/${slug}`
+}
 export function accountProfileUrl(account: AccountStore): string {
   if (account.type === 'twitch') return twitchUrl(account.login)
+  else if (account.type === 'youtube') return youtubeChannelUrl(account.accountId)
+  else if (account.type === 'kick') return kickUrl(account.login)
   else throw new Error('accountType is undefined')
 }
 export function streamItemProfileUrl(item: StreamItemType): string {
   if (item.type === 'twitch') return twitchUrl(item.login)
+  else if (item.type === 'youtube') {
+    // Live and upcoming items open the video itself, the channel page would only show it after some clicks
+    if ((item.status === 'online' || item.status === 'upcoming') && item.videoId) return youtubeVideoUrl(item.videoId)
+    return youtubeChannelUrl(item.id)
+  } else if (item.type === 'kick') return kickUrl(item.login)
   else throw new Error('accountType is undefined')
 }
 
@@ -73,6 +155,25 @@ export function getTimeByClipPeriod(period?: ClipPeriodStore): Moment | undefine
   if (period === '7d') return moment().subtract(7, 'days')
   if (period === '30d') return moment().subtract(30, 'days')
   return undefined
+}
+
+// Like Promise.all over a map, but with at most `concurrency` handlers running at the same time
+export async function mapConcurrent<T, R>(
+  items: T[],
+  concurrency: number,
+  handler: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array<R>(items.length)
+  let nextIndex = 0
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++
+      results[index] = await handler(items[index])
+    }
+  })
+  await Promise.all(workers)
+
+  return results
 }
 
 export function sleep(ms: number): Promise<void> {

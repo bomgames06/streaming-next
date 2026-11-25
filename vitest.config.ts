@@ -5,6 +5,12 @@ import viteConfig from './vite.config.ts'
 
 export default defineConfig(async () => ({
   test: {
+    coverage: {
+      provider: 'v8' as const,
+      include: ['src/**/*.{ts,vue}'],
+      exclude: ['src/**/*.d.ts'],
+      reporter: ['text', 'html', 'lcov'],
+    },
     projects: [
       mergeConfig(viteConfig(), {
         plugins: [await WxtVitest()],

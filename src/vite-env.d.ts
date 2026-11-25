@@ -13,6 +13,17 @@ interface ImportMetaEnv {
   readonly VITE_APP_OAUTH2_TWITCH_URL: string
   readonly VITE_APP_OAUTH2_TWITCH_CLIENTID: string
 
+  readonly VITE_APP_API_YOUTUBE_URL: string
+  readonly VITE_APP_FEED_YOUTUBE_URL: string
+  readonly VITE_APP_OAUTH2_YOUTUBE_URL: string
+  readonly VITE_APP_OAUTH2_YOUTUBE_REVOKE_URL: string
+  readonly VITE_APP_API_BACK_URL: string
+  readonly VITE_APP_OAUTH2_YOUTUBE_CLIENTID?: string
+
+  readonly VITE_APP_API_KICK_URL: string
+  readonly VITE_APP_OAUTH2_KICK_URL: string
+  readonly VITE_APP_OAUTH2_KICK_CLIENTID?: string
+
   readonly VITE_I18N_LOCALE?: Locales
   readonly VITE_I18N_FALLBACK_LOCALE?: Locales
 }

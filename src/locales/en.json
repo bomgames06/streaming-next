@@ -9,6 +9,11 @@
     "shortcuts": "Shortcuts",
     "streamView": "View: Streams"
   },
+  "accountTypes": {
+    "kick": "Kick",
+    "twitch": "Twitch",
+    "youtube": "YouTube"
+  },
   "appLayout": {
     "accounts": "Accounts",
     "addAccount": "Add",
@@ -25,12 +30,13 @@
     "differentAccountError": "Different account",
     "favorite": "Favorite",
     "invalidAccounts": "Invalid accounts",
+    "kickAuth": "Authenticate on Kick",
     "mandatoryMessage": "We need to authenticate to proceed",
     "notFavorite": "Not favorite",
     "remove": "Remove",
     "removeAccount": "Remove {name}",
     "twitchAuth": "Authenticate on Twitch",
-    "twitchExpireMessage": "* Twitch authentication by default lasts 60 days"
+    "youtubeAuth": "Authenticate on YouTube"
   },
   "categoriesList": {
     "appBarView": {
@@ -83,11 +89,14 @@
     "notification": "Notification | Notifications",
     "offlines": "Offlines",
     "onlines": "Onlines",
+    "platforms": "Platforms",
     "projectName": "Streaming Next",
     "refresh": "Refresh",
     "sort": "Sort",
     "systemError": "System error",
+    "twitchOnly": "Only available for Twitch at the moment",
     "unauthorizedAccount": "Account is no longer authorized",
+    "upcomings": "Scheduled",
     "value": "Value"
   },
   "gameNotificationDialog": {
@@ -100,6 +109,14 @@
     "stream": "Stream",
     "streamCount": "Stream: None | Stream: {count} | Streams: {count}",
     "title": "Stream groups"
+  },
+  "kickChannelsDialog": {
+    "alreadyAdded": "Channel already added",
+    "hint": "Kick does not share the channels you follow, add them here by the slug (kick.com/slug) or the URL",
+    "noChannels": "No channels",
+    "notFound": "Channel \"{slug}\" not found on Kick",
+    "slug": "Channel slug or URL",
+    "title": "Kick channels"
   },
   "languages": {
     "en": "English",
@@ -196,6 +213,7 @@
     "spectators": "Viewer | Viewers",
     "streamerPreview": "Live preview from {name}",
     "streamerProfile": "Profile image from {name}",
+    "upcoming": "Scheduled · {time}",
     "videos": "Videos"
   },
   "streamView": {
@@ -209,10 +227,12 @@
     "filter": "Filter"
   },
   "streamsView": {
+    "allow": "Allow",
     "category": "Category",
     "favorites": "Favorites",
     "hideOfflines": "Hide offlines",
-    "showOfflines": "Show offlines"
+    "showOfflines": "Show offlines",
+    "youtubePermission": "Allow access to the YouTube feeds to find the lives"
   },
   "views": {
     "categories": "Categories",
