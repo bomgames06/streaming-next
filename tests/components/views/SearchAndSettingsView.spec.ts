@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser'
 import { VRadioGroup, VSelect, VSwitch } from 'vuetify/components'
 import SearchView from '@/components/views/search/SearchView.vue'
 import SettingsView from '@/components/views/settings/SettingsView.vue'
+import LegalLinks from '@/components/legal/LegalLinks.vue'
 import StreamListItem from '@/components/listStream/StreamListItem.vue'
 import vuetify from '@/plugins/vuetify'
 import i18n from '@/plugins/i18n'
@@ -150,6 +151,7 @@ describe('SettingsView.vue', () => {
     expect(wrapper.text()).toContain('Quick list shortcut: Ctrl+Shift+Space')
     expect(wrapper.findComponent(VSelect).props('items')).toStrictEqual(['en', 'pt-BR'])
     expect(wrapper.findComponent(VSelect).text()).toContain('English')
+    expect(wrapper.findComponent(LegalLinks).exists()).toBe(true)
   })
   it('Show when the quick dialog shortcut is not set', async () => {
     const { wrapper } = mountView({}, '')

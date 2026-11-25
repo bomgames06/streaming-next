@@ -20,7 +20,12 @@ import type {
   YoutubeLivesCacheStore,
   YoutubeSubscriptionsCacheStore,
 } from '@/types/localStorageKeysTypes'
-import { STORAGE_KEY_YOUTUBE_LIVES_CACHE, STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE } from '@/types/localStorageKeysTypes'
+import {
+  STORAGE_KEY_ACCOUNTS_CACHE_STREAMS,
+  STORAGE_KEY_YOUTUBE_LIVES_CACHE,
+  STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE,
+} from '@/types/localStorageKeysTypes'
+import type { AccountCacheStreamsDataStore } from '@/store/system/types/systemStoreType'
 
 const FEED_ORIGIN = 'https://www.youtube.com/*'
 // The YouTube API quota is small, so the data is reused for a while
@@ -136,7 +141,16 @@ const YoutubeBusiness = {
       token,
     }
     await browser.runtime.sendMessage(message)
+    await this.clearCache()
+  },
+  async clearCache() {
     await browser.storage.local.remove([STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE, STORAGE_KEY_YOUTUBE_LIVES_CACHE])
+
+    // The pages keep the last subscriptions there too, with the channels of the other platforms
+    const storage = await browser.storage.local.get(STORAGE_KEY_ACCOUNTS_CACHE_STREAMS)
+    const streams = storage[STORAGE_KEY_ACCOUNTS_CACHE_STREAMS] as AccountCacheStreamsDataStore | undefined
+    if (streams?.youtube?.length)
+      await browser.storage.local.set({ [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: { ...streams, youtube: [] } })
   },
   async requestFeedPermission(): Promise<boolean> {
     return browser.permissions.request({ origins: [FEED_ORIGIN] })

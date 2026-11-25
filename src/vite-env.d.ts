@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly __APP_VERSION__: string
 
   readonly VITE_GITHUB_URL: string
+  readonly VITE_SITE_URL: string
+  readonly VITE_YOUTUBE_TERMS_URL: string
   readonly VITE_BUY_ME_A_COFFE_NAME: string
   readonly VITE_BUY_ME_A_COFFE_URL: string
 

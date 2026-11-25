@@ -7,6 +7,7 @@ import type { Mock } from '@vitest/spy'
 import useSystemStore from '@/store/system/useSystemStore.ts'
 import AppBusiness from '@/services/business/appBusiness'
 import AuthActions from '@/components/auth/AuthActions.vue'
+import LegalNotice from '@/components/legal/LegalNotice.vue'
 
 vi.mock('@/services/business/appBusiness', () => ({
   default: {
@@ -38,6 +39,11 @@ describe('AuthContent.vue', () => {
         },
       }
     )
+  })
+  it('Show the legal notice', () => {
+    const wrapper = mount(AuthContent, { global: { plugins: getTestPlugins() } })
+
+    expect(wrapper.findComponent(LegalNotice).exists()).toBe(true)
   })
   it('Click on authentication buttons', async () => {
     const buttonAuthTypes: {

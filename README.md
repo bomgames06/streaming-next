@@ -71,6 +71,9 @@ extension, so these two requests go through [streaming-next-back](../streaming-n
 Everything else (accounts, favorites, groups, notifications and settings) stays on the browser storage, synced by the
 browser between your devices.
 
+See the [Privacy Policy](https://bomlabs.com.br/products/streaming-next/privacy) and the
+[Terms of Service](https://bomlabs.com.br/products/streaming-next/terms).
+
 YouTube lives are found from the channel feeds on `youtube.com`, so the extension asks for that permission when you log
 in to YouTube. It keeps the YouTube API quota low, the lives are checked without the search endpoint.
 

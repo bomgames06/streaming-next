@@ -26,6 +26,8 @@ declare module 'vue' {
     GroupStreamDialog: typeof import('./components/groupStreamDialog/GroupStreamDialog.vue')['default']
     GroupStreamListItem: typeof import('./components/groupStreamDialog/GroupStreamListItem.vue')['default']
     KickChannelsDialog: typeof import('./components/kickChannelsDialog/KickChannelsDialog.vue')['default']
+    LegalLinks: typeof import('./components/legal/LegalLinks.vue')['default']
+    LegalNotice: typeof import('./components/legal/LegalNotice.vue')['default']
     QuickDialogView: typeof import('./components/views/quickDialog/QuickDialogView.vue')['default']
     SearchAppBarView: typeof import('./components/views/search/SearchAppBarView.vue')['default']
     SearchView: typeof import('./components/views/search/SearchView.vue')['default']

@@ -3,6 +3,7 @@ import moment from 'moment'
 import { browser } from 'wxt/browser'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
 import {
+  STORAGE_KEY_ACCOUNTS_CACHE_STREAMS,
   STORAGE_KEY_YOUTUBE_LIVES_CACHE,
   STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE,
   type YoutubeLivesCacheStore,
@@ -138,6 +139,19 @@ describe('YoutubeBusiness', () => {
 
     expect(sendMessageSpy).toHaveBeenCalledWith({ type: 'revoke', authType: 'youtube', token: 'token' })
     expect(await browser.storage.local.get(null)).toStrictEqual({ other: true })
+  })
+  it('Clear only the YouTube data of the caches', async () => {
+    await browser.storage.local.set({
+      [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: { twitch: [{ id: 't' }], youtube: [{ id: 'A' }] },
+      [STORAGE_KEY_YOUTUBE_LIVES_CACHE]: { accountId: 'UCme' },
+      [STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE]: { accountId: 'UCme' },
+    })
+
+    await YoutubeBusiness.clearCache()
+
+    expect(await browser.storage.local.get(null)).toStrictEqual({
+      [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: { twitch: [{ id: 't' }], youtube: [] },
+    })
   })
   it('Map every page of the subscriptions and reuse them for a while', async () => {
     const { subscriptionRequests, data } = youtubeServer({

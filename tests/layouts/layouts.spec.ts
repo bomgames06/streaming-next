@@ -210,6 +210,7 @@ describe('layouts', () => {
       bodyFindByText('.v-list-item', 'Accounts')!.click()
       await flushPromises()
       expect(bodyFindByText('.v-list-item-title', 'Me')).toBeTruthy()
+      expect(bodyFindAll('[data-testid="legal-notice"]')).toHaveLength(1)
 
       wrapper.findComponent(AuthActions).vm.$emit('authenticated', { token: 'new-token', user })
       await flushPromises()

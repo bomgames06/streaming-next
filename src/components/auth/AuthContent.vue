@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import useSystemStore from '@/store/system/useSystemStore'
 import type { AuthenticatedType } from '@/types/userType'
 import AuthActions from '@/components/auth/AuthActions.vue'
+import LegalNotice from '@/components/legal/LegalNotice.vue'
 
 const system = useSystemStore()
 const { t } = useI18n()
@@ -26,6 +27,7 @@ async function authenticated(value: AuthenticatedType): Promise<void> {
       <div class="d-flex flex-column">
         <AuthActions @authenticated="authenticated" />
       </div>
+      <LegalNotice class="mt-3 mx-auto" />
     </v-col>
   </v-row>
 </template>

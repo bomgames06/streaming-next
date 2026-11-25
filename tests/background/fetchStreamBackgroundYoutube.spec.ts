@@ -22,7 +22,7 @@ vi.mock('@/services/business/twitchBusiness', () => ({
 }))
 vi.mock('@/services/business/appBusiness', () => ({ default: { renewToken: vi.fn() } }))
 vi.mock('@/services/business/youtubeBusiness', () => ({
-  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn() },
+  default: { getStreamersFollowed: vi.fn(), getLivesFollowed: vi.fn(), clearCache: vi.fn() },
 }))
 vi.mock('@/background/handlers/countHandler', () => ({
   default: vi.fn(),
@@ -38,6 +38,7 @@ const twitchOnlinesMock = TwitchBusiness.getStreamersOnlineFollowed as Mock<
 >
 const subscriptionsMock = YoutubeBusiness.getStreamersFollowed as Mock<typeof YoutubeBusiness.getStreamersFollowed>
 const livesMock = YoutubeBusiness.getLivesFollowed as Mock<typeof YoutubeBusiness.getLivesFollowed>
+const clearCacheMock = YoutubeBusiness.clearCache as Mock<typeof YoutubeBusiness.clearCache>
 const renewMock = AppBusiness.renewToken as Mock<typeof AppBusiness.renewToken>
 const countHandlerMock = countHandler as Mock<typeof countHandler>
 const notificationHandlerMock = notificationHandler as Mock<typeof notificationHandler>
@@ -68,7 +69,7 @@ function unauthorized() {
 }
 async function fetchWith(accounts: AccountDataStore) {
   await browser.storage.sync.set({ [STORAGE_KEY_ACCOUNTS]: accounts })
-  for (const mock of [countHandlerMock, notificationHandlerMock, renewMock]) mock.mockReset()
+  for (const mock of [countHandlerMock, notificationHandlerMock, renewMock, clearCacheMock]) mock.mockReset()
   twitchOnlinesMock.mockReset().mockResolvedValue([twitchOnline])
   subscriptionsMock.mockReset().mockResolvedValue(youtubeStreams)
   livesMock
@@ -145,6 +146,33 @@ describe('fetchStreamBackground with YouTube', () => {
 
     expect((await storedAccounts()).youtube!.invalid).toBe(false)
     expect(notificationHandlerMock).toHaveBeenLastCalledWith([twitchOnline])
+  })
+  it('Delete the YouTube data after the access is revoked or the account is removed', async () => {
+    await fetchWith({ youtube: youtubeAccount() })
+    await run()
+    expect(clearCacheMock).not.toHaveBeenCalled()
+
+    // Revoked on the Google account
+    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }) })
+    renewMock.mockRejectedValue(unauthorized())
+    await run()
+    expect(clearCacheMock).toHaveBeenCalled()
+
+    await fetchWith({ youtube: youtubeAccount({ invalid: true }) })
+    await run()
+    expect(clearCacheMock).toHaveBeenCalled()
+
+    // The revoke message may have failed when the account was removed
+    await fetchWith({ twitch: account() })
+    await run()
+    expect(clearCacheMock).toHaveBeenCalled()
+  })
+  it('Keep the YouTube data when the renew fails for other reasons', async () => {
+    await fetchWith({ youtube: youtubeAccount({ expiresAt: Date.now() - 1000, refreshToken: 'refresh-token' }) })
+    renewMock.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'))
+    await run()
+
+    expect(clearCacheMock).not.toHaveBeenCalled()
   })
   it('Skip YouTube on other errors or without the feed permission', async () => {
     await fetchWith({ twitch: account(), youtube: youtubeAccount() })
