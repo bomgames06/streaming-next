@@ -9,8 +9,8 @@ function linksOf(links: DOMWrapper<HTMLAnchorElement>[]) {
   return links.map((link) => [link.text(), link.attributes('href'), link.attributes('target')])
 }
 const links = [
-  ['Terms of Service', 'https://bomlabs.com.br/products/streaming-next/terms', '_blank'],
-  ['Privacy Policy', 'https://bomlabs.com.br/products/streaming-next/privacy', '_blank'],
+  ['Terms of Service', 'https://www.bomlabs.com.br/products/streaming-next/terms', '_blank'],
+  ['Privacy Policy', 'https://www.bomlabs.com.br/products/streaming-next/privacy', '_blank'],
   ['YouTube Terms of Service', 'https://www.youtube.com/t/terms', '_blank'],
 ]
 
@@ -44,8 +44,8 @@ describe('LegalNotice.vue', () => {
     )
     // The documents open in the language of the extension
     expect(wrapper.findAll('a').map((link) => link.attributes('href'))).toStrictEqual([
-      'https://bomlabs.com.br/pt-BR/products/streaming-next/terms',
-      'https://bomlabs.com.br/pt-BR/products/streaming-next/privacy',
+      'https://www.bomlabs.com.br/pt-BR/products/streaming-next/terms',
+      'https://www.bomlabs.com.br/pt-BR/products/streaming-next/privacy',
       'https://www.youtube.com/t/terms',
     ])
   })
