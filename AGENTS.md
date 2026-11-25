@@ -109,7 +109,7 @@ Platform differences that must be respected:
 | Platform | Followed list                                                          | Lives                                                        | Notes                                                                       |
 | -------- | ---------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | Twitch   | API (`channels/followed`)                                              | `streams/followed`                                           | Token validated every hour (Twitch rule). Videos, clips, categories, search |
-| YouTube  | Subscriptions (cached 30 min)                                          | RSS feeds + `videos` endpoint (cached 2 min), never `search` | Tiny API quota: cache everything, `youtube.com` optional host permission    |
+| YouTube  | Subscriptions (cached 30 min)                                          | RSS feeds (15 min) + `videos` (cached 2 min), never `search` | Tiny API quota: cache everything, `youtube.com` optional host permission    |
 | Kick     | **None in the API**: slugs added by the user (`kickChannels` sync key) | `channels?slug=` (same request as the channels)              | Only the category name, no `gameId` (the categories view is Twitch only)    |
 
 Only Twitch has categories (`gameId`), videos and clips. Game notifications match categories **by name**

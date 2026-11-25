@@ -9,19 +9,22 @@ import type {
 } from '@/components/listStream/types/streamItemType'
 import moment from 'moment'
 import { orderBy, pickBy, uniq, uniqBy } from 'lodash'
-import { mapConcurrent } from '@/utils/util'
+import { withLock } from '@/utils/util'
 import type {
   YoutubeApiThumbnailsType,
   YoutubeApiVideoType,
   YoutubeFeedEntryType,
+  YoutubeFeedType,
 } from '@/services/api/youtube/types/youtubeApiType'
 import type {
   StorageLocalTypes,
+  YoutubeFeedsCacheStore,
   YoutubeLivesCacheStore,
   YoutubeSubscriptionsCacheStore,
 } from '@/types/localStorageKeysTypes'
 import {
   STORAGE_KEY_ACCOUNTS_CACHE_STREAMS,
+  STORAGE_KEY_YOUTUBE_FEEDS_CACHE,
   STORAGE_KEY_YOUTUBE_LIVES_CACHE,
   STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE,
 } from '@/types/localStorageKeysTypes'
@@ -33,7 +36,9 @@ const SUBSCRIPTIONS_CACHE_TIME = 30 * 60 * 1000
 const LIVES_CACHE_TIME = 2 * 60 * 1000
 // Lives are published on the feed when they are scheduled, usually some days before they start
 const FEED_WINDOW = 7 * 24 * 60 * 60 * 1000
-const FEED_CONCURRENCY = 8
+// YouTube keeps each feed for 15 minutes, a wrong clock must not keep it for longer
+const FEED_CACHE_TIME = 15 * 60 * 1000
+const LIVES_LOCK = 'youtubeLives'
 // Upcoming lives this late are usually abandoned schedules or permanent waiting rooms
 const UPCOMING_LATE_LIMIT = 24 * 60 * 60 * 1000
 
@@ -122,6 +127,11 @@ async function readLivesCache(accountId: string): Promise<YoutubeLivesCacheStore
   const cache = storage[STORAGE_KEY_YOUTUBE_LIVES_CACHE]
   return cache?.accountId === accountId ? cache : { accountId, videos: [], finished: {} }
 }
+async function readFeedsCache(accountId: string): Promise<YoutubeFeedsCacheStore['feeds']> {
+  const storage = (await browser.storage.local.get(STORAGE_KEY_YOUTUBE_FEEDS_CACHE)) as Partial<StorageLocalTypes>
+  const cache = storage[STORAGE_KEY_YOUTUBE_FEEDS_CACHE]
+  return cache?.accountId === accountId ? cache.feeds : {}
+}
 
 const YoutubeBusiness = {
   async auth(): Promise<AuthenticatedType> {
@@ -144,7 +154,11 @@ const YoutubeBusiness = {
     await this.clearCache()
   },
   async clearCache() {
-    await browser.storage.local.remove([STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE, STORAGE_KEY_YOUTUBE_LIVES_CACHE])
+    await browser.storage.local.remove([
+      STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE,
+      STORAGE_KEY_YOUTUBE_LIVES_CACHE,
+      STORAGE_KEY_YOUTUBE_FEEDS_CACHE,
+    ])
 
     // The pages keep the last subscriptions there too, with the channels of the other platforms
     const storage = await browser.storage.local.get(STORAGE_KEY_ACCOUNTS_CACHE_STREAMS)
@@ -189,11 +203,7 @@ const YoutubeBusiness = {
 
     return items
   },
-  /**
-   * The search endpoint costs 100 quota units by call, so the recent videos come from the free RSS feeds and only
-   * them are checked with the videos endpoint (1 unit for 50 videos).
-   * Videos that will never be live are remembered, so each video is usually checked only once.
-   */
+  /** Lives of the cache while they are recent, only one page (or the background) fetches them at a time */
   async getLivesFollowed(
     token: string,
     accountId: string,
@@ -206,12 +216,54 @@ const YoutubeBusiness = {
 
     if (!(await this.hasFeedPermission())) return { onlines: [], upcomings: [], missingPermission: true }
 
+    return withLock(LIVES_LOCK, async () => {
+      // Fetched by the popup or the background while waiting for the lock
+      const current = await readLivesCache(accountId)
+      if (current.fetchedAt && current.fetchedAt !== cache.fetchedAt)
+        return { ...videosToLives(current.videos), missingPermission: false }
+
+      return this.fetchLives(token, accountId, channelIds, current)
+    })
+  },
+  /** Recent videos of the channels, only the expired feeds are requested (all of them at the same time) */
+  async fetchFeedEntries(accountId: string, channelIds: string[]): Promise<YoutubeFeedEntryType[]> {
     const now = Date.now()
-    const feeds = await mapConcurrent(channelIds, FEED_CONCURRENCY, async (channelId) =>
-      // A failed feed (like a deleted channel) must not hide the lives of the other channels
-      YoutubeApi.feeds.videos(channelId).catch((): YoutubeFeedEntryType[] => [])
+    const cache = await readFeedsCache(accountId)
+    const recent = (entries: YoutubeFeedEntryType[]) =>
+      entries.filter((value) => now - Date.parse(value.published) < FEED_WINDOW)
+
+    const feeds = await Promise.all(
+      channelIds.map(async (channelId): Promise<[string, YoutubeFeedType]> => {
+        const cached = cache[channelId] ?? { expiresAt: 0, entries: [] }
+        if (cached.expiresAt > now) return [channelId, { ...cached, entries: recent(cached.entries) }]
+        try {
+          const { expiresAt, entries } = await YoutubeApi.feeds.videos(channelId)
+          return [channelId, { expiresAt: Math.min(expiresAt, now + FEED_CACHE_TIME), entries: recent(entries) }]
+        } catch {
+          // A failed feed (like a deleted channel) must not hide the lives of the other channels
+          return [channelId, { expiresAt: 0, entries: recent(cached.entries) }]
+        }
+      })
     )
-    const entries = feeds.flat().filter((value) => now - Date.parse(value.published) < FEED_WINDOW)
+
+    const newCache: YoutubeFeedsCacheStore = { accountId, feeds: Object.fromEntries(feeds) }
+    await browser.storage.local.set({ [STORAGE_KEY_YOUTUBE_FEEDS_CACHE]: newCache })
+
+    return feeds.flatMap(([, feed]) => feed.entries)
+  },
+  /**
+   * The search endpoint costs 100 quota units by call, so the recent videos come from the free RSS feeds and only
+   * them are checked with the videos endpoint (1 unit for 50 videos).
+   * Videos that will never be live are remembered, so each video is usually checked only once.
+   */
+  async fetchLives(
+    token: string,
+    accountId: string,
+    channelIds: string[],
+    cache: YoutubeLivesCacheStore
+  ): Promise<YoutubeLivesFollowed> {
+    const now = Date.now()
+    const entries = await this.fetchFeedEntries(accountId, channelIds)
 
     const finished = pickBy(cache.finished, (published) => now - published < FEED_WINDOW)
     const entryIds = uniq(entries.map((value) => value.videoId))

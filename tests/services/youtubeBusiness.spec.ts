@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import moment from 'moment'
 import { browser } from 'wxt/browser'
+import YoutubeApi from '@/services/api/youtube/youtubeApi'
 import YoutubeBusiness from '@/services/business/youtubeBusiness'
+import { sleep } from '@/utils/util'
 import {
   STORAGE_KEY_ACCOUNTS_CACHE_STREAMS,
+  STORAGE_KEY_YOUTUBE_FEEDS_CACHE,
   STORAGE_KEY_YOUTUBE_LIVES_CACHE,
   STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE,
   type YoutubeLivesCacheStore,
@@ -143,6 +146,7 @@ describe('YoutubeBusiness', () => {
   it('Clear only the YouTube data of the caches', async () => {
     await browser.storage.local.set({
       [STORAGE_KEY_ACCOUNTS_CACHE_STREAMS]: { twitch: [{ id: 't' }], youtube: [{ id: 'A' }] },
+      [STORAGE_KEY_YOUTUBE_FEEDS_CACHE]: { accountId: 'UCme', feeds: {} },
       [STORAGE_KEY_YOUTUBE_LIVES_CACHE]: { accountId: 'UCme' },
       [STORAGE_KEY_YOUTUBE_SUBSCRIPTIONS_CACHE]: { accountId: 'UCme' },
     })
@@ -276,6 +280,92 @@ describe('YoutubeBusiness', () => {
     // Everything is finished now, no video request at all
     await YoutubeBusiness.getLivesFollowed('token', 'UCme', channels, true)
     expect(videoRequests()).toHaveLength(2)
+  })
+  it('Share one fetch between the popup and the background', async () => {
+    const { videoRequests, feedRequests } = youtubeServer(livesData)
+    allowFeeds()
+    // jsdom has no Web Locks
+    let last: Promise<unknown> = Promise.resolve()
+    const request = vi.fn((_name: string, handler: () => Promise<unknown>) => (last = last.then(handler, handler)))
+    vi.stubGlobal('navigator', { ...navigator, locks: { request } })
+    onTestFinished(() => void vi.unstubAllGlobals())
+
+    const [popup, background, refresh] = await Promise.all([
+      YoutubeBusiness.getLivesFollowed('token', 'UCme', channels),
+      YoutubeBusiness.getLivesFollowed('token', 'UCme', channels),
+      YoutubeBusiness.getLivesFollowed('token', 'UCme', channels, true),
+    ])
+
+    expect(request).toHaveBeenCalledTimes(3)
+    expect(popup.onlines.map((item) => item.videoId)).toStrictEqual(['a1', 'c2'])
+    for (const lives of [background, refresh])
+      expect(lives.onlines.map((item) => item.videoId)).toStrictEqual(['a1', 'c2'])
+    expect(feedRequests()).toHaveLength(channels.length)
+    expect(videoRequests()).toHaveLength(1)
+
+    // A refresh asked later fetches again
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
+    await YoutubeBusiness.getLivesFollowed('token', 'UCme', channels, true)
+    expect(feedRequests()).toHaveLength(channels.length * 2)
+  })
+  it('Read every feed at the same time', async () => {
+    const ids = Array.from({ length: 70 }, (_, index) => `UC${index}`)
+    youtubeServer({ videos: [] })
+    allowFeeds()
+    let running = 0
+    let peak = 0
+    vi.spyOn(YoutubeApi.feeds, 'videos').mockImplementation(async (channelId) => {
+      peak = Math.max(peak, ++running)
+      await sleep(1)
+      running--
+      if (channelId === 'UC3') throw new Error('timeout of 25000ms exceeded')
+      return { expiresAt: 0, entries: [] }
+    })
+
+    expect(await YoutubeBusiness.getLivesFollowed('token', 'UCme', ids)).toStrictEqual({
+      onlines: [],
+      upcomings: [],
+      missingPermission: false,
+    })
+    expect(YoutubeApi.feeds.videos).toHaveBeenCalledTimes(70)
+    expect(peak).toBe(70)
+  })
+  it('Read a feed again only after it expires', async () => {
+    const { feedRequests, videoRequests, data } = youtubeServer({
+      feeds: { A: [{ videoId: 'a1', published: hoursAgo(1) }], B: [] },
+      feedsExpireAt: Date.now() + 10 * 60 * 1000,
+      videos: [apiYoutubeVideo('a1', 'A', { liveBroadcastContent: 'live' })],
+    })
+    allowFeeds()
+    await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A', 'B'])
+    expect(feedRequests()).toHaveLength(2)
+
+    // The lives are still checked, a new channel has no feed yet
+    data.feeds!.C = []
+    const lives = await YoutubeBusiness.getLivesFollowed('token', 'UCme', ['A', 'B', 'C'], true)
+    expect(lives.onlines.map((item) => item.videoId)).toStrictEqual(['a1'])
+    expect(videoRequests()).toHaveLength(2)
+    expect(feedRequests().map((request) => request.query.get('channel_id'))).toStrictEqual(['A', 'B', 'C'])
+
+    // The feeds of another account are not used
+    await YoutubeBusiness.getLivesFollowed('token', 'UCother', ['A'])
+    expect(feedRequests()).toHaveLength(4)
+
+    // Expired, one that fails keeps its last entries
+    const now = Date.now() + 11 * 60 * 1000
+    vi.spyOn(Date, 'now').mockReturnValue(now)
+    data.feeds = {}
+    const failed = await YoutubeBusiness.getLivesFollowed('token', 'UCother', ['A'], true)
+    expect(feedRequests()).toHaveLength(5)
+    expect(failed.onlines.map((item) => item.videoId)).toStrictEqual(['a1'])
+
+    // A wrong clock does not keep a feed for more than 15 minutes
+    data.feeds = { A: [] }
+    data.feedsExpireAt = now + 24 * 60 * 60 * 1000
+    await YoutubeBusiness.getLivesFollowed('token', 'UCother', ['A'], true)
+    vi.spyOn(Date, 'now').mockReturnValue(now + 16 * 60 * 1000)
+    await YoutubeBusiness.getLivesFollowed('token', 'UCother', ['A'], true)
+    expect(feedRequests()).toHaveLength(7)
   })
   it('Expire old finished videos and discard the cache of another account', async () => {
     const { videoRequests } = youtubeServer({

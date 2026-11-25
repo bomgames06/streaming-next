@@ -11,7 +11,7 @@ export type HttpRequest = {
   body?: unknown
 }
 // `text` is sent as is (like XML), `data` is sent as JSON
-export type HttpResponse = { status?: number; data?: unknown; text?: string }
+export type HttpResponse = { status?: number; data?: unknown; text?: string; headers?: Record<string, string> }
 type Route = {
   method: string
   path: string | RegExp
@@ -71,7 +71,7 @@ export function mockHttp() {
       data: result.text ?? (result.data === undefined ? '' : JSON.stringify(result.data)),
       status,
       statusText: String(status),
-      headers: {},
+      headers: AxiosHeaders.from(result.headers),
       config,
       request: {},
     }

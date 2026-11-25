@@ -54,6 +54,11 @@ export type YoutubeApiVideoType = {
   }
 }
 
+export type YoutubeFeedType = {
+  // Epoch in ms, the feed does not change until then
+  expiresAt: number
+  entries: YoutubeFeedEntryType[]
+}
 export type YoutubeFeedEntryType = {
   videoId: string
   channelId: string

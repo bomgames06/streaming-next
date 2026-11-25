@@ -157,23 +157,11 @@ export function getTimeByClipPeriod(period?: ClipPeriodStore): Moment | undefine
   return undefined
 }
 
-// Like Promise.all over a map, but with at most `concurrency` handlers running at the same time
-export async function mapConcurrent<T, R>(
-  items: T[],
-  concurrency: number,
-  handler: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = new Array<R>(items.length)
-  let nextIndex = 0
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (nextIndex < items.length) {
-      const index = nextIndex++
-      results[index] = await handler(items[index])
-    }
-  })
-  await Promise.all(workers)
-
-  return results
+/** Runs one handler at a time for each name, also between the popup and the background (both of the extension origin) */
+export async function withLock<T>(name: string, handler: () => Promise<T>): Promise<T> {
+  // Missing on insecure contexts
+  if (!navigator.locks) return handler()
+  return navigator.locks.request(name, handler) as Promise<T>
 }
 
 export function sleep(ms: number): Promise<void> {
